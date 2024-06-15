@@ -1,0 +1,64 @@
+package com.github.airatgaliev.itblogback.service;
+
+import com.github.airatgaliev.itblogback.dto.CreatePostDTO;
+import com.github.airatgaliev.itblogback.dto.GetPostDTO;
+import com.github.airatgaliev.itblogback.dto.UpdatePostDTO;
+import com.github.airatgaliev.itblogback.model.PostModel;
+import com.github.airatgaliev.itblogback.model.UserModel;
+import com.github.airatgaliev.itblogback.repository.PostRepository;
+import com.github.airatgaliev.itblogback.repository.UserRepository;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class PostService {
+
+  private final PostRepository postRepository;
+  private final UserRepository userRepository;
+
+  public List<GetPostDTO> getAllPosts() {
+    return this.postRepository.findAll().stream().map(this::convertToDTO)
+        .collect(Collectors.toList());
+  }
+
+  public Optional<GetPostDTO> getPostById(Long id) {
+    return this.postRepository.findById(id).map(this::convertToDTO);
+  }
+
+  public void createPost(CreatePostDTO createPostDTO) {
+    UserModel userModel = userRepository.findById(createPostDTO.getAuthorId())
+        .orElseThrow(() -> new RuntimeException("Author not found"));
+    PostModel postModel = new PostModel();
+    postModel.setTitle(createPostDTO.getTitle());
+    postModel.setContent(createPostDTO.getContent());
+    postModel.setUser(userModel);
+    postRepository.save(postModel);
+  }
+
+  public void updatePost(Long id, UpdatePostDTO getPostDTO) {
+    UserModel userModel = userRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("Author not found"));
+    PostModel postModel = postRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("Post not found"));
+    postModel.setTitle(getPostDTO.getTitle());
+    postModel.setContent(getPostDTO.getContent());
+    postModel.setUser(userModel);
+    postRepository.save(postModel);
+  }
+
+  public void deletePost(Long id) {
+    postRepository.deleteById(id);
+  }
+
+  private GetPostDTO convertToDTO(PostModel postModel) {
+    GetPostDTO getPostDto = new GetPostDTO();
+    getPostDto.setTitle(postModel.getTitle());
+    getPostDto.setContent(postModel.getContent());
+    getPostDto.setAuthorId(postModel.getUser().getId());
+    return getPostDto;
+  }
+}
