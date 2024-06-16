@@ -8,6 +8,7 @@ import com.github.airatgaliev.itblogback.model.RoleModel;
 import com.github.airatgaliev.itblogback.model.UserModel;
 import com.github.airatgaliev.itblogback.repository.RoleRepository;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,7 +35,7 @@ public class AuthService {
   }
 
   public AuthResponse login(AuthRequest authRequest) {
-    UserModel user = userRepository.findByUsername(authRequest.getUsername());
+    Optional<UserModel> user = userRepository.findByUsername(authRequest.getUsername());
     if (user != null && passwordEncoder.matches(authRequest.getPassword(), user.getPassword())) {
       // Возвращаем токен (в реальной жизни тут должна быть логика создания JWT)
       return new AuthResponse("fake-jwt-token");

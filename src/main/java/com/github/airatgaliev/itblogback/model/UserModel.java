@@ -29,6 +29,7 @@ public class UserModel implements UserDetails {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(nullable = false)
   private Long id;
   @Column(nullable = false)
   private String username;

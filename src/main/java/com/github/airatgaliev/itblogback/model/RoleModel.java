@@ -1,5 +1,6 @@
 package com.github.airatgaliev.itblogback.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -22,6 +23,7 @@ public class RoleModel {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(nullable = false)
   private Long id;
 
   @Enumerated(EnumType.STRING)
