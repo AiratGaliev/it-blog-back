@@ -1,5 +1,5 @@
 package com.github.airatgaliev.itblogback.model;
 
-public enum ERole {
+public enum Role {
   USER, AUTHOR, ADMIN
 }

@@ -1,6 +1,7 @@
 package com.github.airatgaliev.itblogback.service;
 
-import com.github.airatgaliev.itblogback.dto.CreateUserDTO;
+import com.github.airatgaliev.itblogback.dto.GetPostDTO;
+import com.github.airatgaliev.itblogback.dto.SignUpRequestDTO;
 import com.github.airatgaliev.itblogback.dto.UpdateUserDTO;
 import com.github.airatgaliev.itblogback.dto.UserDTO;
 import com.github.airatgaliev.itblogback.model.UserModel;
@@ -17,34 +18,38 @@ public class UserService {
 
   private final UserRepository userRepository;
 
-  public List<UserDTO> getAllAuthors() {
+  public List<UserDTO> getAllUsers() {
     return userRepository.findAll().stream().map(this::convertToDto).collect(Collectors.toList());
   }
 
-  public Optional<UserDTO> getAuthorById(Long id) {
-    return userRepository.findById(id).map(this::convertToDto);
+  public Optional<UserDTO> getUserById(Long id) {
+    return userRepository.findByIdWithPosts(id).map(this::convertToDto);
   }
 
-  public void createAuthor(CreateUserDTO createUserDTO) {
+  public void createUser(SignUpRequestDTO signUpRequestDTO) {
     UserModel userModel = new UserModel();
-    userModel.setUsername(createUserDTO.getUsername());
+    userModel.setUsername(signUpRequestDTO.getUsername());
     userRepository.save(userModel);
   }
 
-  public void updateAuthor(Long id, UpdateUserDTO updateUserDTO) {
+  public void updateUser(Long id, UpdateUserDTO updateUserDTO) {
     UserModel userModel = userRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("Author not found"));
+        .orElseThrow(() -> new RuntimeException("User not found"));
     userModel.setUsername(updateUserDTO.getUsername());
     userRepository.save(userModel);
   }
 
-  public void deleteAuthor(Long id) {
+  public void deleteUser(Long id) {
     userRepository.deleteById(id);
   }
 
   private UserDTO convertToDto(UserModel userModel) {
-    UserDTO userDTO = new UserDTO();
-    userDTO.setName(userModel.getUsername());
-    return userDTO;
+    return UserDTO.builder().id(userModel.getId()).username(userModel.getUsername())
+        .email(userModel.getEmail())
+        .firstName(userModel.getFirstName()).lastName(userModel.getLastName()).posts(
+            userModel.getPosts().stream().map(
+                    postModel -> GetPostDTO.builder().title(postModel.getTitle())
+                        .content(postModel.getContent()).authorId(postModel.getUser().getId()).build())
+                .toList()).role(userModel.getRole()).build();
   }
 }

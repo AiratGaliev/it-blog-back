@@ -11,7 +11,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,15 +23,16 @@ public class PostService {
   private final UserRepository userRepository;
 
   public List<GetPostDTO> getAllPosts() {
-    return this.postRepository.findAll().stream().map(this::convertToDTO)
+    return this.postRepository.findAll().stream().map(this::convertPostModelToDTO)
         .collect(Collectors.toList());
   }
 
   public Optional<GetPostDTO> getPostById(Long id) {
-    return this.postRepository.findById(id).map(this::convertToDTO);
+    return this.postRepository.findById(id).map(this::convertPostModelToDTO);
   }
 
-  public void createPost(CreatePostDTO createPostDTO) {
+  @Transactional
+  public void createPost(CreatePostDTO createPostDTO, UserDetails userDetails) {
     UserModel userModel = userRepository.findById(createPostDTO.getAuthorId())
         .orElseThrow(() -> new RuntimeException("Author not found"));
     PostModel postModel = new PostModel();
@@ -39,6 +42,7 @@ public class PostService {
     postRepository.save(postModel);
   }
 
+  @Transactional
   public void updatePost(Long id, UpdatePostDTO getPostDTO) {
     UserModel userModel = userRepository.findById(id)
         .orElseThrow(() -> new RuntimeException("Author not found"));
@@ -50,15 +54,13 @@ public class PostService {
     postRepository.save(postModel);
   }
 
+  @Transactional
   public void deletePost(Long id) {
     postRepository.deleteById(id);
   }
 
-  private GetPostDTO convertToDTO(PostModel postModel) {
-    GetPostDTO getPostDto = new GetPostDTO();
-    getPostDto.setTitle(postModel.getTitle());
-    getPostDto.setContent(postModel.getContent());
-    getPostDto.setAuthorId(postModel.getUser().getId());
-    return getPostDto;
+  private GetPostDTO convertPostModelToDTO(PostModel postModel) {
+    return GetPostDTO.builder().title(postModel.getTitle()).content(postModel.getContent())
+        .authorId(postModel.getUser().getId()).build();
   }
 }
