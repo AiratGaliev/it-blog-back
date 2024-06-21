@@ -16,7 +16,7 @@ services:
     ports:
       - "8080:8080"
   app:
-    image: airatgaliev/it-blog-back
+    image: airatgaliev/it-blog-back:latest
     build:
       context: .
       dockerfile: Dockerfile

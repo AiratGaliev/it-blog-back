@@ -2,6 +2,10 @@ package com.github.airatgaliev.itblogback.config;
 
 
 import com.github.airatgaliev.itblogback.repository.UserRepository;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Contact;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.info.License;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +18,15 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Configuration
+@OpenAPIDefinition(
+    info = @Info(
+        title = "IT Blog API",
+        version = "0.1",
+        description = "API documentation for IT Blog",
+        contact = @Contact(name = "Email", email = "your.email@example.com"),
+        license = @License(name = "Apache 2.0", url = "http://springdoc.org")
+    )
+)
 @RequiredArgsConstructor
 public class ApplicationConfiguration {
 
