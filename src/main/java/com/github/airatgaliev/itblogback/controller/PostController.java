@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/posts")
@@ -50,10 +52,12 @@ public class PostController {
   @PostMapping
   @Operation(summary = "Create a new post")
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<Void> createPost(@Valid @RequestBody CreatePostDTO createPostDTO,
+  public ResponseEntity<String> createPost(@Valid @RequestBody CreatePostDTO createPostDTO,
       @AuthenticationPrincipal UserDetails userDetails) {
+    log.info("Request to create a post by user: {}", userDetails.getUsername());
     postService.createPost(createPostDTO, userDetails);
-    return new ResponseEntity<>(HttpStatus.CREATED);
+    log.info("Post created successfully");
+    return new ResponseEntity<>("Post created successfully", HttpStatus.CREATED);
   }
 
   @PutMapping("/{id}")

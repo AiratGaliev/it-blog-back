@@ -35,6 +35,7 @@ public class PostService {
 
   @Transactional
   public void createPost(CreatePostDTO createPostDTO, UserDetails userDetails) {
+    log.info("Creating post for user: {}", userDetails.getUsername());
     UserModel userModel = userRepository.findByUsername(userDetails.getUsername())
         .orElseThrow(() -> new RuntimeException("Author not found"));
     PostModel postModel = new PostModel();
@@ -42,6 +43,7 @@ public class PostService {
     postModel.setContent(createPostDTO.getContent());
     postModel.setUser(userModel);
     postRepository.save(postModel);
+    log.info("Post saved with title: {}", createPostDTO.getTitle());
   }
 
   @Transactional

@@ -1,5 +1,7 @@
 package com.github.airatgaliev.itblogback.config;
 
+import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
+
 import com.github.airatgaliev.itblogback.model.Role;
 import com.github.airatgaliev.itblogback.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -25,20 +27,19 @@ public class SecurityConfiguration {
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(
+    return http.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(
             auth -> auth.requestMatchers("/auth/**").permitAll().requestMatchers("/api-docs/**")
                 .permitAll().requestMatchers("/swagger-ui.html").permitAll()
                 .requestMatchers("/swagger-ui/**").permitAll().requestMatchers("/v3/api-docs/**")
                 .permitAll()
-                .requestMatchers(HttpMethod.GET, "/posts/**").permitAll()
-                .requestMatchers("/posts/**")
-                .hasAnyRole(Role.AUTHOR.name(), Role.ADMIN.name())
-                .requestMatchers(HttpMethod.GET, "/users/**").permitAll()
-                .requestMatchers("/users/**")
+                .requestMatchers("/posts/**").permitAll()
+                .requestMatchers("/posts/**").hasAnyRole(Role.AUTHOR.name(), Role.ADMIN.name())
+                .requestMatchers(HttpMethod.GET, "/users/**").permitAll().requestMatchers("/users/**")
                 .hasRole(Role.ADMIN.name()).requestMatchers("/subscriptions/**")
                 .hasRole(Role.USER.name()).anyRequest().authenticated())
+        .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))
         .authenticationProvider(authenticationProvider)
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-    return http.build();
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .build();
   }
 }

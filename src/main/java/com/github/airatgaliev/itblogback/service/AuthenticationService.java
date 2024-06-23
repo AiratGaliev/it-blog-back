@@ -24,11 +24,8 @@ import org.springframework.stereotype.Service;
 public class AuthenticationService {
 
   private final UserRepository userRepository;
-
   private final PasswordEncoder passwordEncoder;
-
   private final AuthenticationManager authenticationManager;
-
   private final JwtService jwtService;
 
   public UserDTO signup(SignUpRequestDTO input) {
