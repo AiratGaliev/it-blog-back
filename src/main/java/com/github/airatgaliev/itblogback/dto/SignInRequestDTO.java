@@ -2,7 +2,6 @@ package com.github.airatgaliev.itblogback.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -11,15 +10,10 @@ import lombok.Data;
 @Schema(name = "Authentication Request")
 public class SignInRequestDTO {
 
-  @NotBlank(message = "Username cannot be empty")
-  @Size(min = 5, max = 20, message = "Username must be between 5 and 20 characters")
-  @Schema(description = "Username of the user", example = "JohnDoe", requiredMode = RequiredMode.REQUIRED)
-  private String username;
-
-  @NotBlank(message = "Email cannot be empty")
-  @Email(message = "Invalid email address")
-  @Schema(description = "Email", example = "test@test.com", requiredMode = RequiredMode.REQUIRED)
-  private String email;
+  @NotBlank(message = "Username or Email cannot be empty")
+  @Size(min = 5, max = 50, message = "Username or Email must be between 5 and 50 characters")
+  @Schema(description = "Username or Email of the user", example = "JohnDoe or test@test.com", requiredMode = RequiredMode.REQUIRED)
+  private String usernameOrEmail;
 
   @NotBlank(message = "Password cannot be empty")
   @Schema(description = "Password", example = "P@ssword", requiredMode = RequiredMode.REQUIRED)

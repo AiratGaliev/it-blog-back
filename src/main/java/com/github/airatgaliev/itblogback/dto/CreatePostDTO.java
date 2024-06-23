@@ -15,7 +15,4 @@ public class CreatePostDTO {
   @NotNull(message = "Content cannot be empty")
   @Schema(description = "Content of the post", example = "This is the content of the post", requiredMode = RequiredMode.REQUIRED)
   private String content;
-  @NotNull(message = "Author ID cannot be empty")
-  @Schema(description = "Author ID associated with the post", example = "1", requiredMode = RequiredMode.REQUIRED)
-  private Long authorId;
 }

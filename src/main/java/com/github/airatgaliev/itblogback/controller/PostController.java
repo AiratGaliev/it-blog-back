@@ -5,6 +5,7 @@ import com.github.airatgaliev.itblogback.dto.GetPostDTO;
 import com.github.airatgaliev.itblogback.dto.UpdatePostDTO;
 import com.github.airatgaliev.itblogback.service.PostService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/posts")
 @Tag(name = "Posts", description = "API for blog posts")
+@Validated
 public class PostController {
 
   private final PostService postService;
@@ -46,6 +49,7 @@ public class PostController {
 
   @PostMapping
   @Operation(summary = "Create a new post")
+  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<Void> createPost(@Valid @RequestBody CreatePostDTO createPostDTO,
       @AuthenticationPrincipal UserDetails userDetails) {
     postService.createPost(createPostDTO, userDetails);
@@ -54,6 +58,7 @@ public class PostController {
 
   @PutMapping("/{id}")
   @Operation(summary = "Update a post")
+  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<Void> updatePost(@Valid @PathVariable Long id,
       @RequestBody UpdatePostDTO updatePostDTO) {
     postService.updatePost(id, updatePostDTO);
@@ -62,6 +67,7 @@ public class PostController {
 
   @DeleteMapping("/{id}")
   @Operation(summary = "Delete a post")
+  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<Void> deletePost(@PathVariable Long id) {
     postService.deletePost(id);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);

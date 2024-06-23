@@ -4,6 +4,7 @@ import com.github.airatgaliev.itblogback.dto.UpdateUserDTO;
 import com.github.airatgaliev.itblogback.dto.UserDTO;
 import com.github.airatgaliev.itblogback.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -43,6 +44,7 @@ public class UserController {
 
   @PutMapping("/{id}")
   @Operation(summary = "Update an user")
+  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<Void> updateUser(@PathVariable Long id,
       @Valid @RequestBody UpdateUserDTO updateUserDTO) {
     userService.updateUser(id, updateUserDTO);
@@ -51,6 +53,7 @@ public class UserController {
 
   @DeleteMapping("/{id}")
   @Operation(summary = "Delete an user")
+  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
     userService.deleteUser(id);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);

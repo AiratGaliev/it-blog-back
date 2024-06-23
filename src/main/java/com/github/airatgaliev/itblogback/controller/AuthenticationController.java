@@ -4,6 +4,7 @@ import com.github.airatgaliev.itblogback.dto.AuthenticationResponseDTO;
 import com.github.airatgaliev.itblogback.dto.SignInRequestDTO;
 import com.github.airatgaliev.itblogback.dto.SignUpRequestDTO;
 import com.github.airatgaliev.itblogback.service.AuthenticationService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class AuthenticationController {
   private final AuthenticationService authenticationService;
 
   @PostMapping("/signup")
+  @Operation(summary = "Register a new user")
   public ResponseEntity<String> register(@Valid @RequestBody SignUpRequestDTO signUpRequestDTO) {
     Long userId = authenticationService.signup(signUpRequestDTO).getId();
     return ResponseEntity.status(HttpStatus.CREATED)
@@ -32,6 +34,7 @@ public class AuthenticationController {
   }
 
   @PostMapping("/login")
+  @Operation(summary = "Authenticate a user")
   public ResponseEntity<AuthenticationResponseDTO> authenticate(
       @Valid @RequestBody SignInRequestDTO signInRequestDTO) {
     AuthenticationResponseDTO authenticatedUser = authenticationService.authenticate(

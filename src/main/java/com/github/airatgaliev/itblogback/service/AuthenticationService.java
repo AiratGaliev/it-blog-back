@@ -49,28 +49,23 @@ public class AuthenticationService {
     }
 
     if (!existingFields.isEmpty()) {
-      throw new UserAlreadyExistsException(
-          "The following fields already exist: " + existingFields);
+      throw new UserAlreadyExistsException("The following fields already exist: " + existingFields);
     }
 
     UserModel user = UserModel.builder().username(input.getUsername()).email(input.getEmail())
         .password(passwordEncoder.encode(input.getPassword())).role(Role.USER).build();
 
     UserModel savedUser = userRepository.save(user);
-    return UserDTO.builder()
-        .id(savedUser.getId())
-        .username(savedUser.getUsername())
-        .email(savedUser.getEmail())
-        .firstName(savedUser.getFirstName())
-        .lastName(savedUser.getLastName())
-        .role(savedUser.getRole())
-        .build();
+    return UserDTO.builder().id(savedUser.getId()).username(savedUser.getUsername())
+        .email(savedUser.getEmail()).firstName(savedUser.getFirstName())
+        .lastName(savedUser.getLastName()).role(savedUser.getRole()).build();
   }
 
   public AuthenticationResponseDTO authenticate(SignInRequestDTO input) {
     authenticationManager.authenticate(
-        new UsernamePasswordAuthenticationToken(input.getEmail(), input.getPassword()));
-    UserModel user = userRepository.findByEmail(input.getEmail())
+        new UsernamePasswordAuthenticationToken(input.getUsernameOrEmail(), input.getPassword()));
+    UserModel user = userRepository.findByUsername(input.getUsernameOrEmail())
+        .or(() -> userRepository.findByEmail(input.getUsernameOrEmail()))
         .orElseThrow(() -> new RuntimeException("User not found"));
     String jwtToken = jwtService.generateToken(user);
     return AuthenticationResponseDTO.builder().token(jwtToken)

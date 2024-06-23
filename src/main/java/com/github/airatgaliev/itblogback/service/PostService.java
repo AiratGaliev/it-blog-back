@@ -11,10 +11,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostService {
@@ -33,7 +35,7 @@ public class PostService {
 
   @Transactional
   public void createPost(CreatePostDTO createPostDTO, UserDetails userDetails) {
-    UserModel userModel = userRepository.findById(createPostDTO.getAuthorId())
+    UserModel userModel = userRepository.findByUsername(userDetails.getUsername())
         .orElseThrow(() -> new RuntimeException("Author not found"));
     PostModel postModel = new PostModel();
     postModel.setTitle(createPostDTO.getTitle());
