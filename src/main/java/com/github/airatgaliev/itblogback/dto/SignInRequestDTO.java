@@ -11,7 +11,7 @@ import lombok.Data;
 public class SignInRequestDTO {
 
   @NotBlank(message = "Username or Email cannot be empty")
-  @Size(min = 5, max = 50, message = "Username or Email must be between 5 and 50 characters")
+  @Size(min = 3, max = 50, message = "Username or Email must be between 3 and 50 characters")
   @Schema(description = "Username or Email of the user", example = "JohnDoe or test@test.com", requiredMode = RequiredMode.REQUIRED)
   private String usernameOrEmail;
 

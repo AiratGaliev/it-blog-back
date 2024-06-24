@@ -12,7 +12,7 @@ import lombok.Data;
 public class SignUpRequestDTO {
 
   @NotBlank(message = "Username cannot be empty")
-  @Size(min = 5, max = 20, message = "Username must be between 5 and 20 characters")
+  @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")
   @Schema(description = "Username of the user", example = "JohnDoe", requiredMode = RequiredMode.REQUIRED)
   private String username;
 
