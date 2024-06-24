@@ -1,6 +1,7 @@
 package com.github.airatgaliev.itblogback.service;
 
 
+import com.github.airatgaliev.itblogback.model.UserModel;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -32,29 +33,22 @@ public class JwtService {
   }
 
   public String generateToken(UserDetails userDetails) {
-    return generateToken(new HashMap<>(), userDetails);
-  }
-
-  public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
-    return buildToken(extraClaims, userDetails, jwtExpiration);
+    Map<String, Object> claims = new HashMap<>();
+    if (userDetails instanceof UserModel) {
+      claims.put("role", ((UserModel) userDetails).getRole().name());
+    }
+    return buildToken(claims, userDetails, jwtExpiration);
   }
 
   public long getExpirationTime() {
     return jwtExpiration;
   }
 
-  private String buildToken(
-      Map<String, Object> extraClaims,
-      UserDetails userDetails,
-      long expiration
-  ) {
-    return Jwts
-        .builder()
-        .claims(extraClaims)
-        .subject(userDetails.getUsername())
+  private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails,
+      long expiration) {
+    return Jwts.builder().claims(extraClaims).subject(userDetails.getUsername())
         .issuedAt(new Date(System.currentTimeMillis()))
-        .expiration(new Date(System.currentTimeMillis() + expiration))
-        .signWith(getSignInKey())
+        .expiration(new Date(System.currentTimeMillis() + expiration)).signWith(getSignInKey())
         .compact();
   }
 
@@ -72,12 +66,7 @@ public class JwtService {
   }
 
   private Claims extractAllClaims(String token) {
-    return Jwts
-        .parser()
-        .verifyWith(getSignInKey())
-        .build()
-        .parseSignedClaims(token)
-        .getPayload();
+    return Jwts.parser().verifyWith(getSignInKey()).build().parseSignedClaims(token).getPayload();
   }
 
   private SecretKey getSignInKey() {

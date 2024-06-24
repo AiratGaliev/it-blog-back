@@ -49,6 +49,7 @@ public class PostController {
         .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
+  //  @PreAuthorize("hasRole('AUTHOR') or hasRole('ADMIN')")
   @PostMapping
   @Operation(summary = "Create a new post")
   @SecurityRequirement(name = "bearerAuth")
