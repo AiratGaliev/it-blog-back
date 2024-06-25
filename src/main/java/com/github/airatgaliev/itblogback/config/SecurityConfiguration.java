@@ -8,7 +8,6 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -46,9 +45,10 @@ public class SecurityConfiguration {
                 .requestMatchers("/posts/**").permitAll()
 //                .requestMatchers("/posts/**")
 //                .hasAnyRole(Role.AUTHOR.name(), Role.ADMIN.name())
-                .requestMatchers(HttpMethod.GET, "/users/**").permitAll()
-                .requestMatchers("/users/**")
-                .hasRole(Role.ADMIN.name()).requestMatchers("/subscriptions/**")
+                .requestMatchers("/users/**").permitAll()
+//                .requestMatchers("/users/**")
+//                .hasRole(Role.ADMIN.name())
+                .requestMatchers("/subscriptions/**")
                 .hasRole(Role.USER.name()).anyRequest().authenticated())
         .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))
         .authenticationProvider(authenticationProvider)
