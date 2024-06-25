@@ -1,7 +1,6 @@
 package com.github.airatgaliev.itblogback.service;
 
 import com.github.airatgaliev.itblogback.dto.GetPostDTO;
-import com.github.airatgaliev.itblogback.dto.SignUpRequestDTO;
 import com.github.airatgaliev.itblogback.dto.UpdateUserDTO;
 import com.github.airatgaliev.itblogback.dto.UserDTO;
 import com.github.airatgaliev.itblogback.model.UserModel;
@@ -19,17 +18,12 @@ public class UserService {
   private final UserRepository userRepository;
 
   public List<UserDTO> getAllUsers() {
-    return userRepository.findAll().stream().map(this::convertToDto).collect(Collectors.toList());
+    return userRepository.findAll().stream().map(this::convertUserModelToDto)
+        .collect(Collectors.toList());
   }
 
   public Optional<UserDTO> getUserById(Long id) {
-    return userRepository.findByIdWithPosts(id).map(this::convertToDto);
-  }
-
-  public void createUser(SignUpRequestDTO signUpRequestDTO) {
-    UserModel userModel = new UserModel();
-    userModel.setUsername(signUpRequestDTO.getUsername());
-    userRepository.save(userModel);
+    return userRepository.findByIdWithPosts(id).map(this::convertUserModelToDto);
   }
 
   public void updateUser(Long id, UpdateUserDTO updateUserDTO) {
@@ -43,13 +37,13 @@ public class UserService {
     userRepository.deleteById(id);
   }
 
-  private UserDTO convertToDto(UserModel userModel) {
+  private UserDTO convertUserModelToDto(UserModel userModel) {
     return UserDTO.builder().id(userModel.getId()).username(userModel.getUsername())
         .email(userModel.getEmail())
         .firstName(userModel.getFirstName()).lastName(userModel.getLastName()).posts(
             userModel.getPosts().stream().map(
                     postModel -> GetPostDTO.builder().title(postModel.getTitle())
-                        .content(postModel.getContent()).authorId(postModel.getUser().getId()).build())
+                        .content(postModel.getContent()).userId(postModel.getUser().getId()).build())
                 .toList()).role(userModel.getRole()).build();
   }
 }

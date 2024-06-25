@@ -29,6 +29,6 @@ public class UserDTO {
   @Schema(description = "Role of the user", example = "USER")
   private Role role;
 
-  @Schema(description = "List of posts written by the user with Author role")
+  @Schema(description = "List of posts written by the user with User role")
   private List<GetPostDTO> posts;
 }

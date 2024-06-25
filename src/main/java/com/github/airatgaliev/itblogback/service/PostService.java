@@ -37,7 +37,7 @@ public class PostService {
   public void createPost(CreatePostDTO createPostDTO, UserDetails userDetails) {
     log.info("Creating post for user: {}", userDetails.getUsername());
     UserModel userModel = userRepository.findByUsername(userDetails.getUsername())
-        .orElseThrow(() -> new RuntimeException("Author not found"));
+        .orElseThrow(() -> new RuntimeException("User not found"));
     PostModel postModel = new PostModel();
     postModel.setTitle(createPostDTO.getTitle());
     postModel.setContent(createPostDTO.getContent());
@@ -49,7 +49,7 @@ public class PostService {
   @Transactional
   public void updatePost(Long id, UpdatePostDTO getPostDTO) {
     UserModel userModel = userRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("Author not found"));
+        .orElseThrow(() -> new RuntimeException("User not found"));
     PostModel postModel = postRepository.findById(id)
         .orElseThrow(() -> new RuntimeException("Post not found"));
     postModel.setTitle(getPostDTO.getTitle());
@@ -64,7 +64,8 @@ public class PostService {
   }
 
   private GetPostDTO convertPostModelToDTO(PostModel postModel) {
-    return GetPostDTO.builder().title(postModel.getTitle()).content(postModel.getContent())
-        .authorId(postModel.getUser().getId()).build();
+    return GetPostDTO.builder().id(postModel.getId()).title(postModel.getTitle())
+        .content(postModel.getContent())
+        .userId(postModel.getUser().getId()).build();
   }
 }
