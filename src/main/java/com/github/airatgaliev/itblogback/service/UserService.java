@@ -1,8 +1,8 @@
 package com.github.airatgaliev.itblogback.service;
 
 import com.github.airatgaliev.itblogback.dto.GetPostDTO;
+import com.github.airatgaliev.itblogback.dto.GetUserDTO;
 import com.github.airatgaliev.itblogback.dto.UpdateUserDTO;
-import com.github.airatgaliev.itblogback.dto.UserDTO;
 import com.github.airatgaliev.itblogback.model.UserModel;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
 import java.util.List;
@@ -17,12 +17,12 @@ public class UserService {
 
   private final UserRepository userRepository;
 
-  public List<UserDTO> getAllUsers() {
+  public List<GetUserDTO> getAllUsers() {
     return userRepository.findAll().stream().map(this::convertUserModelToDto)
         .collect(Collectors.toList());
   }
 
-  public Optional<UserDTO> getUserById(Long id) {
+  public Optional<GetUserDTO> getUserById(Long id) {
     return userRepository.findByIdWithPosts(id).map(this::convertUserModelToDto);
   }
 
@@ -37,12 +37,12 @@ public class UserService {
     userRepository.deleteById(id);
   }
 
-  private UserDTO convertUserModelToDto(UserModel userModel) {
-    return UserDTO.builder().id(userModel.getId()).username(userModel.getUsername())
+  private GetUserDTO convertUserModelToDto(UserModel userModel) {
+    return GetUserDTO.builder().id(userModel.getId()).username(userModel.getUsername())
         .email(userModel.getEmail())
         .firstName(userModel.getFirstName()).lastName(userModel.getLastName()).posts(
             userModel.getPosts().stream().map(
-                    postModel -> GetPostDTO.builder().title(postModel.getTitle())
+                    postModel -> GetPostDTO.builder().id(postModel.getId()).title(postModel.getTitle())
                         .content(postModel.getContent()).userId(postModel.getUser().getId()).build())
                 .toList()).role(userModel.getRole()).build();
   }

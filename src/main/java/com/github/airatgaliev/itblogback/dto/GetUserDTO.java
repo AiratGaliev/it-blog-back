@@ -9,7 +9,7 @@ import lombok.Data;
 @Data
 @Builder
 @Schema(name = "Get User")
-public class UserDTO {
+public class GetUserDTO {
 
   @Schema(description = "ID of the user", example = "1")
   private Long id;

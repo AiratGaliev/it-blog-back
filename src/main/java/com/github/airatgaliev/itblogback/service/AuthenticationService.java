@@ -1,9 +1,9 @@
 package com.github.airatgaliev.itblogback.service;
 
 import com.github.airatgaliev.itblogback.dto.AuthenticationResponseDTO;
+import com.github.airatgaliev.itblogback.dto.GetUserDTO;
 import com.github.airatgaliev.itblogback.dto.SignInRequestDTO;
 import com.github.airatgaliev.itblogback.dto.SignUpRequestDTO;
-import com.github.airatgaliev.itblogback.dto.UserDTO;
 import com.github.airatgaliev.itblogback.exception.UserAlreadyExistsException;
 import com.github.airatgaliev.itblogback.model.Role;
 import com.github.airatgaliev.itblogback.model.UserModel;
@@ -28,7 +28,7 @@ public class AuthenticationService {
   private final AuthenticationManager authenticationManager;
   private final JwtService jwtService;
 
-  public UserDTO signup(SignUpRequestDTO input) {
+  public GetUserDTO signup(SignUpRequestDTO input) {
     new UserModel();
     Map<String, Function<String, Optional<UserModel>>> uniquenessChecks = new HashMap<>();
     uniquenessChecks.put("username", userRepository::findByUsername);
@@ -53,7 +53,7 @@ public class AuthenticationService {
         .password(passwordEncoder.encode(input.getPassword())).role(Role.USER).build();
 
     UserModel savedUser = userRepository.save(user);
-    return UserDTO.builder().id(savedUser.getId()).username(savedUser.getUsername())
+    return GetUserDTO.builder().id(savedUser.getId()).username(savedUser.getUsername())
         .email(savedUser.getEmail()).firstName(savedUser.getFirstName())
         .lastName(savedUser.getLastName()).role(savedUser.getRole()).build();
   }

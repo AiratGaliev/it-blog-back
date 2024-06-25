@@ -1,7 +1,7 @@
 package com.github.airatgaliev.itblogback.controller;
 
+import com.github.airatgaliev.itblogback.dto.GetUserDTO;
 import com.github.airatgaliev.itblogback.dto.UpdateUserDTO;
-import com.github.airatgaliev.itblogback.dto.UserDTO;
 import com.github.airatgaliev.itblogback.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -29,16 +29,16 @@ public class UserController {
 
   @GetMapping
   @Operation(summary = "Get all users")
-  public ResponseEntity<List<UserDTO>> getAllUsers() {
-    List<UserDTO> users = userService.getAllUsers();
+  public ResponseEntity<List<GetUserDTO>> getAllUsers() {
+    List<GetUserDTO> users = userService.getAllUsers();
     return ResponseEntity.ok(users);
   }
 
   @GetMapping("/{id}")
   @Operation(summary = "Get an user by id")
-  public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
+  public ResponseEntity<GetUserDTO> getUserById(@PathVariable Long id) {
     return userService.getUserById(id)
-        .map(createUserDTO -> new ResponseEntity<>(createUserDTO, HttpStatus.OK))
+        .map(createGetUserDTO -> new ResponseEntity<>(createGetUserDTO, HttpStatus.OK))
         .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
