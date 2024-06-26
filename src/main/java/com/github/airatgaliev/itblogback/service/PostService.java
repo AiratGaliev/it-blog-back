@@ -24,11 +24,13 @@ public class PostService {
   private final PostRepository postRepository;
   private final UserRepository userRepository;
 
+  @Transactional
   public List<GetPostDTO> getAllPosts() {
     return this.postRepository.findAll().stream().map(this::convertPostModelToDTO)
         .collect(Collectors.toList());
   }
 
+  @Transactional
   public Optional<GetPostDTO> getPostById(Long id) {
     return this.postRepository.findById(id).map(this::convertPostModelToDTO);
   }
