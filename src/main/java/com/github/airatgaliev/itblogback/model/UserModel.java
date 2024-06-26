@@ -1,5 +1,6 @@
 package com.github.airatgaliev.itblogback.model;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -56,7 +57,7 @@ public class UserModel implements UserDetails {
   @Column(nullable = false)
   private Role role;
 
-  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
   private List<PostModel> posts;
 
   @OneToMany(mappedBy = "subscriber")
