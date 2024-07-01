@@ -1,6 +1,8 @@
 package com.github.airatgaliev.itblogback.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.Date;
+import java.util.List;
 import lombok.Builder;
 import lombok.Data;
 
@@ -17,4 +19,10 @@ public class GetPostDTO {
   private String content;
   @Schema(description = "User ID associated with the post", example = "1")
   private Long userId;
+  @Schema(description = "Categories associated with the post")
+  private List<GetCategoryDTO> categories;
+  @Schema(description = "Date and time of the post creation", example = "2022-01-01T00:00:00.000Z")
+  private Date createdAt;
+  @Schema(description = "Date and time of the post update", example = "2022-01-01T01:00:00.000Z")
+  private Date updatedAt;
 }

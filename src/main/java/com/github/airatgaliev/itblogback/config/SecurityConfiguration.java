@@ -2,7 +2,6 @@ package com.github.airatgaliev.itblogback.config;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
-import com.github.airatgaliev.itblogback.model.Role;
 import com.github.airatgaliev.itblogback.security.JwtAuthenticationFilter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +41,9 @@ public class SecurityConfiguration {
                 .permitAll().requestMatchers("/swagger-ui.html").permitAll()
                 .requestMatchers("/swagger-ui/**").permitAll().requestMatchers("/v3/api-docs/**")
                 .permitAll()
+                .requestMatchers("/categories/**").permitAll()
+//                .requestMatchers(HttpMethod.PUT, "/categories/**")
+//                .hasAnyRole(Role.ADMIN.name())
                 .requestMatchers("/posts/**").permitAll()
 //                .requestMatchers("/posts/**")
 //                .hasAnyRole(Role.AUTHOR.name(), Role.ADMIN.name())
@@ -49,7 +51,7 @@ public class SecurityConfiguration {
 //                .requestMatchers("/users/**")
 //                .hasRole(Role.ADMIN.name())
                 .requestMatchers("/subscriptions/**")
-                .hasRole(Role.USER.name()).anyRequest().authenticated())
+                .hasRole("USER").anyRequest().authenticated())
         .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))
         .authenticationProvider(authenticationProvider)
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

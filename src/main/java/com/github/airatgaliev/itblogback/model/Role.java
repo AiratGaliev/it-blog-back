@@ -1,5 +1,5 @@
 package com.github.airatgaliev.itblogback.model;
 
 public enum Role {
-  USER, AUTHOR, ADMIN
+  ROLE_USER, ROLE_AUTHOR, ROLE_ADMIN
 }

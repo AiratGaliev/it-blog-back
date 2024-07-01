@@ -5,6 +5,8 @@ import com.github.airatgaliev.itblogback.dto.SignInRequestDTO;
 import com.github.airatgaliev.itblogback.dto.SignUpRequestDTO;
 import com.github.airatgaliev.itblogback.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,11 +18,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
 @Tag(name = "Authentication", description = "API for authentication")
-@Validated
+@ApiResponse(content = @Content(mediaType = "application/json"))
 public class AuthenticationController {
 
   private final AuthenticationService authenticationService;

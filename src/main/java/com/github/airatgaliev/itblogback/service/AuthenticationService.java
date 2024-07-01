@@ -50,7 +50,7 @@ public class AuthenticationService {
     }
 
     UserModel user = UserModel.builder().username(input.getUsername()).email(input.getEmail())
-        .password(passwordEncoder.encode(input.getPassword())).role(Role.USER).build();
+        .password(passwordEncoder.encode(input.getPassword())).role(Role.ROLE_USER).build();
 
     UserModel savedUser = userRepository.save(user);
     return GetUserDTO.builder().id(savedUser.getId()).username(savedUser.getUsername())
