@@ -25,7 +25,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @OpenAPIDefinition(
     info = @Info(
         title = "IT Blog API",
-        version = "0.9",
+        version = "0.9.1",
         description = "API documentation for IT Blog",
         contact = @Contact(name = "Email", email = "your.email@example.com"),
         license = @License(name = "Apache 2.0", url = "http://springdoc.org")

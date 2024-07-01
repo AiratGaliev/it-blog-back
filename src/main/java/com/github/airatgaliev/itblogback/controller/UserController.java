@@ -4,8 +4,6 @@ import com.github.airatgaliev.itblogback.dto.GetUserDTO;
 import com.github.airatgaliev.itblogback.dto.UpdateUserDTO;
 import com.github.airatgaliev.itblogback.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -27,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/users")
 @Tag(name = "Users", description = "API for users")
-@ApiResponse(content = @Content(mediaType = "application/json"))
 public class UserController {
 
   private final UserService userService;
