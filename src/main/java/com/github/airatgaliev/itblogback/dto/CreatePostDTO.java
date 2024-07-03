@@ -16,6 +16,7 @@ public class CreatePostDTO {
   @NotNull(message = "Content cannot be empty")
   @Schema(description = "Content of the post", example = "This is the content of the post", requiredMode = RequiredMode.REQUIRED)
   private String content;
+  @NotNull(message = "Content cannot be empty")
   @Schema(description = "Categories associated with the post")
   private List<Long> categoryIds;
 }

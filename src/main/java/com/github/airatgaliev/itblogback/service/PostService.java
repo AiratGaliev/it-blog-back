@@ -56,14 +56,15 @@ public class PostService {
   }
 
   @Transactional
-  public void updatePost(Long id, UpdatePostDTO getPostDTO, UserDetails userDetails) {
+  public void updatePost(Long id, UpdatePostDTO updatePostDTO, UserDetails userDetails) {
     UserModel userModel = userRepository.findByUsername(userDetails.getUsername())
         .orElseThrow(() -> new RuntimeException("User not found"));
     PostModel postModel = postRepository.findById(id)
         .orElseThrow(() -> new RuntimeException("Post not found"));
     if (Objects.equals(userModel.getId(), postModel.getUser().getId())) {
-      postModel.setTitle(getPostDTO.getTitle());
-      postModel.setContent(getPostDTO.getContent());
+      postModel.setTitle(updatePostDTO.getTitle());
+      postModel.setContent(updatePostDTO.getContent());
+      postModel.setContent(updatePostDTO.getContent());
       postModel.setUser(userModel);
       postRepository.save(postModel);
     } else {
