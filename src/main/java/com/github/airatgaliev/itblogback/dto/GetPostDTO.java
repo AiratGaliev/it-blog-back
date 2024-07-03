@@ -17,8 +17,8 @@ public class GetPostDTO {
   private String title;
   @Schema(description = "Content of the post", example = "This is the content of the post")
   private String content;
-  @Schema(description = "User ID associated with the post", example = "1")
-  private Long userId;
+  @Schema(description = "Username associated with the post", example = "JohnDoe")
+  private String username;
   @Schema(description = "Categories associated with the post")
   private List<GetCategoryDTO> categories;
   @Schema(description = "Date and time of the post creation", example = "2022-01-01T00:00:00.000Z")

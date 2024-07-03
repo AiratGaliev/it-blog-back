@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -61,7 +62,7 @@ public class UserModel implements UserDetails {
   private List<PostModel> posts;
 
   @OneToMany(mappedBy = "subscriber")
-  private List<SubscriptionModel> subscriptions;
+  private List<SubscriptionModel> subscriptions = new ArrayList<>();
 
   @CreationTimestamp
   @Column(nullable = false, name = "created_at")

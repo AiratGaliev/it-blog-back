@@ -7,8 +7,10 @@ import com.github.airatgaliev.itblogback.dto.UpdatePostDTO;
 import com.github.airatgaliev.itblogback.model.CategoryModel;
 import com.github.airatgaliev.itblogback.model.PostModel;
 import com.github.airatgaliev.itblogback.model.UserModel;
+import com.github.airatgaliev.itblogback.repository.CategoryRepository;
 import com.github.airatgaliev.itblogback.repository.PostRepository;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -26,6 +28,7 @@ public class PostService {
 
   private final PostRepository postRepository;
   private final UserRepository userRepository;
+  private final CategoryRepository categoryRepository;
 
   @Transactional
   public List<GetPostDTO> getAllPosts() {
@@ -42,9 +45,12 @@ public class PostService {
   public void createPost(CreatePostDTO createPostDTO, UserDetails userDetails) {
     UserModel userModel = userRepository.findByUsername(userDetails.getUsername())
         .orElseThrow(() -> new RuntimeException("User not found"));
+    List<CategoryModel> categories = new ArrayList<>(
+        categoryRepository.findAllById(createPostDTO.getCategoryIds()));
     PostModel postModel = new PostModel();
     postModel.setTitle(createPostDTO.getTitle());
     postModel.setContent(createPostDTO.getContent());
+    postModel.setCategories(categories);
     postModel.setUser(userModel);
     postRepository.save(postModel);
   }
@@ -80,7 +86,7 @@ public class PostService {
 
   private GetPostDTO convertPostModelToDTO(PostModel postModel) {
     return GetPostDTO.builder().id(postModel.getId()).title(postModel.getTitle())
-        .content(postModel.getContent()).userId(postModel.getUser().getId()).categories(
+        .content(postModel.getContent()).username(postModel.getUser().getUsername()).categories(
             postModel.getCategories().stream().map(this::convertCategoryToDTO)
                 .collect(Collectors.toList())).createdAt(postModel.getCreatedAt())
         .updatedAt(postModel.getUpdatedAt()).build();

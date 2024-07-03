@@ -36,28 +36,28 @@ public class UserController {
     return ResponseEntity.ok(users);
   }
 
-  @GetMapping("/{id}")
-  @Operation(summary = "Get an user by id")
-  public ResponseEntity<GetUserDTO> getUserById(@PathVariable Long id) {
-    return userService.getUserById(id)
+  @GetMapping("/{username}")
+  @Operation(summary = "Get an user by username")
+  public ResponseEntity<GetUserDTO> getUserByUsername(@PathVariable String username) {
+    return userService.getUserByUsername(username)
         .map(createGetUserDTO -> new ResponseEntity<>(createGetUserDTO, HttpStatus.OK))
         .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
-  @PutMapping("/{id}")
-  @Operation(summary = "Update an user")
+  @PutMapping("/{username}")
+  @Operation(summary = "Update an user by username")
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<Void> updateUser(@PathVariable Long id,
+  public ResponseEntity<Void> updateUser(@PathVariable String username,
       @Valid @RequestBody UpdateUserDTO updateUserDTO) {
-    userService.updateUser(id, updateUserDTO);
+    userService.updateUser(username, updateUserDTO);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
-  @DeleteMapping("/{id}")
-  @Operation(summary = "Delete an user")
+  @DeleteMapping("/{username}")
+  @Operation(summary = "Delete an user by username")
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-    userService.deleteUser(id);
+  public ResponseEntity<Void> deleteUser(@PathVariable String username) {
+    userService.deleteUser(username);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 }

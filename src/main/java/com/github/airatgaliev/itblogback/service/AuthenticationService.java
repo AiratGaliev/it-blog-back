@@ -53,7 +53,7 @@ public class AuthenticationService {
         .password(passwordEncoder.encode(input.getPassword())).role(Role.ROLE_USER).build();
 
     UserModel savedUser = userRepository.save(user);
-    return GetUserDTO.builder().id(savedUser.getId()).username(savedUser.getUsername())
+    return GetUserDTO.builder().username(savedUser.getUsername())
         .email(savedUser.getEmail()).firstName(savedUser.getFirstName())
         .lastName(savedUser.getLastName()).role(savedUser.getRole()).build();
   }

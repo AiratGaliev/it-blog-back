@@ -11,6 +11,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -41,7 +42,7 @@ public class PostModel {
 
   @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(name = "post_categories", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
-  private List<CategoryModel> categories;
+  private List<CategoryModel> categories = new ArrayList<>();
 
   @CreationTimestamp
   @Column(nullable = false, name = "created_at")

@@ -11,9 +11,6 @@ import lombok.Data;
 @Schema(name = "Get User")
 public class GetUserDTO {
 
-  @Schema(description = "ID of the user", example = "1")
-  private Long id;
-
   @Schema(description = "Username of the user", example = "JohnDoe")
   private String username;
 

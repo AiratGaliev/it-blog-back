@@ -25,29 +25,29 @@ public class UserService {
   }
 
   @Transactional
-  public Optional<GetUserDTO> getUserById(Long id) {
-    return userRepository.findById(id).map(this::convertUserModelToDto);
+  public Optional<GetUserDTO> getUserByUsername(String username) {
+    return userRepository.findByUsername(username).map(this::convertUserModelToDto);
   }
 
   @Transactional
-  public void updateUser(Long id, UpdateUserDTO updateUserDTO) {
-    UserModel userModel = userRepository.findById(id)
+  public void updateUser(String username, UpdateUserDTO updateUserDTO) {
+    UserModel userModel = userRepository.findByUsername(username)
         .orElseThrow(() -> new RuntimeException("User not found"));
     userModel.setUsername(updateUserDTO.getUsername());
     userRepository.save(userModel);
   }
 
   @Transactional
-  public void deleteUser(Long id) {
-    userRepository.deleteById(id);
+  public void deleteUser(String username) {
+    userRepository.deleteByUsername(username);
   }
 
   private GetUserDTO convertUserModelToDto(UserModel userModel) {
-    return GetUserDTO.builder().id(userModel.getId()).username(userModel.getUsername())
-        .email(userModel.getEmail()).firstName(userModel.getFirstName())
-        .lastName(userModel.getLastName()).posts(userModel.getPosts().stream().map(
+    return GetUserDTO.builder().username(userModel.getUsername()).email(userModel.getEmail())
+        .firstName(userModel.getFirstName()).lastName(userModel.getLastName()).posts(
+            userModel.getPosts().stream().map(
                 postModel -> GetPostDTO.builder().id(postModel.getId()).title(postModel.getTitle())
-                    .content(postModel.getContent()).userId(postModel.getUser().getId()).build())
-            .toList()).role(userModel.getRole()).build();
+                    .content(postModel.getContent()).username(postModel.getUser().getUsername())
+                    .build()).toList()).role(userModel.getRole()).build();
   }
 }

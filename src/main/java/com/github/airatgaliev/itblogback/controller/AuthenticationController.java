@@ -28,9 +28,9 @@ public class AuthenticationController {
   @PostMapping("/signup")
   @Operation(summary = "Register a new user")
   public ResponseEntity<String> register(@Valid @RequestBody SignUpRequestDTO signUpRequestDTO) {
-    Long userId = authenticationService.signup(signUpRequestDTO).getId();
+    String username = authenticationService.signup(signUpRequestDTO).getUsername();
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body("User registered successfully with ID: " + userId);
+        .body("User registered successfully with username: " + username);
   }
 
   @PostMapping("/login")
