@@ -1,8 +1,7 @@
-package com.github.airatgaliev.itblogback.config;
+package com.github.airatgaliev.itblogback.security;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
-import com.github.airatgaliev.itblogback.security.JwtAuthenticationFilter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
