@@ -1,6 +1,7 @@
 package com.github.airatgaliev.itblogback.service;
 
 import com.github.airatgaliev.itblogback.dto.CreatePost;
+import com.github.airatgaliev.itblogback.dto.GetCategory;
 import com.github.airatgaliev.itblogback.dto.GetPost;
 import com.github.airatgaliev.itblogback.dto.UpdatePost;
 import com.github.airatgaliev.itblogback.exception.PostNotFoundException;
@@ -40,9 +41,7 @@ public class PostService {
 
   @Transactional
   public List<GetPost> getPostsByCategoryId(Long categoryId) {
-    return postRepository.findByCategoriesId(categoryId)
-        .stream()
-        .map(this::convertPostModelToDTO)
+    return postRepository.findByCategoriesId(categoryId).stream().map(this::convertPostModelToDTO)
         .collect(Collectors.toList());
   }
 
@@ -67,9 +66,8 @@ public class PostService {
 
   @Transactional
   public void updatePost(Long id, UpdatePost updatePost, UserDetails userDetails) {
-    UserModel userModel = userRepository.findByUsername(userDetails.getUsername())
-        .orElseThrow(
-            () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+    UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
+        () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
     PostModel postModel = postRepository.findById(id)
         .orElseThrow(() -> new PostNotFoundException("Post not found"));
     if (Objects.equals(userModel.getId(), postModel.getUser().getId())) {
@@ -85,9 +83,8 @@ public class PostService {
 
   @Transactional
   public void deletePost(Long id, UserDetails userDetails) {
-    UserModel userModel = userRepository.findByUsername(userDetails.getUsername())
-        .orElseThrow(
-            () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+    UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
+        () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
     PostModel postModel = postRepository.findById(id)
         .orElseThrow(() -> new PostNotFoundException("Post not found"));
     if (Objects.equals(userModel.getId(), postModel.getUser().getId())) {
@@ -99,9 +96,10 @@ public class PostService {
 
   private GetPost convertPostModelToDTO(PostModel postModel) {
     return GetPost.builder().id(postModel.getId()).title(postModel.getTitle())
-        .content(postModel.getContent()).username(postModel.getUser().getUsername()).categoriesIds(
-            postModel.getCategories().stream().map(CategoryModel::getId)
-                .collect(Collectors.toList())).createdAt(postModel.getCreatedAt())
-        .updatedAt(postModel.getUpdatedAt()).build();
+        .content(postModel.getContent()).username(postModel.getUser().getUsername()).categories(
+            postModel.getCategories().stream().map(
+                categoryModel -> GetCategory.builder().id(categoryModel.getId())
+                    .name(categoryModel.getName()).build()).collect(Collectors.toList()))
+        .createdAt(postModel.getCreatedAt()).updatedAt(postModel.getUpdatedAt()).build();
   }
 }

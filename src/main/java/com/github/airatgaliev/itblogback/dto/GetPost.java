@@ -20,7 +20,7 @@ public class GetPost {
   @Schema(description = "Username associated with the post", example = "JohnDoe")
   private String username;
   @Schema(description = "Categories associated with the post")
-  private List<Long> categoriesIds;
+  private List<GetCategory> categories;
   @Schema(description = "Date and time of the post creation", example = "2022-01-01T00:00:00.000Z")
   private Date createdAt;
   @Schema(description = "Date and time of the post update", example = "2022-01-01T01:00:00.000Z")

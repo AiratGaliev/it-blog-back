@@ -20,26 +20,12 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
-@OpenAPIDefinition(
-    info = @Info(
-        title = "IT Blog API",
-        version = "0.9.7",
-        description = "API documentation for IT Blog",
-        contact = @Contact(name = "Email", email = "your.email@example.com"),
-        license = @License(name = "Apache 2.0", url = "http://springdoc.org")
-    )
-)
+@OpenAPIDefinition(info = @Info(title = "IT Blog API", version = "0.9.7", description = "API documentation for IT Blog", contact = @Contact(name = "Email", email = "your.email@example.com"), license = @License(name = "Apache 2.0", url = "http://springdoc.org")))
 @SecuritySchemes({
-    @SecurityScheme(
-        name = "bearerAuth",
-        type = SecuritySchemeType.HTTP,
-        scheme = "bearer",
-        bearerFormat = "JWT",
-        in = SecuritySchemeIn.HEADER
-    )
-})
+    @SecurityScheme(name = "bearerAuth", type = SecuritySchemeType.HTTP, scheme = "bearer", bearerFormat = "JWT", in = SecuritySchemeIn.HEADER)})
 @RequiredArgsConstructor
 public class ApplicationConfiguration {
 
@@ -53,7 +39,7 @@ public class ApplicationConfiguration {
   }
 
   @Bean
-  BCryptPasswordEncoder passwordEncoder() {
+  PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
   }
 
@@ -64,7 +50,7 @@ public class ApplicationConfiguration {
   }
 
   @Bean
-  AuthenticationProvider authenticationProvider() {
+  public AuthenticationProvider authenticationProvider() {
     DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
     authProvider.setUserDetailsService(userDetailsService());
     authProvider.setPasswordEncoder(passwordEncoder());
