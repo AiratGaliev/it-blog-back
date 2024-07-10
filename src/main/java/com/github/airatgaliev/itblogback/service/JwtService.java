@@ -1,6 +1,6 @@
 package com.github.airatgaliev.itblogback.service;
 
-
+import com.github.airatgaliev.itblogback.exception.TokenExpiredException;
 import com.github.airatgaliev.itblogback.model.UserModel;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -58,7 +58,11 @@ public class JwtService {
   }
 
   private boolean isTokenExpired(String token) {
-    return extractExpiration(token).before(new Date());
+    boolean expired = extractExpiration(token).before(new Date());
+    if (expired) {
+      throw new TokenExpiredException("Token has expired");
+    }
+    return expired;
   }
 
   private Date extractExpiration(String token) {

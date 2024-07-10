@@ -1,14 +1,16 @@
 package com.github.airatgaliev.itblogback.service;
 
-import com.github.airatgaliev.itblogback.dto.GetPostDTO;
-import com.github.airatgaliev.itblogback.dto.GetUserDTO;
-import com.github.airatgaliev.itblogback.dto.UpdateUserDTO;
+import com.github.airatgaliev.itblogback.dto.GetUser;
+import com.github.airatgaliev.itblogback.dto.UpdateUser;
+import com.github.airatgaliev.itblogback.model.PostModel;
 import com.github.airatgaliev.itblogback.model.UserModel;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,21 +21,22 @@ public class UserService {
   private final UserRepository userRepository;
 
   @Transactional
-  public List<GetUserDTO> getAllUsers() {
+  public List<GetUser> getAllUsers() {
     return userRepository.findAll().stream().map(this::convertUserModelToDto)
         .collect(Collectors.toList());
   }
 
   @Transactional
-  public Optional<GetUserDTO> getUserByUsername(String username) {
+  public Optional<GetUser> getUserByUsername(String username) {
     return userRepository.findByUsername(username).map(this::convertUserModelToDto);
   }
 
   @Transactional
-  public void updateUser(String username, UpdateUserDTO updateUserDTO) {
-    UserModel userModel = userRepository.findByUsername(username)
-        .orElseThrow(() -> new RuntimeException("User not found"));
-    userModel.setUsername(updateUserDTO.getUsername());
+  public void updateUser(UpdateUser updateUser, UserDetails userDetails) {
+    UserModel userModel = userRepository.findByUsername(userDetails.getUsername())
+        .orElseThrow(
+            () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+    userModel.setUsername(updateUser.getUsername());
     userRepository.save(userModel);
   }
 
@@ -42,12 +45,10 @@ public class UserService {
     userRepository.deleteByUsername(username);
   }
 
-  private GetUserDTO convertUserModelToDto(UserModel userModel) {
-    return GetUserDTO.builder().username(userModel.getUsername()).email(userModel.getEmail())
-        .firstName(userModel.getFirstName()).lastName(userModel.getLastName()).posts(
-            userModel.getPosts().stream().map(
-                postModel -> GetPostDTO.builder().id(postModel.getId()).title(postModel.getTitle())
-                    .content(postModel.getContent()).username(postModel.getUser().getUsername())
-                    .build()).toList()).role(userModel.getRole()).build();
+  private GetUser convertUserModelToDto(UserModel userModel) {
+    return GetUser.builder().username(userModel.getUsername()).email(userModel.getEmail())
+        .firstName(userModel.getFirstName()).lastName(userModel.getLastName()).postsIds(
+            userModel.getPosts().stream().map(PostModel::getId).toList()).role(userModel.getRole())
+        .build();
   }
 }

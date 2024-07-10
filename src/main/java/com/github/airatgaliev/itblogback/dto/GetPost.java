@@ -9,7 +9,7 @@ import lombok.Data;
 @Data
 @Builder
 @Schema(name = "Get Post")
-public class GetPostDTO {
+public class GetPost {
 
   @Schema(description = "ID of the post", example = "1")
   private Long id;
@@ -20,7 +20,7 @@ public class GetPostDTO {
   @Schema(description = "Username associated with the post", example = "JohnDoe")
   private String username;
   @Schema(description = "Categories associated with the post")
-  private List<GetCategoryDTO> categories;
+  private List<Long> categoriesIds;
   @Schema(description = "Date and time of the post creation", example = "2022-01-01T00:00:00.000Z")
   private Date createdAt;
   @Schema(description = "Date and time of the post update", example = "2022-01-01T01:00:00.000Z")

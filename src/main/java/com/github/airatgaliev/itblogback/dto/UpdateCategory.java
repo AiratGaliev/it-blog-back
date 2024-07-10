@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Schema(name = "Update Category")
-public class UpdateCategoryDTO {
+public class UpdateCategory {
 
   @Schema(description = "Name of the category", example = "Software Engineering")
   private String name;

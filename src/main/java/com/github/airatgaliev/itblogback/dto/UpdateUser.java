@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 @Schema(name = "Update User")
-public class UpdateUserDTO {
+public class UpdateUser {
 
   @Schema(description = "Username of the user", example = "John Doe")
   private String username;

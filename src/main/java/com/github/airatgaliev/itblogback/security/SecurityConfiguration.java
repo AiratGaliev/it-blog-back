@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -34,23 +35,19 @@ public class SecurityConfiguration {
           corsConfiguration.setAllowedHeaders(List.of("*"));
           corsConfiguration.setAllowCredentials(true);
           return corsConfiguration;
-        }))
-        .authorizeHttpRequests(
-            auth -> auth.requestMatchers("/auth/**").permitAll().requestMatchers("/api-docs/**")
-                .permitAll().requestMatchers("/swagger-ui.html").permitAll()
-                .requestMatchers("/swagger-ui/**").permitAll().requestMatchers("/v3/api-docs/**")
+        })).authorizeHttpRequests(
+            auth -> auth
+                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/api-docs/**").permitAll().requestMatchers("/swagger-ui.html")
                 .permitAll()
-                .requestMatchers("/categories/**").permitAll()
-//                .requestMatchers(HttpMethod.PUT, "/categories/**")
-//                .hasAnyRole(Role.ADMIN.name())
-                .requestMatchers("/posts/**").permitAll()
-//                .requestMatchers("/posts/**")
-//                .hasAnyRole(Role.AUTHOR.name(), Role.ADMIN.name())
-                .requestMatchers("/users/**").permitAll()
-//                .requestMatchers("/users/**")
-//                .hasRole(Role.ADMIN.name())
-                .requestMatchers("/subscriptions/**")
-                .hasRole("USER").anyRequest().authenticated())
+                .requestMatchers("/swagger-ui/**").permitAll().requestMatchers("/v3/api-docs/**")
+                .permitAll().requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
+                .requestMatchers("/categories/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/posts/**").permitAll()
+                .requestMatchers("/posts/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/users/**").permitAll()
+                .requestMatchers("/users/**").authenticated()
+                .requestMatchers("/subscriptions/**").authenticated())
         .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))
         .authenticationProvider(authenticationProvider)
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

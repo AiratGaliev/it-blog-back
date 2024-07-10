@@ -9,7 +9,7 @@ import lombok.Data;
 
 @Data
 @Schema(name = "Register User")
-public class SignUpRequestDTO {
+public class SignUpRequest {
 
   @NotBlank(message = "Username cannot be empty")
   @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")

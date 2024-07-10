@@ -1,8 +1,8 @@
 package com.github.airatgaliev.itblogback.service;
 
-import com.github.airatgaliev.itblogback.dto.CreateCategoryDTO;
-import com.github.airatgaliev.itblogback.dto.GetCategoryDTO;
-import com.github.airatgaliev.itblogback.dto.UpdateCategoryDTO;
+import com.github.airatgaliev.itblogback.dto.CreateCategory;
+import com.github.airatgaliev.itblogback.dto.GetCategory;
+import com.github.airatgaliev.itblogback.dto.UpdateCategory;
 import com.github.airatgaliev.itblogback.model.CategoryModel;
 import com.github.airatgaliev.itblogback.repository.CategoryRepository;
 import jakarta.transaction.Transactional;
@@ -21,28 +21,28 @@ public class CategoryService {
   private final CategoryRepository categoryRepository;
 
   @Transactional
-  public List<GetCategoryDTO> getAllCategories() {
+  public List<GetCategory> getAllCategories() {
     return categoryRepository.findAll().stream().map(this::convertCategoryToDTO)
         .collect(Collectors.toList());
   }
 
   @Transactional
-  public Optional<GetCategoryDTO> getCategoryById(Long id) {
+  public Optional<GetCategory> getCategoryById(Long id) {
     return categoryRepository.findById(id).map(this::convertCategoryToDTO);
   }
 
   @Transactional
-  public void createCategory(CreateCategoryDTO createCategoryDTO) {
+  public void createCategory(CreateCategory createCategory) {
     CategoryModel category = new CategoryModel();
-    category.setName(createCategoryDTO.getName());
+    category.setName(createCategory.getName());
     categoryRepository.save(category);
   }
 
   @Transactional
-  public void updateCategory(Long id, UpdateCategoryDTO updateCategoryDTO) {
+  public void updateCategory(Long id, UpdateCategory updateCategory) {
     CategoryModel category = categoryRepository.findById(id)
         .orElseThrow(() -> new RuntimeException("Category not found"));
-    category.setName(updateCategoryDTO.getName());
+    category.setName(updateCategory.getName());
     categoryRepository.save(category);
   }
 
@@ -51,7 +51,7 @@ public class CategoryService {
     categoryRepository.deleteById(id);
   }
 
-  private GetCategoryDTO convertCategoryToDTO(CategoryModel category) {
-    return GetCategoryDTO.builder().id(category.getId()).name(category.getName()).build();
+  private GetCategory convertCategoryToDTO(CategoryModel category) {
+    return GetCategory.builder().id(category.getId()).name(category.getName()).build();
   }
 }

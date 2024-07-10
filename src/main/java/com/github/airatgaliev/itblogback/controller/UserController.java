@@ -1,7 +1,7 @@
 package com.github.airatgaliev.itblogback.controller;
 
-import com.github.airatgaliev.itblogback.dto.GetUserDTO;
-import com.github.airatgaliev.itblogback.dto.UpdateUserDTO;
+import com.github.airatgaliev.itblogback.dto.GetUser;
+import com.github.airatgaliev.itblogback.dto.UpdateUser;
 import com.github.airatgaliev.itblogback.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -11,6 +11,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,31 +34,32 @@ public class UserController {
 
   @GetMapping
   @Operation(summary = "Get all users")
-  public ResponseEntity<List<GetUserDTO>> getAllUsers() {
-    List<GetUserDTO> users = userService.getAllUsers();
+  public ResponseEntity<List<GetUser>> getAllUsers() {
+    List<GetUser> users = userService.getAllUsers();
     return ResponseEntity.ok(users);
   }
 
   @GetMapping("/{username}")
   @Operation(summary = "Get an user by username")
-  public ResponseEntity<GetUserDTO> getUserByUsername(@PathVariable String username) {
+  public ResponseEntity<GetUser> getUserByUsername(@PathVariable String username) {
     return userService.getUserByUsername(username)
-        .map(createGetUserDTO -> new ResponseEntity<>(createGetUserDTO, HttpStatus.OK))
+        .map(createGetUser -> new ResponseEntity<>(createGetUser, HttpStatus.OK))
         .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
-  @PutMapping("/{username}")
+  @PutMapping
   @Operation(summary = "Update an user by username")
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<Void> updateUser(@PathVariable String username,
-      @Valid @RequestBody UpdateUserDTO updateUserDTO) {
-    userService.updateUser(username, updateUserDTO);
+  public ResponseEntity<Void> updateUser(@Valid @RequestBody UpdateUser updateUser,
+      @AuthenticationPrincipal UserDetails userDetails) {
+    userService.updateUser(updateUser, userDetails);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @DeleteMapping("/{username}")
   @Operation(summary = "Delete an user by username")
   @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
   public ResponseEntity<Void> deleteUser(@PathVariable String username) {
     userService.deleteUser(username);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);

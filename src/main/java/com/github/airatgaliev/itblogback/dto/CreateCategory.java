@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 @Schema(name = "Create Category")
-public class CreateCategoryDTO {
+public class CreateCategory {
 
   @Schema(description = "Name of the category", example = "Programming", requiredMode = RequiredMode.REQUIRED)
   private String name;

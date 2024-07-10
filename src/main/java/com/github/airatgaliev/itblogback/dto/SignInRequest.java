@@ -8,7 +8,7 @@ import lombok.Data;
 
 @Data
 @Schema(name = "Authentication Request")
-public class SignInRequestDTO {
+public class SignInRequest {
 
   @NotBlank(message = "Username or Email cannot be empty")
   @Size(min = 3, max = 50, message = "Username or Email must be between 3 and 50 characters")

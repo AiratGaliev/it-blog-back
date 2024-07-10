@@ -1,8 +1,8 @@
 package com.github.airatgaliev.itblogback.controller;
 
-import com.github.airatgaliev.itblogback.dto.CreateCategoryDTO;
-import com.github.airatgaliev.itblogback.dto.GetCategoryDTO;
-import com.github.airatgaliev.itblogback.dto.UpdateCategoryDTO;
+import com.github.airatgaliev.itblogback.dto.CreateCategory;
+import com.github.airatgaliev.itblogback.dto.GetCategory;
+import com.github.airatgaliev.itblogback.dto.UpdateCategory;
 import com.github.airatgaliev.itblogback.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -34,15 +34,14 @@ public class CategoryController {
 
   @GetMapping
   @Operation(summary = "Get all categories")
-  public ResponseEntity<List<GetCategoryDTO>> getAllCategories() {
-    List<GetCategoryDTO> categories = categoryService.getAllCategories();
+  public ResponseEntity<List<GetCategory>> getAllCategories() {
+    List<GetCategory> categories = categoryService.getAllCategories();
     return ResponseEntity.ok(categories);
   }
 
-  @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/{id}")
   @Operation(summary = "Get post by id")
-  public ResponseEntity<GetCategoryDTO> getCategoryById(@PathVariable Long id) {
+  public ResponseEntity<GetCategory> getCategoryById(@PathVariable Long id) {
     return categoryService.getCategoryById(id)
         .map(post -> new ResponseEntity<>(post, HttpStatus.OK))
         .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
@@ -51,7 +50,8 @@ public class CategoryController {
   @PostMapping
   @Operation(summary = "Create a new category")
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<String> createCategory(@Valid @RequestBody CreateCategoryDTO categoryDTO) {
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+  public ResponseEntity<String> createCategory(@Valid @RequestBody CreateCategory categoryDTO) {
     categoryService.createCategory(categoryDTO);
     return new ResponseEntity<>("Category created successfully", HttpStatus.CREATED);
   }
@@ -59,8 +59,9 @@ public class CategoryController {
   @PutMapping("/{id}")
   @Operation(summary = "Update a new category")
   @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
   public ResponseEntity<String> updateCategory(@PathVariable Long id,
-      @Valid @RequestBody UpdateCategoryDTO categoryDTO) {
+      @Valid @RequestBody UpdateCategory categoryDTO) {
     categoryService.updateCategory(id, categoryDTO);
     return new ResponseEntity<>("Category updated successfully", HttpStatus.NO_CONTENT);
   }
@@ -68,7 +69,8 @@ public class CategoryController {
   @DeleteMapping("/{id}")
   @Operation(summary = "Delete a category")
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<String> deletePost(@PathVariable Long id) {
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+  public ResponseEntity<String> deleteCategory(@PathVariable Long id) {
     categoryService.deleteCategory(id);
     return new ResponseEntity<>("Category deleted successfully", HttpStatus.NO_CONTENT);
   }

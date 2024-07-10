@@ -9,7 +9,7 @@ import lombok.Data;
 @Data
 @Builder
 @Schema(name = "Get User")
-public class GetUserDTO {
+public class GetUser {
 
   @Schema(description = "Username of the user", example = "JohnDoe")
   private String username;
@@ -26,6 +26,6 @@ public class GetUserDTO {
   @Schema(description = "Role of the user", example = "USER")
   private Role role;
 
-  @Schema(description = "List of posts written by the user with User role")
-  private List<GetPostDTO> posts;
+  @Schema(description = "List of posts written by the user with Author role")
+  private List<Long> postsIds;
 }

@@ -1,8 +1,8 @@
 package com.github.airatgaliev.itblogback.controller;
 
-import com.github.airatgaliev.itblogback.dto.AuthenticationResponseDTO;
-import com.github.airatgaliev.itblogback.dto.SignInRequestDTO;
-import com.github.airatgaliev.itblogback.dto.SignUpRequestDTO;
+import com.github.airatgaliev.itblogback.dto.AuthenticationResponse;
+import com.github.airatgaliev.itblogback.dto.SignInRequest;
+import com.github.airatgaliev.itblogback.dto.SignUpRequest;
 import com.github.airatgaliev.itblogback.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,18 +27,18 @@ public class AuthenticationController {
 
   @PostMapping("/signup")
   @Operation(summary = "Register a new user")
-  public ResponseEntity<String> register(@Valid @RequestBody SignUpRequestDTO signUpRequestDTO) {
-    String username = authenticationService.signup(signUpRequestDTO).getUsername();
+  public ResponseEntity<String> register(@Valid @RequestBody SignUpRequest signUpRequest) {
+    String username = authenticationService.signup(signUpRequest).getUsername();
     return ResponseEntity.status(HttpStatus.CREATED)
         .body("User registered successfully with username: " + username);
   }
 
   @PostMapping("/login")
   @Operation(summary = "Authenticate a user")
-  public ResponseEntity<AuthenticationResponseDTO> authenticate(
-      @Valid @RequestBody SignInRequestDTO signInRequestDTO) {
-    AuthenticationResponseDTO authenticatedUser = authenticationService.authenticate(
-        signInRequestDTO);
+  public ResponseEntity<AuthenticationResponse> authenticate(
+      @Valid @RequestBody SignInRequest signInRequest) {
+    AuthenticationResponse authenticatedUser = authenticationService.authenticate(
+        signInRequest);
     return ResponseEntity.ok(authenticatedUser);
   }
 }
