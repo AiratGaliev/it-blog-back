@@ -62,13 +62,35 @@ public class AuthenticationService {
   public AuthenticationResponse authenticate(SignInRequest input) {
     authenticationManager.authenticate(
         new UsernamePasswordAuthenticationToken(input.getUsernameOrEmail(), input.getPassword()));
-    // TODO: check if user exists with existsByUsernameOrEmail method
     UserModel user = userRepository.findByUsernameOrEmail(input.getUsernameOrEmail(),
         input.getUsernameOrEmail()).orElseThrow(
         () -> new UsernameNotFoundException("User not found " + input.getUsernameOrEmail()));
     String jwtToken = jwtService.generateToken(user);
     return AuthenticationResponse.builder().token(jwtToken)
         .expiresIn(jwtService.getExpirationTime()).build();
+  }
+
+  public AuthenticationResponse refreshToken(String token) {
+    if (jwtService.isTokenExpired(token)) {
+      throw new RuntimeException("Token has expired");
+    }
+
+    String username = jwtService.extractUsername(token);
+    UserModel user = userRepository.findByUsername(username)
+        .orElseThrow(() -> new UsernameNotFoundException("User not found " + username));
+
+    String newToken = jwtService.generateToken(user);
+    return AuthenticationResponse.builder().token(newToken)
+        .expiresIn(jwtService.getExpirationTime()).build();
+  }
+
+  public boolean validateToken(String token) {
+    if (jwtService.isTokenExpired(token)) {
+      return false;
+    }
+
+    String username = jwtService.extractUsername(token);
+    return userRepository.findByUsername(username).isPresent();
   }
 
   private String getFieldValue(SignUpRequest signUpRequest, String fieldName) {

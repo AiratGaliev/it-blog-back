@@ -35,17 +35,16 @@ public class SecurityConfiguration {
           corsConfiguration.setAllowedHeaders(List.of("*"));
           corsConfiguration.setAllowCredentials(true);
           return corsConfiguration;
-        })).authorizeHttpRequests(
-            auth -> auth
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/api-docs/**").permitAll().requestMatchers("/swagger-ui.html")
-                .permitAll()
+        }))
+        .authorizeHttpRequests(
+            auth -> auth.requestMatchers("/auth/**").permitAll().requestMatchers("/api-docs/**")
+                .permitAll().requestMatchers("/swagger-ui.html").permitAll()
                 .requestMatchers("/swagger-ui/**").permitAll().requestMatchers("/v3/api-docs/**")
                 .permitAll().requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/posts/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/users/**").permitAll()
-                .anyRequest().authenticated())
-        .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))
+                .requestMatchers(HttpMethod.GET, "/users/**").permitAll().anyRequest()
+                .authenticated())
+        .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
         .authenticationProvider(authenticationProvider)
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .build();
