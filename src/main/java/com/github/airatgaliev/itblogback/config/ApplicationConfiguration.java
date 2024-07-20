@@ -2,14 +2,6 @@ package com.github.airatgaliev.itblogback.config;
 
 
 import com.github.airatgaliev.itblogback.repository.UserRepository;
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
-import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
-import io.swagger.v3.oas.annotations.info.Contact;
-import io.swagger.v3.oas.annotations.info.Info;
-import io.swagger.v3.oas.annotations.info.License;
-import io.swagger.v3.oas.annotations.security.SecurityScheme;
-import io.swagger.v3.oas.annotations.security.SecuritySchemes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,9 +15,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
-@OpenAPIDefinition(info = @Info(title = "IT Blog API", version = "0.9.8.1", description = "API documentation for IT Blog", contact = @Contact(name = "Email", email = "your.email@example.com"), license = @License(name = "Apache 2.0", url = "http://springdoc.org")))
-@SecuritySchemes({
-    @SecurityScheme(name = "bearerAuth", type = SecuritySchemeType.HTTP, scheme = "bearer", bearerFormat = "JWT", in = SecuritySchemeIn.HEADER)})
 @RequiredArgsConstructor
 public class ApplicationConfiguration {
 

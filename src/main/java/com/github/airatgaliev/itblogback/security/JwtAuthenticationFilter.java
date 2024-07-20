@@ -7,8 +7,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,30 +27,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   @Override
   protected void doFilterInternal(@NonNull HttpServletRequest request,
       @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
-      throws ServletException, IOException {
-    // Extract the token from cookies
-    Cookie[] cookies = request.getCookies();
-    String jwt = null;
-    if (cookies != null) {
-      for (Cookie cookie : cookies) {
-        if ("auth-token".equals(cookie.getName())) {
-          jwt = cookie.getValue();
-          break;
-        }
-      }
-    }
+      throws IOException, ServletException {
+    final String token = extractToken(request);
 
-    if (jwt == null) {
-      filterChain.doFilter(request, response);
-      return;
-    }
-
-    final String username = jwtService.extractUsername(jwt);
-
-    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+    if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+      String username = jwtService.extractUsername(token);
       UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-
-      if (jwtService.isTokenValid(jwt, userDetails)) {
+      if (username != null && jwtService.isTokenValid(token, userDetails)) {
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
             userDetails, null, userDetails.getAuthorities());
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -59,5 +42,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     filterChain.doFilter(request, response);
+  }
+
+  private String extractToken(HttpServletRequest request) {
+    final String authHeader = request.getHeader("Authorization");
+
+    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+      return authHeader.substring(7);
+    }
+
+    Cookie[] cookies = request.getCookies();
+    if (cookies != null) {
+      for (Cookie cookie : cookies) {
+        if ("auth-token".equals(cookie.getName())) {
+          return cookie.getValue();
+        }
+      }
+    }
+
+    return null;
   }
 }

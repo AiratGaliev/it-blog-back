@@ -6,13 +6,14 @@ import com.github.airatgaliev.itblogback.dto.SignUpRequest;
 import com.github.airatgaliev.itblogback.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,27 +41,28 @@ public class AuthenticationController {
   @PostMapping("/login")
   @Operation(summary = "Authenticate a user")
   public ResponseEntity<AuthenticationResponse> authenticate(
-      @Valid @RequestBody SignInRequest signInRequest) {
-    AuthenticationResponse authenticatedUser = authenticationService.authenticate(signInRequest);
+      @Valid @RequestBody SignInRequest signInRequest, HttpServletResponse response) {
+    AuthenticationResponse authenticatedUser = authenticationService.authenticate(signInRequest,
+        response);
     return ResponseEntity.ok(authenticatedUser);
   }
 
   @PostMapping("/refresh-token")
   @Operation(summary = "Refresh the JWT token")
-  public ResponseEntity<AuthenticationResponse> refreshToken(
-      @CookieValue("auth-token") String token) {
-    AuthenticationResponse refreshedToken = authenticationService.refreshToken(token);
+  public ResponseEntity<AuthenticationResponse> refreshToken(HttpServletRequest request,
+      HttpServletResponse response) {
+    AuthenticationResponse refreshedToken = authenticationService.handleTokenRefresh(request,
+        response);
     return ResponseEntity.ok(refreshedToken);
   }
 
   @GetMapping("/auth-check")
   @Operation(summary = "Check if the JWT token is valid")
-  public ResponseEntity<String> authCheck(@CookieValue(value = "auth-token") String token) {
-    boolean isValid = authenticationService.validateToken(token);
+  public ResponseEntity<String> authCheck(HttpServletRequest request) {
+    boolean isValid = authenticationService.checkAuthentication(request);
     if (isValid) {
       return ResponseEntity.ok("Authenticated");
-    } else {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
     }
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
   }
 }
