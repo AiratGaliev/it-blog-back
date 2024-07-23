@@ -38,18 +38,9 @@ public class PostController {
   private final PostService postService;
 
   @GetMapping
-  @Operation(
-      summary = "Get all posts or posts by category",
-      description = "Retrieve all posts or filter posts by category"
-  )
-  @Parameters({
-      @Parameter(
-          name = "category",
-          description = "Category to filter posts"
-      )
-  })
-  public ResponseEntity<List<GetPost>> getAllPosts(
-      @RequestParam(required = false) Long category) {
+  @Operation(summary = "Get all posts or posts by category", description = "Retrieve all posts or filter posts by category")
+  @Parameters({@Parameter(name = "category", description = "Category to filter posts")})
+  public ResponseEntity<List<GetPost>> getAllPosts(@RequestParam(required = false) Long category) {
     List<GetPost> posts;
     if (category == null) {
       posts = postService.getAllPosts();
@@ -70,10 +61,10 @@ public class PostController {
   @Operation(summary = "Create a new post")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
-  public ResponseEntity<String> createPost(@Valid @RequestBody CreatePost createPost,
+  public ResponseEntity<GetPost> createPost(@Valid @RequestBody CreatePost createPost,
       @AuthenticationPrincipal UserDetails userDetails) {
-    postService.createPost(createPost, userDetails);
-    return new ResponseEntity<>("Post created successfully", HttpStatus.CREATED);
+    GetPost createdPost = postService.createPost(createPost, userDetails);
+    return new ResponseEntity<>(createdPost, HttpStatus.CREATED);
   }
 
   @PutMapping("/{id}")

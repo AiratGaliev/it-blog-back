@@ -32,10 +32,11 @@ public class CategoryService {
   }
 
   @Transactional
-  public void createCategory(CreateCategory createCategory) {
+  public GetCategory createCategory(CreateCategory createCategory) {
     CategoryModel category = new CategoryModel();
     category.setName(createCategory.getName());
-    categoryRepository.save(category);
+    CategoryModel savedCategory = categoryRepository.save(category);
+    return convertCategoryToDTO(savedCategory);
   }
 
   @Transactional

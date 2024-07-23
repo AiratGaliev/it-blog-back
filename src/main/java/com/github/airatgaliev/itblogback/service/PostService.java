@@ -51,7 +51,7 @@ public class PostService {
   }
 
   @Transactional
-  public void createPost(CreatePost createPost, UserDetails userDetails) {
+  public GetPost createPost(CreatePost createPost, UserDetails userDetails) {
     UserModel userModel = userRepository.findByUsername(userDetails.getUsername())
         .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     List<CategoryModel> categories = new ArrayList<>(
@@ -61,7 +61,8 @@ public class PostService {
     postModel.setContent(createPost.getContent());
     postModel.setCategories(categories);
     postModel.setUser(userModel);
-    postRepository.save(postModel);
+    PostModel savedPost = postRepository.save(postModel);
+    return convertPostModelToDTO(savedPost);
   }
 
   @Transactional

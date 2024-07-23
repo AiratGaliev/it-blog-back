@@ -51,9 +51,10 @@ public class CategoryController {
   @Operation(summary = "Create a new category")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-  public ResponseEntity<String> createCategory(@Valid @RequestBody CreateCategory categoryDTO) {
-    categoryService.createCategory(categoryDTO);
-    return new ResponseEntity<>("Category created successfully", HttpStatus.CREATED);
+  public ResponseEntity<GetCategory> createCategory(
+      @Valid @RequestBody CreateCategory categoryDTO) {
+    GetCategory createdCategory = categoryService.createCategory(categoryDTO);
+    return new ResponseEntity<>(createdCategory, HttpStatus.CREATED);
   }
 
   @PutMapping("/{id}")
