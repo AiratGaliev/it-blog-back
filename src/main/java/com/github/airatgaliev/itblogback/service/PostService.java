@@ -70,10 +70,13 @@ public class PostService {
         () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
     PostModel postModel = postRepository.findById(id)
         .orElseThrow(() -> new PostNotFoundException("Post not found"));
+    List<CategoryModel> categories = new ArrayList<>(
+        categoryRepository.findAllById(updatePost.getCategoryIds()));
     if (Objects.equals(userModel.getId(), postModel.getUser().getId())) {
       postModel.setTitle(updatePost.getTitle());
       postModel.setContent(updatePost.getContent());
       postModel.setContent(updatePost.getContent());
+      postModel.setCategories(categories);
       postModel.setUser(userModel);
       postRepository.save(postModel);
     } else {
