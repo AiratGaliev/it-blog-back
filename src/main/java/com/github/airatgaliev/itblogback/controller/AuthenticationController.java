@@ -1,10 +1,12 @@
 package com.github.airatgaliev.itblogback.controller;
 
 import com.github.airatgaliev.itblogback.dto.AuthenticationResponse;
+import com.github.airatgaliev.itblogback.dto.GetUser;
 import com.github.airatgaliev.itblogback.dto.SignInRequest;
 import com.github.airatgaliev.itblogback.dto.SignUpRequest;
 import com.github.airatgaliev.itblogback.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -47,6 +49,15 @@ public class AuthenticationController {
     return ResponseEntity.ok(authenticatedUser);
   }
 
+  @GetMapping("/current-user")
+  @Operation(summary = "Get the current authenticated user")
+  @SecurityRequirement(name = "bearerAuth")
+  public ResponseEntity<GetUser> getCurrentUser(HttpServletRequest request) {
+    return authenticationService.getCurrentUser(request)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
+  }
+
   @PostMapping("/refresh-token")
   @Operation(summary = "Refresh the JWT token")
   public ResponseEntity<AuthenticationResponse> refreshToken(HttpServletRequest request,
@@ -56,13 +67,10 @@ public class AuthenticationController {
     return ResponseEntity.ok(refreshedToken);
   }
 
-  @GetMapping("/auth-check")
-  @Operation(summary = "Check if the JWT token is valid")
-  public ResponseEntity<String> authCheck(HttpServletRequest request) {
-    boolean isValid = authenticationService.checkAuthentication(request);
-    if (isValid) {
-      return ResponseEntity.ok("Authenticated");
-    }
-    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+  @PostMapping("/logout")
+  @Operation(summary = "Logout a user")
+  public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
+    authenticationService.logout(request, response);
+    return ResponseEntity.ok("Logged out successfully");
   }
 }

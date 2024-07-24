@@ -1,5 +1,8 @@
 package com.github.airatgaliev.itblogback.service;
 
+import static com.github.airatgaliev.itblogback.util.TokenUtils.extractToken;
+import static com.github.airatgaliev.itblogback.util.TokenUtils.invalidateToken;
+
 import com.github.airatgaliev.itblogback.dto.AuthenticationResponse;
 import com.github.airatgaliev.itblogback.dto.GetUser;
 import com.github.airatgaliev.itblogback.dto.SignInRequest;
@@ -8,10 +11,8 @@ import com.github.airatgaliev.itblogback.exception.UserAlreadyExistsException;
 import com.github.airatgaliev.itblogback.model.Role;
 import com.github.airatgaliev.itblogback.model.UserModel;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -21,8 +22,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class AuthenticationService {
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final AuthenticationManager authenticationManager;
+  private final UserDetailsService userDetailsService;
   private final JwtService jwtService;
 
   public GetUser signup(SignUpRequest input) {
@@ -69,6 +71,16 @@ public class AuthenticationService {
     }
   }
 
+  private String getFieldValue(SignUpRequest signUpRequest, String fieldName) {
+    try {
+      var field = SignUpRequest.class.getDeclaredField(fieldName);
+      field.setAccessible(true);
+      return (String) field.get(signUpRequest);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new RuntimeException("Error accessing field: " + fieldName, e);
+    }
+  }
+
   public AuthenticationResponse authenticate(SignInRequest input, HttpServletResponse response) {
     authenticationManager.authenticate(
         new UsernamePasswordAuthenticationToken(input.getUsernameOrEmail(), input.getPassword()));
@@ -82,11 +94,8 @@ public class AuthenticationService {
   }
 
   private void setAuthTokenCookie(HttpServletResponse response, String token) {
-    ResponseCookie cookie = ResponseCookie.from("auth-token", token)
-        .httpOnly(true)
-        .secure(false)
-        .path("/")
-        .build();
+    ResponseCookie cookie = ResponseCookie.from("auth-token", token).httpOnly(true).secure(false)
+        .path("/").build();
     response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
   }
 
@@ -111,48 +120,24 @@ public class AuthenticationService {
         .expiresIn(jwtService.getExpirationTime()).build();
   }
 
-  public boolean checkAuthentication(HttpServletRequest request) {
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication != null && authentication.isAuthenticated()) {
-      String token = extractToken(request);
-      return token != null && validateToken(token);
+  public Optional<GetUser> getCurrentUser(HttpServletRequest request) {
+    String token = extractToken(request);
+    if (token != null) {
+      String username = jwtService.extractUsername(token);
+      return userRepository.findByUsername(username).map(
+          user -> GetUser.builder().username(user.getUsername()).email(user.getEmail())
+              .firstName(user.getFirstName()).lastName(user.getLastName()).role(user.getRole())
+              .build());
     }
-    return false;
+    return Optional.empty();
   }
 
-  public boolean validateToken(String token) {
-    if (jwtService.isTokenExpired(token)) {
-      return false;
-    }
-
+  public void logout(HttpServletRequest request, HttpServletResponse response) {
+    String token = extractToken(request);
     String username = jwtService.extractUsername(token);
-    return userRepository.findByUsername(username).isPresent();
-  }
-
-  private String extractToken(HttpServletRequest request) {
-    String authHeader = request.getHeader("Authorization");
-    if (authHeader != null && authHeader.startsWith("Bearer ")) {
-      return authHeader.substring(7);
-    }
-
-    Cookie[] cookies = request.getCookies();
-    if (cookies != null) {
-      for (Cookie cookie : cookies) {
-        if ("auth-token".equals(cookie.getName())) {
-          return cookie.getValue();
-        }
-      }
-    }
-    return null;
-  }
-
-  private String getFieldValue(SignUpRequest signUpRequest, String fieldName) {
-    try {
-      Field field = SignUpRequest.class.getDeclaredField(fieldName);
-      field.setAccessible(true);
-      return (String) field.get(signUpRequest);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new RuntimeException("Error accessing field: " + fieldName, e);
+    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+    if (token != null && jwtService.isTokenValid(token, userDetails)) {
+      invalidateToken(response);
     }
   }
 }
