@@ -5,12 +5,13 @@ import com.github.airatgaliev.itblogback.dto.UpdateUser;
 import com.github.airatgaliev.itblogback.model.PostModel;
 import com.github.airatgaliev.itblogback.model.UserModel;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
+import com.github.airatgaliev.itblogback.util.FileUploadUtil;
+import jakarta.validation.ValidationException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
   private final UserRepository userRepository;
+  private final FileUploadUtil fileUploadUtil;
 
   @Transactional
   public List<GetUser> getAllUsers() {
@@ -33,11 +35,19 @@ public class UserService {
 
   @Transactional
   public void updateUser(UpdateUser updateUser, UserDetails userDetails) {
-    UserModel userModel = userRepository.findByUsername(userDetails.getUsername())
-        .orElseThrow(
-            () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
-    userModel.setUsername(updateUser.getUsername());
-    userRepository.save(userModel);
+    UserModel user = userRepository.findByUsername(userDetails.getUsername())
+        .orElseThrow(() -> new ValidationException("User not found"));
+
+    user.setUsername(updateUser.getUsername());
+    user.setEmail(updateUser.getEmail());
+
+    if (updateUser.getAvatar() != null && !updateUser.getAvatar().isEmpty()) {
+      String avatarUrl = fileUploadUtil.uploadUserAvatar(updateUser.getAvatar(),
+          user.getUsername());
+      user.setAvatarUrl(avatarUrl);
+    }
+
+    userRepository.save(user);
   }
 
   @Transactional
@@ -47,8 +57,8 @@ public class UserService {
 
   private GetUser convertUserModelToDto(UserModel userModel) {
     return GetUser.builder().username(userModel.getUsername()).email(userModel.getEmail())
-        .firstName(userModel.getFirstName()).lastName(userModel.getLastName()).postsIds(
-            userModel.getPosts().stream().map(PostModel::getId).toList()).role(userModel.getRole())
-        .build();
+        .firstName(userModel.getFirstName()).lastName(userModel.getLastName())
+        .postsIds(userModel.getPosts().stream().map(PostModel::getId).toList())
+        .role(userModel.getRole()).build();
   }
 }

@@ -50,6 +50,8 @@ public class UserModel implements UserDetails {
   private String lastName;
   @Column
   private String bio;
+  @Column(name = "avatar_url") // Новое поле для аватара
+  private String avatarUrl;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)

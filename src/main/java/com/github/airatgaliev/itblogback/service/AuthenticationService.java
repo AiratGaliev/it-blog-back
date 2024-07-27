@@ -7,17 +7,16 @@ import com.github.airatgaliev.itblogback.dto.AuthenticationResponse;
 import com.github.airatgaliev.itblogback.dto.GetUser;
 import com.github.airatgaliev.itblogback.dto.SignInRequest;
 import com.github.airatgaliev.itblogback.dto.SignUpRequest;
-import com.github.airatgaliev.itblogback.exception.UserAlreadyExistsException;
 import com.github.airatgaliev.itblogback.model.Role;
 import com.github.airatgaliev.itblogback.model.UserModel;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
+import com.github.airatgaliev.itblogback.util.FileUploadUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.HashMap;
-import java.util.Map;
+import jakarta.transaction.Transactional;
 import java.util.Optional;
-import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -37,48 +36,29 @@ public class AuthenticationService {
   private final AuthenticationManager authenticationManager;
   private final UserDetailsService userDetailsService;
   private final JwtService jwtService;
+  private final FileUploadUtil fileUploadUtil;
 
-  public GetUser signup(SignUpRequest input) {
-    validateUniqueness(input);
+  @Value("${server.servlet.context-path}")
+  private String contextPath;
 
-    UserModel user = UserModel.builder().username(input.getUsername()).email(input.getEmail())
-        .password(passwordEncoder.encode(input.getPassword())).role(Role.ROLE_USER).build();
+  @Transactional
+  public GetUser signup(SignUpRequest signUpRequest) {
+    UserModel user = UserModel.builder().username(signUpRequest.getUsername())
+        .email(signUpRequest.getEmail())
+        .password(passwordEncoder.encode(signUpRequest.getPassword())).role(Role.ROLE_USER).build();
 
-    UserModel savedUser = userRepository.save(user);
-    return GetUser.builder().username(savedUser.getUsername()).email(savedUser.getEmail())
-        .firstName(savedUser.getFirstName()).lastName(savedUser.getLastName())
-        .role(savedUser.getRole()).build();
-  }
-
-  private void validateUniqueness(SignUpRequest input) {
-    Map<String, Function<String, Optional<UserModel>>> uniquenessChecks = new HashMap<>();
-    uniquenessChecks.put("username", userRepository::findByUsername);
-    uniquenessChecks.put("email", userRepository::findByEmail);
-
-    Map<String, String> existingFields = new HashMap<>();
-
-    for (Map.Entry<String, Function<String, Optional<UserModel>>> entry : uniquenessChecks.entrySet()) {
-      String field = entry.getKey();
-      String value = getFieldValue(input, field);
-
-      if (value != null && entry.getValue().apply(value).isPresent()) {
-        existingFields.put(field, value);
-      }
+    if (signUpRequest.getAvatar() != null && !signUpRequest.getAvatar().isEmpty()) {
+      String avatarFilename = fileUploadUtil.uploadUserAvatar(signUpRequest.getAvatar(),
+          user.getUsername());
+      String avatarUrl = String.format("%s/users/avatars/%s", contextPath, avatarFilename);
+      user.setAvatarUrl(avatarUrl);
     }
 
-    if (!existingFields.isEmpty()) {
-      throw new UserAlreadyExistsException("The following fields already exist: " + existingFields);
-    }
-  }
+    userRepository.save(user);
 
-  private String getFieldValue(SignUpRequest signUpRequest, String fieldName) {
-    try {
-      var field = SignUpRequest.class.getDeclaredField(fieldName);
-      field.setAccessible(true);
-      return (String) field.get(signUpRequest);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new RuntimeException("Error accessing field: " + fieldName, e);
-    }
+    return GetUser.builder().username(user.getUsername()).email(user.getEmail())
+        .firstName(user.getFirstName()).lastName(user.getLastName()).role(user.getRole())
+        .avatarUrl(user.getAvatarUrl()).build();
   }
 
   public AuthenticationResponse authenticate(SignInRequest input, HttpServletResponse response) {
@@ -120,14 +100,14 @@ public class AuthenticationService {
         .expiresIn(jwtService.getExpirationTime()).build();
   }
 
-  public Optional<GetUser> getCurrentUser(HttpServletRequest request) {
+  public Optional<GetUser> currentUser(HttpServletRequest request) {
     String token = extractToken(request);
     if (token != null) {
       String username = jwtService.extractUsername(token);
       return userRepository.findByUsername(username).map(
           user -> GetUser.builder().username(user.getUsername()).email(user.getEmail())
               .firstName(user.getFirstName()).lastName(user.getLastName()).role(user.getRole())
-              .build());
+              .avatarUrl(user.getAvatarUrl()).build());
     }
     return Optional.empty();
   }

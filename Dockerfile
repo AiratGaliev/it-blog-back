@@ -26,6 +26,9 @@ WORKDIR /app
 # Copy the JAR file from the first stage
 COPY --from=build /app/target/*.jar app.jar
 
+# Create necessary directories
+RUN mkdir -p /app/users/avatars && mkdir -p /app/posts/images
+
 # Expose the port that your application runs on
 EXPOSE 9000
 
