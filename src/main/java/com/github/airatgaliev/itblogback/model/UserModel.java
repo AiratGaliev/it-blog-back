@@ -58,7 +58,7 @@ public class UserModel implements UserDetails {
   private Role role;
 
   @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
-  private List<PostModel> posts;
+  private List<ArticleModel> articles;
 
   @OneToMany(mappedBy = "subscriber")
   private List<SubscriptionModel> subscriptions = new ArrayList<>();

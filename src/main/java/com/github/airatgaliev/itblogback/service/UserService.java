@@ -2,7 +2,8 @@ package com.github.airatgaliev.itblogback.service;
 
 import com.github.airatgaliev.itblogback.dto.GetUser;
 import com.github.airatgaliev.itblogback.dto.UpdateUser;
-import com.github.airatgaliev.itblogback.model.PostModel;
+import com.github.airatgaliev.itblogback.model.ArticleModel;
+import com.github.airatgaliev.itblogback.model.Role;
 import com.github.airatgaliev.itblogback.model.UserModel;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
 import com.github.airatgaliev.itblogback.util.FileUploadUtil;
@@ -25,6 +26,13 @@ public class UserService {
   @Transactional
   public List<GetUser> getAllUsers() {
     return userRepository.findAll().stream().map(this::convertUserModelToDto)
+        .collect(Collectors.toList());
+  }
+
+  @Transactional
+  public List<GetUser> getAllAuthors() {
+    return userRepository.findAllByRole(Role.ROLE_AUTHOR).stream()
+        .map(this::convertUserModelToDto)
         .collect(Collectors.toList());
   }
 
@@ -58,7 +66,7 @@ public class UserService {
   private GetUser convertUserModelToDto(UserModel userModel) {
     return GetUser.builder().username(userModel.getUsername()).email(userModel.getEmail())
         .firstName(userModel.getFirstName()).lastName(userModel.getLastName())
-        .postsIds(userModel.getPosts().stream().map(PostModel::getId).toList())
+        .articlesIds(userModel.getArticles().stream().map(ArticleModel::getId).toList())
         .role(userModel.getRole()).build();
   }
 }

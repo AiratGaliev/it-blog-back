@@ -29,6 +29,6 @@ public class GetUser {
   @Schema(description = "Profile avatar image")
   private String avatarUrl;
 
-  @Schema(description = "List of posts written by the user with Author role")
-  private List<Long> postsIds;
+  @Schema(description = "List of articles written by the user with Author role")
+  private List<Long> articlesIds;
 }

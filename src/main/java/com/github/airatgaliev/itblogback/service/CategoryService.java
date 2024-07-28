@@ -5,6 +5,7 @@ import com.github.airatgaliev.itblogback.dto.GetCategory;
 import com.github.airatgaliev.itblogback.dto.UpdateCategory;
 import com.github.airatgaliev.itblogback.model.CategoryModel;
 import com.github.airatgaliev.itblogback.repository.CategoryRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
@@ -49,7 +50,10 @@ public class CategoryService {
 
   @Transactional
   public void deleteCategory(Long id) {
-    categoryRepository.deleteById(id);
+    CategoryModel category = categoryRepository.findById(id)
+        .orElseThrow(EntityNotFoundException::new);
+    category.getArticles().forEach(article -> article.getCategories().remove(category));
+    categoryRepository.delete(category);
   }
 
   private GetCategory convertCategoryToDTO(CategoryModel category) {

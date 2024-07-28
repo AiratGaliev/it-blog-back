@@ -7,16 +7,16 @@ import java.util.List;
 import lombok.Data;
 
 @Data
-@Schema(name = "Create Post")
-public class CreatePost {
+@Schema(name = "Create Article")
+public class CreateArticle {
 
   @NotNull(message = "Title cannot be empty")
-  @Schema(description = "Title of the post", example = "My First Blog Post", requiredMode = RequiredMode.REQUIRED)
+  @Schema(description = "Title of the article", example = "My First Blog Article", requiredMode = RequiredMode.REQUIRED)
   private String title;
   @NotNull(message = "Content cannot be empty")
-  @Schema(description = "Content of the post", example = "This is the content of the post", requiredMode = RequiredMode.REQUIRED)
+  @Schema(description = "Content of the article", example = "This is the content of the article", requiredMode = RequiredMode.REQUIRED)
   private String content;
   @NotNull(message = "Content cannot be empty")
-  @Schema(description = "Categories associated with the post")
+  @Schema(description = "Categories associated with the article")
   private List<Long> categoryIds;
 }

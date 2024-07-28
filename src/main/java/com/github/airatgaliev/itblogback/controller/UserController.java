@@ -39,6 +39,13 @@ public class UserController {
     return ResponseEntity.ok(users);
   }
 
+  @GetMapping("/authors")
+  @Operation(summary = "Get all authors")
+  public ResponseEntity<List<GetUser>> getAllAuthors() {
+    List<GetUser> users = userService.getAllAuthors();
+    return ResponseEntity.ok(users);
+  }
+
   @GetMapping("/{username}")
   @Operation(summary = "Get an user by username")
   public ResponseEntity<GetUser> getUserByUsername(@PathVariable String username) {

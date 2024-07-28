@@ -42,8 +42,8 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNAUTHORIZED);
   }
 
-  @ExceptionHandler(PostNotFoundException.class)
-  public ResponseEntity<String> handlePostNotFoundException(PostNotFoundException ex) {
+  @ExceptionHandler(ArticleNotFoundException.class)
+  public ResponseEntity<String> handleArticleNotFoundException(ArticleNotFoundException ex) {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
   }
 

@@ -6,16 +6,16 @@ import java.util.List;
 import lombok.Data;
 
 @Data
-@Schema(name = "Update Post")
-public class UpdatePost {
+@Schema(name = "Update Article")
+public class UpdateArticle {
 
   @NotNull(message = "Title cannot be empty")
-  @Schema(description = "Title of the post", example = "My First Blog Post")
+  @Schema(description = "Title of the article", example = "My First Blog Article")
   private String title;
   @NotNull(message = "Content cannot be empty")
-  @Schema(description = "Content of the post", example = "This is the content of the post")
+  @Schema(description = "Content of the article", example = "This is the content of the article")
   private String content;
   @NotNull(message = "Categories cannot be empty")
-  @Schema(description = "Categories associated with the post")
+  @Schema(description = "Categories associated with the article")
   private List<Long> categoryIds;
 }

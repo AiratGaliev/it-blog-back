@@ -16,8 +16,8 @@ public class FileUploadUtil {
   @Value("${user.avatar.upload-dir}")
   private String avatarUploadDir;
 
-  @Value("${post.image.upload-dir}")
-  private String postImageUploadDir;
+  @Value("${article.image.upload-dir}")
+  private String articleImageUploadDir;
 
   public String uploadUserAvatar(MultipartFile file, String username) {
     if (file == null || file.isEmpty()) {
@@ -30,13 +30,13 @@ public class FileUploadUtil {
     return filename;
   }
 
-  public String uploadPostImage(MultipartFile file, Long postId) {
+  public String uploadArticleImage(MultipartFile file, Long articleId) {
     if (file == null || file.isEmpty()) {
       throw new IllegalArgumentException("File is empty or null");
     }
 
-    String filename = postId + "_" + UUID.randomUUID() + getFileExtension(file);
-    Path path = Paths.get(postImageUploadDir).resolve(filename);
+    String filename = articleId + "_" + UUID.randomUUID() + getFileExtension(file);
+    Path path = Paths.get(articleImageUploadDir).resolve(filename);
     saveFile(file, path);
     return filename;
   }

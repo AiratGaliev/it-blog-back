@@ -40,10 +40,10 @@ public class CategoryController {
   }
 
   @GetMapping("/{id}")
-  @Operation(summary = "Get post by id")
+  @Operation(summary = "Get article by id")
   public ResponseEntity<GetCategory> getCategoryById(@PathVariable Long id) {
     return categoryService.getCategoryById(id)
-        .map(post -> new ResponseEntity<>(post, HttpStatus.OK))
+        .map(article -> new ResponseEntity<>(article, HttpStatus.OK))
         .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
