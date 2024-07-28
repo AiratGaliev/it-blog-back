@@ -102,6 +102,7 @@ public class ArticleService {
   private GetArticle convertArticleModelToDTO(ArticleModel articleModel) {
     return GetArticle.builder().id(articleModel.getId()).title(articleModel.getTitle())
         .content(articleModel.getContent()).username(articleModel.getUser().getUsername())
+        .authorAvatarUrl(articleModel.getUser().getAvatarUrl())
         .categories(
             articleModel.getCategories().stream().map(
                 categoryModel -> GetCategory.builder().id(categoryModel.getId())

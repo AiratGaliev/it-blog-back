@@ -19,6 +19,8 @@ public class GetArticle {
   private String content;
   @Schema(description = "Username associated with the article", example = "JohnDoe")
   private String username;
+  @Schema(description = "Author's avatar image")
+  private String authorAvatarUrl;
   @Schema(description = "Categories associated with the article")
   private List<GetCategory> categories;
   @Schema(description = "Date and time of the article creation", example = "2022-01-01T00:00:00.000Z")
