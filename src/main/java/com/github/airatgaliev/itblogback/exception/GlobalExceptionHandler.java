@@ -42,6 +42,16 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNAUTHORIZED);
   }
 
+  @ExceptionHandler(EmailNotFoundException.class)
+  public ResponseEntity<String> handleEmailNotFoundException(EmailNotFoundException ex) {
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(IncorrectPasswordException.class)
+  public ResponseEntity<String> handleIncorrectPasswordException(IncorrectPasswordException ex) {
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNAUTHORIZED);
+  }
+
   @ExceptionHandler(ArticleNotFoundException.class)
   public ResponseEntity<String> handleArticleNotFoundException(ArticleNotFoundException ex) {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);

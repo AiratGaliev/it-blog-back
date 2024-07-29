@@ -9,13 +9,29 @@ import org.springframework.web.multipart.MultipartFile;
 @Schema(name = "Update User")
 public class UpdateUser {
 
-  @Schema(description = "Username of the user", example = "John Doe")
-  private String username;
+  @Schema(description = "First name of the user", example = "John")
+  private String firstName;
+
+  @Schema(description = "Last name of the user", example = "Doe")
+  private String lastName;
+
+  @Schema(description = "Description of the user", example = "I am John Doe")
+  private String bio;
+
+  @Schema(description = "Current email", example = "test@test.com")
+  @Email(message = "Invalid email address")
+  private String currentEmail;
 
   @Schema(description = "Email", example = "test@test.com")
-  @Email
-  private String email;
+  @Email(message = "Invalid email address")
+  private String newEmail;
 
-  @Schema(description = "User's avatar image file")
+  @Schema(description = "User's current password", example = "P@ssword")
+  private String currentPassword;
+
+  @Schema(description = "User's new password", example = "P@ssw0rd")
+  private String newPassword;
+
+  @Schema(description = "User's avatar image")
   private MultipartFile avatar;
 }
