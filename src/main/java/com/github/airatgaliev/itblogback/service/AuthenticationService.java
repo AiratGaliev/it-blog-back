@@ -106,8 +106,8 @@ public class AuthenticationService {
       String username = jwtService.extractUsername(token);
       return userRepository.findByUsername(username).map(
           user -> GetUser.builder().username(user.getUsername()).email(user.getEmail())
-              .firstName(user.getFirstName()).lastName(user.getLastName()).role(user.getRole())
-              .avatarUrl(user.getAvatarUrl()).build());
+              .firstName(user.getFirstName()).lastName(user.getLastName()).bio(user.getBio())
+              .role(user.getRole()).avatarUrl(user.getAvatarUrl()).build());
     }
     return Optional.empty();
   }

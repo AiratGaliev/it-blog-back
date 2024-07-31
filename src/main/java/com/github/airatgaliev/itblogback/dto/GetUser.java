@@ -23,6 +23,9 @@ public class GetUser {
   @Schema(description = "Last name of the user", example = "Doe")
   private String lastName;
 
+  @Schema(description = "Bio of the user", example = "I am John Doe")
+  private String bio;
+
   @Schema(description = "Role of the user", example = "USER")
   private Role role;
 

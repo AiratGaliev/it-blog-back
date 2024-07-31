@@ -62,7 +62,8 @@ public class UserService {
     } else if (updateUser.getCurrentEmail() != null) {
       throw new EmailNotFoundException("Current email is incorrect");
     }
-    if (passwordEncoder.matches(updateUser.getCurrentPassword(), user.getPassword())) {
+    if (passwordEncoder.matches(updateUser.getCurrentPassword(), user.getPassword())
+        && updateUser.getNewPassword() != null) {
       user.setPassword(passwordEncoder.encode(updateUser.getNewPassword()));
     } else if (updateUser.getNewPassword() != null) {
       throw new IncorrectPasswordException("Current password is incorrect");
@@ -85,6 +86,7 @@ public class UserService {
   private GetUser convertUserModelToDto(UserModel userModel) {
     return GetUser.builder().username(userModel.getUsername()).email(userModel.getEmail())
         .firstName(userModel.getFirstName()).lastName(userModel.getLastName())
+        .bio(userModel.getBio()).avatarUrl(userModel.getAvatarUrl())
         .articlesIds(userModel.getArticles().stream().map(ArticleModel::getId).toList())
         .role(userModel.getRole()).build();
   }
