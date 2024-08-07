@@ -64,7 +64,7 @@ public class CategoryController {
   public ResponseEntity<String> updateCategory(@PathVariable Long id,
       @Valid @RequestBody UpdateCategory categoryDTO) {
     categoryService.updateCategory(id, categoryDTO);
-    return new ResponseEntity<>("Category updated successfully", HttpStatus.NO_CONTENT);
+    return new ResponseEntity<>("Category updated successfully", HttpStatus.OK);
   }
 
   @DeleteMapping("/{id}")

@@ -60,12 +60,12 @@ public class UserController {
   @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @Operation(summary = "Update an user by username")
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<Void> updateUser(@Valid UpdateUser updateUser,
+  public ResponseEntity<String> updateUser(@Valid UpdateUser updateUser,
       @ModelAttribute @RequestParam("avatar") MultipartFile avatar,
       @AuthenticationPrincipal UserDetails userDetails) {
     updateUser.setAvatar(avatar);
     userService.updateUser(updateUser, userDetails);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    return new ResponseEntity<>("User updated successfully", HttpStatus.OK);
   }
 
   @DeleteMapping("/{username}")

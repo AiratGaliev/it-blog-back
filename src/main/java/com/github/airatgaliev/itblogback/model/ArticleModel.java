@@ -1,6 +1,8 @@
 package com.github.airatgaliev.itblogback.model;
 
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -45,6 +47,11 @@ public class ArticleModel {
   @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(name = "article_categories", joinColumns = @JoinColumn(name = "article_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
   private List<CategoryModel> categories = new ArrayList<>();
+
+  @ElementCollection(fetch = FetchType.LAZY)
+  @CollectionTable(name = "article_images", joinColumns = @JoinColumn(name = "article_id"))
+  @Column(name = "image_url")
+  private List<String> imageUrls = new ArrayList<>();
 
   @CreationTimestamp
   @Column(nullable = false, updatable = false, name = "created_at")

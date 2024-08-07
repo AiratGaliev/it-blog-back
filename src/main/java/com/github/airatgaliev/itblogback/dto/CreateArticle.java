@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 @Schema(name = "Create Article")
@@ -19,4 +20,6 @@ public class CreateArticle {
   @NotNull(message = "Content cannot be empty")
   @Schema(description = "Categories associated with the article")
   private List<Long> categoryIds;
+  @Schema(type = "array", format = "binary", description = "Article images")
+  private List<MultipartFile> images;
 }

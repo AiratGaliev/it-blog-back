@@ -11,6 +11,7 @@ import com.github.airatgaliev.itblogback.model.UserModel;
 import com.github.airatgaliev.itblogback.repository.ArticleRepository;
 import com.github.airatgaliev.itblogback.repository.CategoryRepository;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
+import com.github.airatgaliev.itblogback.util.FileUploadUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -18,6 +19,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -32,6 +34,10 @@ public class ArticleService {
   private final ArticleRepository articleRepository;
   private final UserRepository userRepository;
   private final CategoryRepository categoryRepository;
+  private final FileUploadUtil fileUploadUtil;
+
+  @Value("${server.servlet.context-path}")
+  private String contextPath;
 
   @Transactional
   public List<GetArticle> getAllArticles() {
@@ -42,8 +48,7 @@ public class ArticleService {
   @Transactional
   public List<GetArticle> getArticlesByCategoryId(Long categoryId) {
     return articleRepository.findByCategoriesId(categoryId).stream()
-        .map(this::convertArticleModelToDTO)
-        .collect(Collectors.toList());
+        .map(this::convertArticleModelToDTO).collect(Collectors.toList());
   }
 
   @Transactional
@@ -63,6 +68,13 @@ public class ArticleService {
     articleModel.setCategories(categories);
     articleModel.setUser(userModel);
     ArticleModel savedArticle = articleRepository.save(articleModel);
+    if (createArticle.getImages() != null && !createArticle.getImages().isEmpty()) {
+      savedArticle.setImageUrls(createArticle.getImages().stream().map(image -> {
+        String filename = fileUploadUtil.uploadArticleImage(image, savedArticle.getId());
+        return String.format("%s/articles/images/%s", contextPath, filename);
+      }).collect(Collectors.toList()));
+      articleRepository.save(savedArticle);
+    }
     return convertArticleModelToDTO(savedArticle);
   }
 
@@ -103,7 +115,7 @@ public class ArticleService {
     return GetArticle.builder().id(articleModel.getId()).title(articleModel.getTitle())
         .content(articleModel.getContent()).username(articleModel.getUser().getUsername())
         .authorAvatarUrl(articleModel.getUser().getAvatarUrl())
-        .categories(
+        .imageUrls(articleModel.getImageUrls().stream().toList()).categories(
             articleModel.getCategories().stream().map(
                 categoryModel -> GetCategory.builder().id(categoryModel.getId())
                     .name(categoryModel.getName()).build()).collect(Collectors.toList()))
