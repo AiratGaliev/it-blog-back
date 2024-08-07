@@ -37,6 +37,12 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
   }
 
+  @ExceptionHandler(UsernameAlreadyExistsException.class)
+  public ResponseEntity<String> handleUsernameAlreadyExistsException(
+      UsernameAlreadyExistsException ex) {
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+  }
+
   @ExceptionHandler(UsernameNotFoundException.class)
   public ResponseEntity<String> handleUsernameNotFoundException(UsernameNotFoundException ex) {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNAUTHORIZED);
@@ -45,6 +51,11 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(EmailNotFoundException.class)
   public ResponseEntity<String> handleEmailNotFoundException(EmailNotFoundException ex) {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+  }
+  
+  @ExceptionHandler(EmailAlreadyExistsException.class)
+  public ResponseEntity<String> handleEmailAlreadyExistsException(EmailAlreadyExistsException ex) {
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
   }
 
   @ExceptionHandler(IncorrectPasswordException.class)

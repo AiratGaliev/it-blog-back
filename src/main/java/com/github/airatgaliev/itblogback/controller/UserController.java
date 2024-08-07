@@ -61,7 +61,7 @@ public class UserController {
   @Operation(summary = "Update an user by username")
   @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<String> updateUser(@Valid UpdateUser updateUser,
-      @ModelAttribute @RequestParam("avatar") MultipartFile avatar,
+      @ModelAttribute @RequestParam(value = "avatar", required = false) MultipartFile avatar,
       @AuthenticationPrincipal UserDetails userDetails) {
     updateUser.setAvatar(avatar);
     userService.updateUser(updateUser, userDetails);

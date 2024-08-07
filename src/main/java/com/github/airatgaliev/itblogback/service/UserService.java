@@ -2,15 +2,15 @@ package com.github.airatgaliev.itblogback.service;
 
 import com.github.airatgaliev.itblogback.dto.GetUser;
 import com.github.airatgaliev.itblogback.dto.UpdateUser;
-import com.github.airatgaliev.itblogback.exception.EmailNotFoundException;
+import com.github.airatgaliev.itblogback.exception.EmailAlreadyExistsException;
 import com.github.airatgaliev.itblogback.exception.IncorrectPasswordException;
+import com.github.airatgaliev.itblogback.exception.UsernameAlreadyExistsException;
 import com.github.airatgaliev.itblogback.model.ArticleModel;
 import com.github.airatgaliev.itblogback.model.Role;
 import com.github.airatgaliev.itblogback.model.UserModel;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
 import com.github.airatgaliev.itblogback.util.FileUploadUtil;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -54,14 +54,19 @@ public class UserService {
   public void updateUser(UpdateUser updateUser, UserDetails userDetails) {
     UserModel user = userRepository.findByUsername(userDetails.getUsername())
         .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    boolean isExistsUser = userRepository.existsByUsername(updateUser.getUsername());
+    if (isExistsUser && !user.getUsername().equals(updateUser.getUsername())) {
+      throw new UsernameAlreadyExistsException("This username is already taken");
+    }
+    user.setUsername(updateUser.getUsername());
     user.setFirstName(updateUser.getFirstName());
     user.setLastName(updateUser.getLastName());
     user.setBio(updateUser.getBio());
-    if (Objects.equals(updateUser.getCurrentEmail(), user.getEmail())) {
-      user.setEmail(updateUser.getNewEmail());
-    } else if (updateUser.getCurrentEmail() != null) {
-      throw new EmailNotFoundException("Current email is incorrect");
+    boolean isExistsEmail = userRepository.existsByEmail(updateUser.getNewEmail());
+    if (isExistsEmail && !user.getEmail().equals(updateUser.getNewEmail())) {
+      throw new EmailAlreadyExistsException("This email is already taken");
     }
+    user.setEmail(updateUser.getNewEmail());
     if (passwordEncoder.matches(updateUser.getCurrentPassword(), user.getPassword())
         && updateUser.getNewPassword() != null) {
       user.setPassword(passwordEncoder.encode(updateUser.getNewPassword()));

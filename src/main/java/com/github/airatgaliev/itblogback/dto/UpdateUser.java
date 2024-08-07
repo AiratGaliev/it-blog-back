@@ -9,6 +9,9 @@ import org.springframework.web.multipart.MultipartFile;
 @Schema(name = "Update User")
 public class UpdateUser {
 
+  @Schema(description = "Username of the user", example = "JohnDoe")
+  private String username;
+
   @Schema(description = "First name of the user", example = "John")
   private String firstName;
 
@@ -17,10 +20,6 @@ public class UpdateUser {
 
   @Schema(description = "Bio of the user", example = "I am John Doe")
   private String bio;
-
-  @Schema(description = "Current email", example = "test@test.com")
-  @Email(message = "Invalid email address")
-  private String currentEmail;
 
   @Schema(description = "Email", example = "test@test.com")
   @Email(message = "Invalid email address")
