@@ -54,24 +54,35 @@ public class UserService {
   public void updateUser(UpdateUser updateUser, UserDetails userDetails) {
     UserModel user = userRepository.findByUsername(userDetails.getUsername())
         .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-    boolean isExistsUser = userRepository.existsByUsername(updateUser.getUsername());
-    if (isExistsUser && !user.getUsername().equals(updateUser.getUsername())) {
-      throw new UsernameAlreadyExistsException("This username is already taken");
+    if (updateUser.getUsername() != null && !updateUser.getUsername().equals(user.getUsername())) {
+      boolean isExistsUser = userRepository.existsByUsername(updateUser.getUsername());
+      if (isExistsUser) {
+        throw new UsernameAlreadyExistsException("This username is already taken");
+      }
+      user.setUsername(updateUser.getUsername());
     }
-    user.setUsername(updateUser.getUsername());
-    user.setFirstName(updateUser.getFirstName());
-    user.setLastName(updateUser.getLastName());
-    user.setBio(updateUser.getBio());
-    boolean isExistsEmail = userRepository.existsByEmail(updateUser.getNewEmail());
-    if (isExistsEmail && !user.getEmail().equals(updateUser.getNewEmail())) {
-      throw new EmailAlreadyExistsException("This email is already taken");
+    if (updateUser.getFirstName() != null) {
+      user.setFirstName(updateUser.getFirstName());
     }
-    user.setEmail(updateUser.getNewEmail());
-    if (passwordEncoder.matches(updateUser.getCurrentPassword(), user.getPassword())
-        && updateUser.getNewPassword() != null) {
-      user.setPassword(passwordEncoder.encode(updateUser.getNewPassword()));
-    } else if (updateUser.getNewPassword() != null) {
-      throw new IncorrectPasswordException("Current password is incorrect");
+    if (updateUser.getLastName() != null) {
+      user.setLastName(updateUser.getLastName());
+    }
+    if (updateUser.getBio() != null) {
+      user.setBio(updateUser.getBio());
+    }
+    if (updateUser.getNewEmail() != null && !updateUser.getNewEmail().equals(user.getEmail())) {
+      boolean isExistsEmail = userRepository.existsByEmail(updateUser.getNewEmail());
+      if (isExistsEmail) {
+        throw new EmailAlreadyExistsException("This email is already taken");
+      }
+      user.setEmail(updateUser.getNewEmail());
+    }
+    if (updateUser.getNewPassword() != null && !updateUser.getNewPassword().isEmpty()) {
+      if (passwordEncoder.matches(updateUser.getCurrentPassword(), user.getPassword())) {
+        user.setPassword(passwordEncoder.encode(updateUser.getNewPassword()));
+      } else {
+        throw new IncorrectPasswordException("Current password is incorrect");
+      }
     }
     if (updateUser.getAvatar() != null && !updateUser.getAvatar().isEmpty()) {
       String avatarFilename = fileUploadUtil.uploadUserAvatar(updateUser.getAvatar(),
@@ -79,7 +90,6 @@ public class UserService {
       String avatarUrl = String.format("%s/users/avatars/%s", contextPath, avatarFilename);
       user.setAvatarUrl(avatarUrl);
     }
-
     userRepository.save(user);
   }
 

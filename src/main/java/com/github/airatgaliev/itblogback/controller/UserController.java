@@ -65,7 +65,7 @@ public class UserController {
       @AuthenticationPrincipal UserDetails userDetails) {
     updateUser.setAvatar(avatar);
     userService.updateUser(updateUser, userDetails);
-    return new ResponseEntity<>("User updated successfully", HttpStatus.OK);
+    return ResponseEntity.ok("User updated successfully");
   }
 
   @DeleteMapping("/{username}")
