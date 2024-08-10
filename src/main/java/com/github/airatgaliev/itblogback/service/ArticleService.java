@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -40,15 +42,14 @@ public class ArticleService {
   private String contextPath;
 
   @Transactional
-  public List<GetArticle> getAllArticles() {
-    return this.articleRepository.findAll().stream().map(this::convertArticleModelToDTO)
-        .collect(Collectors.toList());
+  public Page<GetArticle> getAllArticles(Pageable pageable) {
+    return this.articleRepository.findAll(pageable).map(this::convertArticleModelToDTO);
   }
 
   @Transactional
-  public List<GetArticle> getArticlesByCategoryId(Long categoryId) {
-    return articleRepository.findByCategoriesId(categoryId).stream()
-        .map(this::convertArticleModelToDTO).collect(Collectors.toList());
+  public Page<GetArticle> getArticlesByCategoryId(Long categoryId, Pageable pageable) {
+    return articleRepository.findByCategoriesId(categoryId, pageable)
+        .map(this::convertArticleModelToDTO);
   }
 
   @Transactional

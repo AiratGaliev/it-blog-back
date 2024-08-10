@@ -8,6 +8,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -60,11 +65,18 @@ public class UserController {
   @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @Operation(summary = "Update an user by username")
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<String> updateUser(@Valid UpdateUser updateUser,
-      @ModelAttribute @RequestParam(value = "avatar", required = false) MultipartFile avatar,
-      @AuthenticationPrincipal UserDetails userDetails) {
+  public ResponseEntity<Object> updateUser(@Valid @ModelAttribute UpdateUser updateUser,
+      @RequestParam(value = "avatar", required = false) MultipartFile avatar,
+      @AuthenticationPrincipal UserDetails userDetails, BindingResult bindingResult) {
     updateUser.setAvatar(avatar);
-    userService.updateUser(updateUser, userDetails);
+    userService.updateUser(updateUser, userDetails, bindingResult);
+    if (bindingResult.hasErrors()) {
+      Map<String, String> errors = bindingResult.getFieldErrors().stream()
+          .collect(Collectors.toMap(FieldError::getField,
+              fieldError -> Optional.ofNullable(fieldError.getDefaultMessage())
+                  .orElse("Unknown error")));
+      return ResponseEntity.badRequest().body(errors);
+    }
     return ResponseEntity.ok("User updated successfully");
   }
 

@@ -2,9 +2,6 @@ package com.github.airatgaliev.itblogback.service;
 
 import com.github.airatgaliev.itblogback.dto.GetUser;
 import com.github.airatgaliev.itblogback.dto.UpdateUser;
-import com.github.airatgaliev.itblogback.exception.EmailAlreadyExistsException;
-import com.github.airatgaliev.itblogback.exception.IncorrectPasswordException;
-import com.github.airatgaliev.itblogback.exception.UsernameAlreadyExistsException;
 import com.github.airatgaliev.itblogback.model.ArticleModel;
 import com.github.airatgaliev.itblogback.model.Role;
 import com.github.airatgaliev.itblogback.model.UserModel;
@@ -20,6 +17,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.BindingResult;
 
 @Service
 @RequiredArgsConstructor
@@ -40,8 +38,7 @@ public class UserService {
 
   @Transactional
   public List<GetUser> getAllAuthors() {
-    return userRepository.findAllByRole(Role.ROLE_AUTHOR).stream()
-        .map(this::convertUserModelToDto)
+    return userRepository.findAllByRole(Role.ROLE_AUTHOR).stream().map(this::convertUserModelToDto)
         .collect(Collectors.toList());
   }
 
@@ -51,15 +48,17 @@ public class UserService {
   }
 
   @Transactional
-  public void updateUser(UpdateUser updateUser, UserDetails userDetails) {
+  public void updateUser(UpdateUser updateUser, UserDetails userDetails,
+      BindingResult bindingResult) {
     UserModel user = userRepository.findByUsername(userDetails.getUsername())
         .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     if (updateUser.getUsername() != null && !updateUser.getUsername().equals(user.getUsername())) {
       boolean isExistsUser = userRepository.existsByUsername(updateUser.getUsername());
       if (isExistsUser) {
-        throw new UsernameAlreadyExistsException("This username is already taken");
+        bindingResult.rejectValue("username", "username.exists", "This username is already taken");
+      } else {
+        user.setUsername(updateUser.getUsername());
       }
-      user.setUsername(updateUser.getUsername());
     }
     if (updateUser.getFirstName() != null) {
       user.setFirstName(updateUser.getFirstName());
@@ -73,15 +72,17 @@ public class UserService {
     if (updateUser.getNewEmail() != null && !updateUser.getNewEmail().equals(user.getEmail())) {
       boolean isExistsEmail = userRepository.existsByEmail(updateUser.getNewEmail());
       if (isExistsEmail) {
-        throw new EmailAlreadyExistsException("This email is already taken");
+        bindingResult.rejectValue("newEmail", "email.exists", "This email is already taken");
+      } else {
+        user.setEmail(updateUser.getNewEmail());
       }
-      user.setEmail(updateUser.getNewEmail());
     }
     if (updateUser.getNewPassword() != null && !updateUser.getNewPassword().isEmpty()) {
       if (passwordEncoder.matches(updateUser.getCurrentPassword(), user.getPassword())) {
         user.setPassword(passwordEncoder.encode(updateUser.getNewPassword()));
       } else {
-        throw new IncorrectPasswordException("Current password is incorrect");
+        bindingResult.rejectValue("currentPassword", "password.incorrect",
+            "Current password is incorrect");
       }
     }
     if (updateUser.getAvatar() != null && !updateUser.getAvatar().isEmpty()) {
@@ -90,7 +91,9 @@ public class UserService {
       String avatarUrl = String.format("%s/users/avatars/%s", contextPath, avatarFilename);
       user.setAvatarUrl(avatarUrl);
     }
-    userRepository.save(user);
+    if (!bindingResult.hasErrors()) {
+      userRepository.save(user);
+    }
   }
 
   @Transactional

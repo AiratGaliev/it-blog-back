@@ -12,6 +12,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -43,14 +45,17 @@ public class ArticleController {
 
   @GetMapping
   @Operation(summary = "Get all articles or articles by category", description = "Retrieve all articles or filter articles by category")
-  @Parameters({@Parameter(name = "category", description = "Category to filter articles")})
-  public ResponseEntity<List<GetArticle>> getAllArticles(
-      @RequestParam(required = false) Long category) {
-    List<GetArticle> articles;
+  @Parameters({@Parameter(name = "category", description = "Category to filter articles"),
+      @Parameter(name = "page", description = "Page number to retrieve"),
+      @Parameter(name = "size", description = "Number of articles per page")})
+  public ResponseEntity<Page<GetArticle>> getAllArticles(
+      @RequestParam(required = false) Long category, @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size) {
+    Page<GetArticle> articles;
     if (category == null) {
-      articles = articleService.getAllArticles();
+      articles = articleService.getAllArticles(PageRequest.of(page, size));
     } else {
-      articles = articleService.getArticlesByCategoryId(category);
+      articles = articleService.getArticlesByCategoryId(category, PageRequest.of(page, size));
     }
     return ResponseEntity.ok(articles);
   }
@@ -67,10 +72,8 @@ public class ArticleController {
   @Operation(summary = "Create a new article")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
-  public ResponseEntity<GetArticle> createArticle(
-      @ModelAttribute CreateArticle createArticle,
-      @RequestPart List<MultipartFile> images,
-      @AuthenticationPrincipal UserDetails userDetails) {
+  public ResponseEntity<GetArticle> createArticle(@ModelAttribute CreateArticle createArticle,
+      @RequestPart List<MultipartFile> images, @AuthenticationPrincipal UserDetails userDetails) {
     createArticle.setImages(images);
     GetArticle createdArticle = articleService.createArticle(createArticle, userDetails);
     return new ResponseEntity<>(createdArticle, HttpStatus.CREATED);
