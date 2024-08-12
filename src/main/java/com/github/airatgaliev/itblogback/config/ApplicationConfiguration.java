@@ -26,16 +26,19 @@ public class ApplicationConfiguration implements WebMvcConfigurer {
 
   @Value("${user.avatar.upload-dir}")
   private String avatarUploadDir;
-
   @Value("${article.image.upload-dir}")
   private String articleImageUploadDir;
+  @Value("${category.image.upload-dir}")
+  private String categoryImageUploadDir;
 
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
     registry.addResourceHandler("/users/avatars/**")
         .addResourceLocations("file:" + avatarUploadDir + "/");
     registry.addResourceHandler("/articles/images/**")
-        .addResourceLocations("file:" + articleImageUploadDir + "/").setCachePeriod(3600)
+        .addResourceLocations("file:" + articleImageUploadDir + "/");
+    registry.addResourceHandler("/categories/images/**")
+        .addResourceLocations("file:" + categoryImageUploadDir + "/").setCachePeriod(3600)
         .resourceChain(true).addResolver(new EncodedResourceResolver());
   }
 

@@ -48,6 +48,10 @@ public class ArticleModel {
   @JoinTable(name = "article_categories", joinColumns = @JoinColumn(name = "article_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
   private List<CategoryModel> categories = new ArrayList<>();
 
+  @ManyToMany(fetch = FetchType.LAZY)
+  @JoinTable(name = "article_tags", joinColumns = @JoinColumn(name = "article_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
+  private List<TagModel> tags = new ArrayList<>();
+
   @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(name = "article_images", joinColumns = @JoinColumn(name = "article_id"))
   @Column(name = "image_url")

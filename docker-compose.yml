@@ -25,6 +25,7 @@ services:
     volumes:
       - ~/it-blog/users/avatars:/app/users/avatars
       - ~/it-blog/articles/images:/app/articles/images
+      - ~/it-blog/categories/images:/app/categories/images
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/it-blog-back
       SPRING_DATASOURCE_USERNAME: postgres
@@ -33,5 +34,6 @@ services:
       SECURITY_JWT_EXPIRATION_TIME: 3600000
       user.avatar.upload-dir: /app/users/avatars
       article.image.upload-dir: /app/articles/images
+      category.image.upload-dir: /app/categories/images
     depends_on:
       - db

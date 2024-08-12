@@ -25,8 +25,7 @@ public class FileUploadUtil {
     }
 
     String filename = username + "_avatar" + getFileExtension(file);
-    Path path = Paths.get(avatarUploadDir).resolve(filename);
-    saveFile(file, path);
+    saveFile(file, avatarUploadDir, filename);
     return filename;
   }
 
@@ -36,13 +35,23 @@ public class FileUploadUtil {
     }
 
     String filename = articleId + "_" + UUID.randomUUID() + getFileExtension(file);
-    Path path = Paths.get(articleImageUploadDir).resolve(filename);
-    saveFile(file, path);
+    saveFile(file, articleImageUploadDir, filename);
     return filename;
   }
 
-  private void saveFile(MultipartFile file, Path path) {
+  public String uploadCategoryAvatar(MultipartFile file, Long categoryId) {
+    if (file == null || file.isEmpty()) {
+      throw new IllegalArgumentException("File is empty or null");
+    }
+
+    String filename = categoryId + "_image" + getFileExtension(file);
+    saveFile(file, avatarUploadDir, filename);
+    return filename;
+  }
+
+  private void saveFile(MultipartFile file, String dir, String filename) {
     try {
+      Path path = Paths.get(dir).resolve(filename);
       Files.createDirectories(path.getParent());
       Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
     } catch (IOException e) {
