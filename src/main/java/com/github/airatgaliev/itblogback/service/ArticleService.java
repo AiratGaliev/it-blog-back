@@ -7,9 +7,11 @@ import com.github.airatgaliev.itblogback.dto.UpdateArticle;
 import com.github.airatgaliev.itblogback.exception.ArticleNotFoundException;
 import com.github.airatgaliev.itblogback.model.ArticleModel;
 import com.github.airatgaliev.itblogback.model.CategoryModel;
+import com.github.airatgaliev.itblogback.model.TagModel;
 import com.github.airatgaliev.itblogback.model.UserModel;
 import com.github.airatgaliev.itblogback.repository.ArticleRepository;
 import com.github.airatgaliev.itblogback.repository.CategoryRepository;
+import com.github.airatgaliev.itblogback.repository.TagRepository;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
 import com.github.airatgaliev.itblogback.util.FileUploadUtil;
 import java.util.ArrayList;
@@ -36,6 +38,7 @@ public class ArticleService {
   private final ArticleRepository articleRepository;
   private final UserRepository userRepository;
   private final CategoryRepository categoryRepository;
+  private final TagRepository tagRepository;
   private final FileUploadUtil fileUploadUtil;
 
   @Value("${server.servlet.context-path}")
@@ -53,6 +56,19 @@ public class ArticleService {
   }
 
   @Transactional
+  public Page<GetArticle> getArticlesByTagId(Long tagId, Pageable pageable) {
+    return articleRepository.findByTagsId(tagId, pageable)
+        .map(this::convertArticleModelToDTO);
+  }
+
+  @Transactional
+  public Page<GetArticle> getArticlesByCategoryAndTag(Long categoryId, Long tagId,
+      Pageable pageable) {
+    return articleRepository.findByCategoriesIdAndTagsId(categoryId, tagId, pageable)
+        .map(this::convertArticleModelToDTO);
+  }
+
+  @Transactional
   public Optional<GetArticle> getArticleById(Long id) {
     return this.articleRepository.findById(id).map(this::convertArticleModelToDTO);
   }
@@ -63,10 +79,12 @@ public class ArticleService {
         .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     List<CategoryModel> categories = new ArrayList<>(
         categoryRepository.findAllById(createArticle.getCategoryIds()));
+    List<TagModel> tags = new ArrayList<>(tagRepository.findAllById(createArticle.getTagIds()));
     ArticleModel articleModel = new ArticleModel();
     articleModel.setTitle(createArticle.getTitle());
     articleModel.setContent(createArticle.getContent());
     articleModel.setCategories(categories);
+    articleModel.setTags(tags);
     articleModel.setUser(userModel);
     ArticleModel savedArticle = articleRepository.save(articleModel);
     if (createArticle.getImages() != null && !createArticle.getImages().isEmpty()) {
@@ -87,11 +105,13 @@ public class ArticleService {
         .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
     List<CategoryModel> categories = new ArrayList<>(
         categoryRepository.findAllById(updateArticle.getCategoryIds()));
+    List<TagModel> tags = new ArrayList<>(tagRepository.findAllById(updateArticle.getTagIds()));
     if (Objects.equals(userModel.getId(), articleModel.getUser().getId())) {
       articleModel.setTitle(updateArticle.getTitle());
       articleModel.setContent(updateArticle.getContent());
       articleModel.setContent(updateArticle.getContent());
       articleModel.setCategories(categories);
+      articleModel.setTags(tags);
       articleModel.setUser(userModel);
       articleRepository.save(articleModel);
     } else {

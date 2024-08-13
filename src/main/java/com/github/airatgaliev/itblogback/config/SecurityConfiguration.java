@@ -36,14 +36,14 @@ public class SecurityConfiguration {
           corsConfiguration.setAllowedHeaders(List.of("*"));
           corsConfiguration.setAllowCredentials(true);
           return corsConfiguration;
-        }))
-        .authorizeHttpRequests(
+        })).authorizeHttpRequests(
             auth -> auth.requestMatchers("/auth/**").permitAll().requestMatchers("/api-docs/**")
                 .permitAll().requestMatchers("/swagger-ui.html").permitAll()
                 .requestMatchers("/swagger-ui/**").permitAll().requestMatchers("/v3/api-docs/**")
                 .permitAll().requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/articles/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/users/**").permitAll().anyRequest()
+                .requestMatchers(HttpMethod.GET, "/users/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/tags/**").permitAll().anyRequest()
                 .authenticated())
         .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
         .authenticationProvider(authenticationProvider)

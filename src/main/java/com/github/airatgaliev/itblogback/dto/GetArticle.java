@@ -21,6 +21,8 @@ public class GetArticle {
   private String username;
   @Schema(description = "Author's avatar image")
   private String authorAvatarUrl;
+  @Schema(description = "Tags associated with the articles")
+  private List<GetTag> tags;
   @Schema(description = "Categories associated with the article")
   private List<GetCategory> categories;
   @Schema(description = "List of article images")

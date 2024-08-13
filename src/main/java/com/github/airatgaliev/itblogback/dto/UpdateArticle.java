@@ -18,4 +18,6 @@ public class UpdateArticle {
   @NotNull(message = "Categories cannot be empty")
   @Schema(description = "Categories associated with the article")
   private List<Long> categoryIds;
+  @Schema(description = "Tags associated with the article")
+  private List<Long> tagIds;
 }

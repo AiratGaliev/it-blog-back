@@ -5,6 +5,7 @@ import com.github.airatgaliev.itblogback.dto.GetCategory;
 import com.github.airatgaliev.itblogback.dto.GetTag;
 import com.github.airatgaliev.itblogback.dto.UpdateCategory;
 import com.github.airatgaliev.itblogback.model.CategoryModel;
+import com.github.airatgaliev.itblogback.model.TagModel;
 import com.github.airatgaliev.itblogback.repository.CategoryRepository;
 import com.github.airatgaliev.itblogback.repository.TagRepository;
 import com.github.airatgaliev.itblogback.util.FileUploadUtil;
@@ -80,10 +81,11 @@ public class CategoryService {
   }
 
   private GetCategory convertCategoryToDTO(CategoryModel category) {
+    List<TagModel> topTags = tagRepository.findTop10TagsByCategoryId(category.getId());
     return GetCategory.builder().id(category.getId()).name(category.getName())
         .description(category.getDescription()).imageUrl(category.getImageUrl()).tags(
-            category.getTags().stream()
-                .map(tag -> GetTag.builder().id(tag.getId()).name(tag.getName()).build())
+            topTags.stream().map(
+                    tagModel -> GetTag.builder().id(tagModel.getId()).name(tagModel.getName()).build())
                 .collect(Collectors.toList())).build();
   }
 }

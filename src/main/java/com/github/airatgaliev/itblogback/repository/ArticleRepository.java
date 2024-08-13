@@ -10,4 +10,8 @@ import org.springframework.stereotype.Repository;
 public interface ArticleRepository extends JpaRepository<ArticleModel, Long> {
 
   Page<ArticleModel> findByCategoriesId(Long categoryId, Pageable pageable);
+
+  Page<ArticleModel> findByTagsId(Long tagId, Pageable pageable);
+
+  Page<ArticleModel> findByCategoriesIdAndTagsId(Long categoryId, Long tagId, Pageable pageable);
 }

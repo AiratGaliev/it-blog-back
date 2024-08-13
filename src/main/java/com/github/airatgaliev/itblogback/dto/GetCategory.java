@@ -18,6 +18,6 @@ public class GetCategory {
   private String description;
   @Schema(description = "Image of the category")
   private String imageUrl;
-  @Schema(description = "Tags associated with the category")
+  @Schema(description = "Tags associated with the category articles")
   private List<GetTag> tags;
 }
