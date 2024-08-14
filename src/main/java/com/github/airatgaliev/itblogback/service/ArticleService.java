@@ -110,9 +110,7 @@ public class ArticleService {
     articleModel.setTitle(createArticle.getTitle());
     articleModel.setContent(createArticle.getContent());
     articleModel.setCategories(categories);
-    if (createArticle.getTagIds() != null && !createArticle.getTagIds().isEmpty()) {
-      articleModel.setTags(tags);
-    }
+    articleModel.setTags(tags);
     articleModel.setUser(userModel);
     ArticleModel savedArticle = articleRepository.save(articleModel);
     if (createArticle.getImages() != null && !createArticle.getImages().isEmpty()) {
