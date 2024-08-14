@@ -99,8 +99,10 @@ public class ArticleController {
   @Operation(summary = "Create a new article")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
-  public ResponseEntity<GetArticle> createArticle(@ModelAttribute CreateArticle createArticle,
-      @RequestPart List<MultipartFile> images, @AuthenticationPrincipal UserDetails userDetails) {
+  public ResponseEntity<GetArticle> createArticle(
+      @Valid @ModelAttribute CreateArticle createArticle,
+      @RequestPart(value = "images", required = false) List<MultipartFile> images,
+      @AuthenticationPrincipal UserDetails userDetails) {
     createArticle.setImages(images);
     GetArticle createdArticle = articleService.createArticle(createArticle, userDetails);
     return new ResponseEntity<>(createdArticle, HttpStatus.CREATED);

@@ -1,6 +1,7 @@
 package com.github.airatgaliev.itblogback.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import java.util.Date;
 import java.util.List;
 import lombok.Builder;
@@ -21,11 +22,11 @@ public class GetArticle {
   private String username;
   @Schema(description = "Author's avatar image")
   private String authorAvatarUrl;
-  @Schema(description = "Tags associated with the articles")
+  @Schema(description = "Tags associated with the article", requiredMode = RequiredMode.NOT_REQUIRED)
   private List<GetTag> tags;
   @Schema(description = "Categories associated with the article")
   private List<GetCategory> categories;
-  @Schema(description = "List of article images")
+  @Schema(description = "List of article images", requiredMode = RequiredMode.NOT_REQUIRED)
   private List<String> imageUrls;
   @Schema(description = "Date and time of the article creation", example = "2022-01-01T00:00:00.000Z")
   private Date createdAt;

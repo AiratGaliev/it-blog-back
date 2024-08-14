@@ -20,8 +20,8 @@ public class CreateArticle {
   @NotNull(message = "Content cannot be empty")
   @Schema(description = "Categories associated with the article")
   private List<Long> categoryIds;
-  @Schema(description = "Tags associated with the article")
+  @Schema(description = "Tags associated with the article", requiredMode = RequiredMode.NOT_REQUIRED)
   private List<Long> tagIds;
-  @Schema(type = "array", format = "binary", description = "Article images")
+  @Schema(type = "array", format = "binary", description = "Article images", requiredMode = RequiredMode.NOT_REQUIRED)
   private List<MultipartFile> images;
 }

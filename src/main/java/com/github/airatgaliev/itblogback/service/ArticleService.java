@@ -57,16 +57,14 @@ public class ArticleService {
 
   @Transactional
   public Page<GetArticle> getArticlesByTagId(Long tagId, Pageable pageable) {
-    return articleRepository.findByTagsId(tagId, pageable)
-        .map(this::convertArticleModelToDTO);
+    return articleRepository.findByTagsId(tagId, pageable).map(this::convertArticleModelToDTO);
   }
 
   @Transactional
   public Page<GetArticle> getArticlesByCategoryAndTagAndContentContaining(Long categoryId,
       Long tagId, String content, Pageable pageable) {
     return articleRepository.findByCategoriesIdAndTagsIdAndContentContaining(categoryId, tagId,
-            content, pageable)
-        .map(this::convertArticleModelToDTO);
+        content, pageable).map(this::convertArticleModelToDTO);
   }
 
   @Transactional
@@ -112,7 +110,9 @@ public class ArticleService {
     articleModel.setTitle(createArticle.getTitle());
     articleModel.setContent(createArticle.getContent());
     articleModel.setCategories(categories);
-    articleModel.setTags(tags);
+    if (createArticle.getTagIds() != null && !createArticle.getTagIds().isEmpty()) {
+      articleModel.setTags(tags);
+    }
     articleModel.setUser(userModel);
     ArticleModel savedArticle = articleRepository.save(articleModel);
     if (createArticle.getImages() != null && !createArticle.getImages().isEmpty()) {
