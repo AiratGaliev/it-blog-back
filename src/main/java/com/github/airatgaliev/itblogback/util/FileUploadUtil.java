@@ -19,6 +19,9 @@ public class FileUploadUtil {
   @Value("${article.image.upload-dir}")
   private String articleImageUploadDir;
 
+  @Value("${category.image.upload-dir}")
+  private String categoryImageUploadDir;
+
   public String uploadUserAvatar(MultipartFile file, String username) {
     if (file == null || file.isEmpty()) {
       throw new IllegalArgumentException("File is empty or null");
@@ -45,7 +48,7 @@ public class FileUploadUtil {
     }
 
     String filename = categoryId + "_image" + getFileExtension(file);
-    saveFile(file, avatarUploadDir, filename);
+    saveFile(file, categoryImageUploadDir, filename);
     return filename;
   }
 

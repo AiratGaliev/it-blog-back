@@ -47,13 +47,14 @@ public class CategoryService {
     CategoryModel category = new CategoryModel();
     category.setName(createCategory.getName());
     category.setDescription(createCategory.getDescription());
+    CategoryModel savedCategory = categoryRepository.save(category);
     if (createCategory.getImage() != null && !createCategory.getImage().isEmpty()) {
       String imageFilename = fileUploadUtil.uploadCategoryAvatar(createCategory.getImage(),
-          category.getId());
+          savedCategory.getId());
       String imagerUrl = String.format("%s/categories/images/%s", contextPath, imageFilename);
       category.setImageUrl(imagerUrl);
     }
-    CategoryModel savedCategory = categoryRepository.save(category);
+    savedCategory = categoryRepository.save(category);
     return convertCategoryToDTO(savedCategory);
   }
 
