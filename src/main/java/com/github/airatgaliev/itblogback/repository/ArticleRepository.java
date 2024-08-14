@@ -14,4 +14,15 @@ public interface ArticleRepository extends JpaRepository<ArticleModel, Long> {
   Page<ArticleModel> findByTagsId(Long tagId, Pageable pageable);
 
   Page<ArticleModel> findByCategoriesIdAndTagsId(Long categoryId, Long tagId, Pageable pageable);
+
+  Page<ArticleModel> findByCategoriesIdAndTagsIdAndContentContaining(Long categoryId, Long tagId,
+      String content, Pageable pageable);
+
+  Page<ArticleModel> findByTagsIdAndContentContaining(Long tagId, String content,
+      Pageable pageable);
+
+  Page<ArticleModel> findByCategoriesIdAndContentContaining(Long categoryId, String content,
+      Pageable pageable);
+
+  Page<ArticleModel> findByContentContaining(String content, Pageable pageable);
 }

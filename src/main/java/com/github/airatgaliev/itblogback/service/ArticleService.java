@@ -62,9 +62,37 @@ public class ArticleService {
   }
 
   @Transactional
+  public Page<GetArticle> getArticlesByCategoryAndTagAndContentContaining(Long categoryId,
+      Long tagId, String content, Pageable pageable) {
+    return articleRepository.findByCategoriesIdAndTagsIdAndContentContaining(categoryId, tagId,
+            content, pageable)
+        .map(this::convertArticleModelToDTO);
+  }
+
+  @Transactional
+  public Page<GetArticle> getArticlesByTagAndContentContaining(Long tagId, String content,
+      Pageable pageable) {
+    return articleRepository.findByTagsIdAndContentContaining(tagId, content, pageable)
+        .map(this::convertArticleModelToDTO);
+  }
+
+  @Transactional
   public Page<GetArticle> getArticlesByCategoryAndTag(Long categoryId, Long tagId,
       Pageable pageable) {
     return articleRepository.findByCategoriesIdAndTagsId(categoryId, tagId, pageable)
+        .map(this::convertArticleModelToDTO);
+  }
+
+  @Transactional
+  public Page<GetArticle> getArticlesByCategoryAndContentContaining(Long categoryId, String content,
+      Pageable pageable) {
+    return articleRepository.findByCategoriesIdAndContentContaining(categoryId, content, pageable)
+        .map(this::convertArticleModelToDTO);
+  }
+
+  @Transactional
+  public Page<GetArticle> getArticlesByContentContaining(String content, Pageable pageable) {
+    return articleRepository.findByContentContaining(content, pageable)
         .map(this::convertArticleModelToDTO);
   }
 

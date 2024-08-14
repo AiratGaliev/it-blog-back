@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -45,22 +46,41 @@ public class ArticleController {
   private final ArticleService articleService;
 
   @GetMapping
-  @Operation(summary = "Get all articles or articles by category or tag", description = "Retrieve all articles or filter articles by category and/or tag")
+  @Operation(summary = "Get all articles or filter articles by various criteria", description = "Retrieve all articles or filter articles by category, tag, and/or content. Supports pagination and multiple filter combinations to narrow down search results.")
   @Parameters({@Parameter(name = "category", description = "Category to filter articles"),
       @Parameter(name = "tag", description = "Tag to filter articles"),
+      @Parameter(name = "content", description = "Content to filter articles"),
       @Parameter(name = "page", description = "Page number to retrieve"),
-      @Parameter(name = "size", description = "Number of articles per page")})
+      @Parameter(name = "size", description = "Number of articles per page"),
+      @Parameter(name = "sort", description = "Field to sort by"),
+      @Parameter(name = "order", description = "Order direction, either 'asc' or 'desc'")})
   public ResponseEntity<Page<GetArticle>> getAllArticles(
       @RequestParam(required = false) Long category, @RequestParam(required = false) Long tag,
-      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+      @RequestParam(required = false) String content, @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size,
+      @RequestParam(defaultValue = "createdAt") String sort,
+      @RequestParam(defaultValue = "desc") String order) {
+
+    Sort.Direction sortDirection = Sort.Direction.fromString(order);
+    Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
     Page<GetArticle> articles;
-    Pageable pageable = PageRequest.of(page, size);
-    if (category != null && tag != null) {
+
+    if (category != null && tag != null && content != null) {
+      articles = articleService.getArticlesByCategoryAndTagAndContentContaining(category, tag,
+          content, pageable);
+    } else if (category != null && tag != null) {
       articles = articleService.getArticlesByCategoryAndTag(category, tag, pageable);
+    } else if (category != null && content != null) {
+      articles = articleService.getArticlesByCategoryAndContentContaining(category, content,
+          pageable);
+    } else if (tag != null && content != null) {
+      articles = articleService.getArticlesByTagAndContentContaining(tag, content, pageable);
     } else if (category != null) {
       articles = articleService.getArticlesByCategoryId(category, pageable);
     } else if (tag != null) {
       articles = articleService.getArticlesByTagId(tag, pageable);
+    } else if (content != null) {
+      articles = articleService.getArticlesByContentContaining(content, pageable);
     } else {
       articles = articleService.getAllArticles(pageable);
     }
