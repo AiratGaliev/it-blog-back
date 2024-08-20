@@ -30,7 +30,7 @@ public class TagController {
   private final TagService tagService;
 
   @GetMapping
-  @Operation(summary = "Get tag by name")
+  @Operation(summary = "Get tags by name")
   public ResponseEntity<List<GetTag>> getTagsByNameContaining(@RequestParam String name) {
     List<GetTag> tags = tagService.getTagsByNameContaining(name);
     return ResponseEntity.ok(tags);

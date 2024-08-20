@@ -3,6 +3,7 @@ package com.github.airatgaliev.itblogback.service;
 import com.github.airatgaliev.itblogback.dto.CreateArticle;
 import com.github.airatgaliev.itblogback.dto.GetArticle;
 import com.github.airatgaliev.itblogback.dto.GetCategory;
+import com.github.airatgaliev.itblogback.dto.GetTag;
 import com.github.airatgaliev.itblogback.dto.UpdateArticle;
 import com.github.airatgaliev.itblogback.exception.ArticleNotFoundException;
 import com.github.airatgaliev.itblogback.model.ArticleModel;
@@ -16,6 +17,7 @@ import com.github.airatgaliev.itblogback.repository.UserRepository;
 import com.github.airatgaliev.itblogback.util.FileUploadUtil;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -56,28 +58,31 @@ public class ArticleService {
   }
 
   @Transactional
-  public Page<GetArticle> getArticlesByTagId(Long tagId, Pageable pageable) {
-    return articleRepository.findByTagsId(tagId, pageable).map(this::convertArticleModelToDTO);
-  }
-
-  @Transactional
-  public Page<GetArticle> getArticlesByCategoryAndTagAndContentContaining(Long categoryId,
-      Long tagId, String content, Pageable pageable) {
-    return articleRepository.findByCategoriesIdAndTagsIdAndContentContaining(categoryId, tagId,
-        content, pageable).map(this::convertArticleModelToDTO);
-  }
-
-  @Transactional
-  public Page<GetArticle> getArticlesByTagAndContentContaining(Long tagId, String content,
-      Pageable pageable) {
-    return articleRepository.findByTagsIdAndContentContaining(tagId, content, pageable)
+  public Page<GetArticle> getArticlesByTagsName(String tagName, Pageable pageable) {
+    return articleRepository.findByTagsNameIgnoreCase(tagName, pageable)
         .map(this::convertArticleModelToDTO);
   }
 
   @Transactional
-  public Page<GetArticle> getArticlesByCategoryAndTag(Long categoryId, Long tagId,
+  public Page<GetArticle> getArticlesByCategoryAndTagsNameAndContentContaining(Long categoryId,
+      String tagName, String content, Pageable pageable) {
+    return articleRepository.findByCategoriesIdAndTagsNameIgnoreCaseAndContentContaining(categoryId,
+        tagName,
+        content, pageable).map(this::convertArticleModelToDTO);
+  }
+
+  @Transactional
+  public Page<GetArticle> getArticlesByTagsNameAndContentContaining(String tagName, String content,
       Pageable pageable) {
-    return articleRepository.findByCategoriesIdAndTagsId(categoryId, tagId, pageable)
+    return articleRepository.findByTagsNameIgnoreCaseAndContentContaining(tagName, content,
+            pageable)
+        .map(this::convertArticleModelToDTO);
+  }
+
+  @Transactional
+  public Page<GetArticle> getArticlesByCategoryAndTag(Long categoryId, String tagName,
+      Pageable pageable) {
+    return articleRepository.findByCategoriesIdAndTagsNameIgnoreCase(categoryId, tagName, pageable)
         .map(this::convertArticleModelToDTO);
   }
 
@@ -105,12 +110,27 @@ public class ArticleService {
         .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     List<CategoryModel> categories = new ArrayList<>(
         categoryRepository.findAllById(createArticle.getCategoryIds()));
-    List<TagModel> tags = new ArrayList<>(tagRepository.findAllById(createArticle.getTagIds()));
+    List<String> tags = createArticle.getTags();
+    List<TagModel> tagModels = new ArrayList<>();
+    if (tags != null && !tags.isEmpty()) {
+      List<TagModel> existingTags = tagRepository.findAllByNameIgnoreCaseIn(tags);
+      Map<String, TagModel> existingTagMap = existingTags.stream()
+          .collect(Collectors.toMap(tag -> tag.getName().toLowerCase(), tag -> tag));
+      tags.forEach(tag -> {
+        TagModel tagModel = existingTagMap.get(tag.toLowerCase());
+        if (tagModel == null) {
+          tagModel = new TagModel();
+          tagModel.setName(tag);
+          tagModel = tagRepository.save(tagModel);
+        }
+        tagModels.add(tagModel);
+      });
+    }
     ArticleModel articleModel = new ArticleModel();
     articleModel.setTitle(createArticle.getTitle());
     articleModel.setContent(createArticle.getContent());
     articleModel.setCategories(categories);
-    articleModel.setTags(tags);
+    articleModel.setTags(tagModels);
     articleModel.setUser(userModel);
     ArticleModel savedArticle = articleRepository.save(articleModel);
     if (createArticle.getImages() != null && !createArticle.getImages().isEmpty()) {
@@ -124,25 +144,40 @@ public class ArticleService {
   }
 
   @Transactional
-  public void updateArticle(Long id, UpdateArticle updateArticle, UserDetails userDetails) {
+  public GetArticle updateArticle(Long id, UpdateArticle updateArticle, UserDetails userDetails) {
     UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
         () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
     ArticleModel articleModel = articleRepository.findById(id)
         .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+    if (!Objects.equals(userModel.getId(), articleModel.getUser().getId())) {
+      throw new AccessDeniedException("You are not allowed to update this article");
+    }
     List<CategoryModel> categories = new ArrayList<>(
         categoryRepository.findAllById(updateArticle.getCategoryIds()));
-    List<TagModel> tags = new ArrayList<>(tagRepository.findAllById(updateArticle.getTagIds()));
-    if (Objects.equals(userModel.getId(), articleModel.getUser().getId())) {
-      articleModel.setTitle(updateArticle.getTitle());
-      articleModel.setContent(updateArticle.getContent());
-      articleModel.setContent(updateArticle.getContent());
-      articleModel.setCategories(categories);
-      articleModel.setTags(tags);
-      articleModel.setUser(userModel);
-      articleRepository.save(articleModel);
-    } else {
-      throw new AccessDeniedException("You are not accessible to update this article");
+    List<String> tags = updateArticle.getTags();
+    List<TagModel> tagModels = new ArrayList<>();
+    if (tags != null && !tags.isEmpty()) {
+      List<TagModel> existingTags = tagRepository.findAllByNameIgnoreCaseIn(tags);
+      Map<String, TagModel> existingTagMap = existingTags.stream()
+          .collect(Collectors.toMap(tag -> tag.getName().toLowerCase(), tag -> tag));
+      tags.forEach(tag -> {
+        TagModel tagModel = existingTagMap.get(tag.toLowerCase());
+        if (tagModel == null) {
+          tagModel = new TagModel();
+          tagModel.setName(tag);
+          tagModel = tagRepository.save(tagModel);
+        }
+        tagModels.add(tagModel);
+      });
     }
+    articleModel.setTitle(updateArticle.getTitle());
+    articleModel.setContent(updateArticle.getContent());
+    articleModel.setContent(updateArticle.getContent());
+    articleModel.setCategories(categories);
+    articleModel.setTags(tagModels);
+    articleModel.setUser(userModel);
+    ArticleModel savedArticle = articleRepository.save(articleModel);
+    return convertArticleModelToDTO(savedArticle);
   }
 
   @Transactional
@@ -162,10 +197,13 @@ public class ArticleService {
     return GetArticle.builder().id(articleModel.getId()).title(articleModel.getTitle())
         .content(articleModel.getContent()).username(articleModel.getUser().getUsername())
         .authorAvatarUrl(articleModel.getUser().getAvatarUrl())
-        .imageUrls(articleModel.getImageUrls().stream().toList()).categories(
-            articleModel.getCategories().stream().map(
-                categoryModel -> GetCategory.builder().id(categoryModel.getId())
-                    .name(categoryModel.getName()).build()).collect(Collectors.toList()))
+        .imageUrls(articleModel.getImageUrls().stream().toList())
+        .categories(articleModel.getCategories().stream().map(
+            categoryModel -> GetCategory.builder().id(categoryModel.getId())
+                .name(categoryModel.getName()).build()).collect(Collectors.toList()))
+        .tags(articleModel.getTags().stream()
+            .map(tagModel -> GetTag.builder().id(tagModel.getId()).name(tagModel.getName()).build())
+            .collect(Collectors.toList()))
         .createdAt(articleModel.getCreatedAt()).updatedAt(articleModel.getUpdatedAt()).build();
   }
 }

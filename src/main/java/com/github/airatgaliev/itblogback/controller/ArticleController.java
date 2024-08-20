@@ -29,7 +29,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -55,7 +54,7 @@ public class ArticleController {
       @Parameter(name = "sort", description = "Field to sort by"),
       @Parameter(name = "order", description = "Order direction, either 'asc' or 'desc'")})
   public ResponseEntity<Page<GetArticle>> getAllArticles(
-      @RequestParam(required = false) Long category, @RequestParam(required = false) Long tag,
+      @RequestParam(required = false) Long category, @RequestParam(required = false) String tag,
       @RequestParam(required = false) String content, @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "createdAt") String sort,
@@ -66,7 +65,7 @@ public class ArticleController {
     Page<GetArticle> articles;
 
     if (category != null && tag != null && content != null) {
-      articles = articleService.getArticlesByCategoryAndTagAndContentContaining(category, tag,
+      articles = articleService.getArticlesByCategoryAndTagsNameAndContentContaining(category, tag,
           content, pageable);
     } else if (category != null && tag != null) {
       articles = articleService.getArticlesByCategoryAndTag(category, tag, pageable);
@@ -74,11 +73,11 @@ public class ArticleController {
       articles = articleService.getArticlesByCategoryAndContentContaining(category, content,
           pageable);
     } else if (tag != null && content != null) {
-      articles = articleService.getArticlesByTagAndContentContaining(tag, content, pageable);
+      articles = articleService.getArticlesByTagsNameAndContentContaining(tag, content, pageable);
     } else if (category != null) {
       articles = articleService.getArticlesByCategoryId(category, pageable);
     } else if (tag != null) {
-      articles = articleService.getArticlesByTagId(tag, pageable);
+      articles = articleService.getArticlesByTagsName(tag, pageable);
     } else if (content != null) {
       articles = articleService.getArticlesByContentContaining(content, pageable);
     } else {
@@ -108,15 +107,17 @@ public class ArticleController {
     return new ResponseEntity<>(createdArticle, HttpStatus.CREATED);
   }
 
-  @PutMapping("/{id}")
+  @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @Operation(summary = "Update an article by id")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
-  public ResponseEntity<String> updateArticle(@PathVariable Long id,
-      @Valid @RequestBody UpdateArticle updateArticle,
+  public ResponseEntity<GetArticle> updateArticle(@PathVariable Long id,
+      @Valid @ModelAttribute UpdateArticle updateArticle,
+      @RequestPart(value = "images", required = false) List<MultipartFile> images,
       @AuthenticationPrincipal UserDetails userDetails) {
-    articleService.updateArticle(id, updateArticle, userDetails);
-    return new ResponseEntity<>("Article updated successfully", HttpStatus.OK);
+    updateArticle.setImages(images);
+    GetArticle updatedArticle = articleService.updateArticle(id, updateArticle, userDetails);
+    return new ResponseEntity<>(updatedArticle, HttpStatus.OK);
   }
 
   @DeleteMapping("/{id}")

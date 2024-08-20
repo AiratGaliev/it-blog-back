@@ -22,7 +22,7 @@ public class CreateArticle {
   @Schema(description = "Categories associated with the article")
   private List<Long> categoryIds;
   @Schema(description = "Tags associated with the article", requiredMode = RequiredMode.NOT_REQUIRED)
-  private List<Long> tagIds = new ArrayList<>();
+  private List<String> tags = new ArrayList<>();
   @Schema(type = "array", format = "binary", description = "Article images", requiredMode = RequiredMode.NOT_REQUIRED)
   private List<MultipartFile> images = new ArrayList<>();
 }

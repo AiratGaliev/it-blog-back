@@ -48,7 +48,7 @@ public class UserService {
   }
 
   @Transactional
-  public void updateUser(UpdateUser updateUser, UserDetails userDetails,
+  public GetUser updateUser(UpdateUser updateUser, UserDetails userDetails,
       BindingResult bindingResult) {
     UserModel user = userRepository.findByUsername(userDetails.getUsername())
         .orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -91,9 +91,7 @@ public class UserService {
       String avatarUrl = String.format("%s/users/avatars/%s", contextPath, avatarFilename);
       user.setAvatarUrl(avatarUrl);
     }
-    if (!bindingResult.hasErrors()) {
-      userRepository.save(user);
-    }
+    return convertUserModelToDto(userRepository.save(user));
   }
 
   @Transactional

@@ -69,15 +69,15 @@ public class UserController {
       @RequestParam(value = "avatar", required = false) MultipartFile avatar,
       @AuthenticationPrincipal UserDetails userDetails, BindingResult bindingResult) {
     updateUser.setAvatar(avatar);
-    userService.updateUser(updateUser, userDetails, bindingResult);
+    GetUser updatedUser = userService.updateUser(updateUser, userDetails, bindingResult);
     if (bindingResult.hasErrors()) {
-      Map<String, String> errors = bindingResult.getFieldErrors().stream()
-          .collect(Collectors.toMap(FieldError::getField,
+      Map<String, String> errors = bindingResult.getFieldErrors().stream().collect(
+          Collectors.toMap(FieldError::getField,
               fieldError -> Optional.ofNullable(fieldError.getDefaultMessage())
                   .orElse("Unknown error")));
       return ResponseEntity.badRequest().body(errors);
     }
-    return ResponseEntity.ok("User updated successfully");
+    return new ResponseEntity<>(updatedUser, HttpStatus.OK);
   }
 
   @DeleteMapping("/{username}")
