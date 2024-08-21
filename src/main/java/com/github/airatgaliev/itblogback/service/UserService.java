@@ -1,8 +1,8 @@
 package com.github.airatgaliev.itblogback.service;
 
+import com.github.airatgaliev.itblogback.dto.GetCategory;
 import com.github.airatgaliev.itblogback.dto.GetUser;
 import com.github.airatgaliev.itblogback.dto.UpdateUser;
-import com.github.airatgaliev.itblogback.model.ArticleModel;
 import com.github.airatgaliev.itblogback.model.CategoryModel;
 import com.github.airatgaliev.itblogback.model.Role;
 import com.github.airatgaliev.itblogback.model.UserModel;
@@ -106,9 +106,9 @@ public class UserService {
     List<CategoryModel> categories = categoryRepository.findCategoriesByUserId(userModel.getId());
     return GetUser.builder().username(userModel.getUsername()).email(userModel.getEmail())
         .firstName(userModel.getFirstName()).lastName(userModel.getLastName())
-        .bio(userModel.getBio()).avatarUrl(userModel.getAvatarUrl())
-        .articlesIds(userModel.getArticles().stream().map(ArticleModel::getId).toList())
-        .categoriesIds(categories.stream().map(CategoryModel::getId).toList())
-        .role(userModel.getRole()).build();
+        .bio(userModel.getBio()).avatarUrl(userModel.getAvatarUrl()).categories(categories.stream()
+            .map((categoryModel -> GetCategory.builder().id(categoryModel.getId())
+                .name(categoryModel.getName()).build())).toList()).role(userModel.getRole())
+        .build();
   }
 }

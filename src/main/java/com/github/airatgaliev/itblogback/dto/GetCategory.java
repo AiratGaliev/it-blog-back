@@ -1,5 +1,6 @@
 package com.github.airatgaliev.itblogback.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.Builder;
@@ -8,6 +9,7 @@ import lombok.Data;
 @Data
 @Builder
 @Schema(name = "Get Category")
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class GetCategory {
 
   @Schema(description = "ID of the category", example = "1")
