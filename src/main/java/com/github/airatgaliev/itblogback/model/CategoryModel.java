@@ -36,7 +36,4 @@ public class CategoryModel {
 
   @ManyToMany(fetch = FetchType.LAZY, mappedBy = "categories")
   private List<ArticleModel> articles = new ArrayList<>();
-
-//  @ManyToMany(fetch = FetchType.LAZY, mappedBy = "categories")
-//  private List<TagModel> tags = new ArrayList<>();
 }

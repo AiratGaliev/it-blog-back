@@ -3,8 +3,10 @@ package com.github.airatgaliev.itblogback.service;
 import com.github.airatgaliev.itblogback.dto.GetUser;
 import com.github.airatgaliev.itblogback.dto.UpdateUser;
 import com.github.airatgaliev.itblogback.model.ArticleModel;
+import com.github.airatgaliev.itblogback.model.CategoryModel;
 import com.github.airatgaliev.itblogback.model.Role;
 import com.github.airatgaliev.itblogback.model.UserModel;
+import com.github.airatgaliev.itblogback.repository.CategoryRepository;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
 import com.github.airatgaliev.itblogback.util.FileUploadUtil;
 import java.util.List;
@@ -24,6 +26,7 @@ import org.springframework.validation.BindingResult;
 public class UserService {
 
   private final UserRepository userRepository;
+  private final CategoryRepository categoryRepository;
   private final FileUploadUtil fileUploadUtil;
   private final PasswordEncoder passwordEncoder;
 
@@ -100,10 +103,12 @@ public class UserService {
   }
 
   private GetUser convertUserModelToDto(UserModel userModel) {
+    List<CategoryModel> categories = categoryRepository.findCategoriesByUserId(userModel.getId());
     return GetUser.builder().username(userModel.getUsername()).email(userModel.getEmail())
         .firstName(userModel.getFirstName()).lastName(userModel.getLastName())
         .bio(userModel.getBio()).avatarUrl(userModel.getAvatarUrl())
         .articlesIds(userModel.getArticles().stream().map(ArticleModel::getId).toList())
+        .categoriesIds(categories.stream().map(CategoryModel::getId).toList())
         .role(userModel.getRole()).build();
   }
 }

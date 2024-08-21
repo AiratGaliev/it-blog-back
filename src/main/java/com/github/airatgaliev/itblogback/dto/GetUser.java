@@ -34,4 +34,7 @@ public class GetUser {
 
   @Schema(description = "List of articles written by the user with Author role")
   private List<Long> articlesIds;
+
+  @Schema(description = "List of categories associated with the user")
+  private List<Long> categoriesIds;
 }
