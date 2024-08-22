@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -47,61 +48,13 @@ public class ArticleService {
   private String contextPath;
 
   @Transactional
-  public Page<GetArticle> getAllArticles(Pageable pageable) {
-    return this.articleRepository.findAll(pageable).map(this::convertArticleModelToDTO);
-  }
-
-  @Transactional
-  public Page<GetArticle> getArticlesByCategoryId(Long categoryId, Pageable pageable) {
-    return articleRepository.findByCategoriesId(categoryId, pageable)
-        .map(this::convertArticleModelToDTO);
-  }
-
-  @Transactional
-  public Page<GetArticle> getArticlesByTagsName(String tagName, Pageable pageable) {
-    return articleRepository.findByTagsNameIgnoreCase(tagName, pageable)
-        .map(this::convertArticleModelToDTO);
-  }
-
-  @Transactional
-  public Page<GetArticle> getArticlesByCategoryAndTagsNameAndContentContaining(Long categoryId,
-      String tagName, String content, Pageable pageable) {
-    return articleRepository.findByCategoriesIdAndTagsNameIgnoreCaseAndContentContaining(categoryId,
-        tagName,
-        content, pageable).map(this::convertArticleModelToDTO);
-  }
-
-  @Transactional
-  public Page<GetArticle> getArticlesByTagsNameAndContentContaining(String tagName, String content,
-      Pageable pageable) {
-    return articleRepository.findByTagsNameIgnoreCaseAndContentContaining(tagName, content,
-            pageable)
-        .map(this::convertArticleModelToDTO);
-  }
-
-  @Transactional
-  public Page<GetArticle> getArticlesByCategoryAndTag(Long categoryId, String tagName,
-      Pageable pageable) {
-    return articleRepository.findByCategoriesIdAndTagsNameIgnoreCase(categoryId, tagName, pageable)
-        .map(this::convertArticleModelToDTO);
-  }
-
-  @Transactional
-  public Page<GetArticle> getArticlesByCategoryAndContentContaining(Long categoryId, String content,
-      Pageable pageable) {
-    return articleRepository.findByCategoriesIdAndContentContaining(categoryId, content, pageable)
-        .map(this::convertArticleModelToDTO);
-  }
-
-  @Transactional
-  public Page<GetArticle> getArticlesByContentContaining(String content, Pageable pageable) {
-    return articleRepository.findByContentContaining(content, pageable)
-        .map(this::convertArticleModelToDTO);
+  public Page<GetArticle> getArticles(Specification<ArticleModel> spec, Pageable pageable) {
+    return articleRepository.findAll(spec, pageable).map(this::convertArticleModelToDTO);
   }
 
   @Transactional
   public Optional<GetArticle> getArticleById(Long id) {
-    return this.articleRepository.findById(id).map(this::convertArticleModelToDTO);
+    return articleRepository.findById(id).map(this::convertArticleModelToDTO);
   }
 
   @Transactional
@@ -197,13 +150,13 @@ public class ArticleService {
     return GetArticle.builder().id(articleModel.getId()).title(articleModel.getTitle())
         .content(articleModel.getContent()).username(articleModel.getUser().getUsername())
         .authorAvatarUrl(articleModel.getUser().getAvatarUrl())
-        .imageUrls(articleModel.getImageUrls().stream().toList())
-        .categories(articleModel.getCategories().stream().map(
-            categoryModel -> GetCategory.builder().id(categoryModel.getId())
-                .name(categoryModel.getName()).build()).collect(Collectors.toList()))
-        .tags(articleModel.getTags().stream()
-            .map(tagModel -> GetTag.builder().id(tagModel.getId()).name(tagModel.getName()).build())
-            .collect(Collectors.toList()))
-        .createdAt(articleModel.getCreatedAt()).updatedAt(articleModel.getUpdatedAt()).build();
+        .imageUrls(articleModel.getImageUrls().stream().toList()).categories(
+            articleModel.getCategories().stream().map(
+                categoryModel -> GetCategory.builder().id(categoryModel.getId())
+                    .name(categoryModel.getName()).build()).collect(Collectors.toList())).tags(
+            articleModel.getTags().stream().map(
+                    tagModel -> GetTag.builder().id(tagModel.getId()).name(tagModel.getName()).build())
+                .collect(Collectors.toList())).createdAt(articleModel.getCreatedAt())
+        .updatedAt(articleModel.getUpdatedAt()).build();
   }
 }

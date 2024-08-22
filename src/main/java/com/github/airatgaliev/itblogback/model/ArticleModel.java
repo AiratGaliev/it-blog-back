@@ -21,12 +21,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded;
 
-@Entity
-@Table(name = "articles")
 @Data
-@AllArgsConstructor
+@Entity
+@Indexed
 @NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "articles")
 public class ArticleModel {
 
   @Id
@@ -37,17 +41,21 @@ public class ArticleModel {
   @Column(nullable = false)
   private String title;
 
+  @FullTextField
   @Column(nullable = false, columnDefinition = "TEXT")
   private String content;
 
+  @IndexedEmbedded
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
   private UserModel user;
 
+  @IndexedEmbedded
   @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(name = "article_categories", joinColumns = @JoinColumn(name = "article_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
   private List<CategoryModel> categories = new ArrayList<>();
 
+  @IndexedEmbedded
   @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(name = "article_tags", joinColumns = @JoinColumn(name = "article_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
   private List<TagModel> tags = new ArrayList<>();
