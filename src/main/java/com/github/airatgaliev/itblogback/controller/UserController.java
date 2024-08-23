@@ -4,6 +4,8 @@ import com.github.airatgaliev.itblogback.dto.GetUser;
 import com.github.airatgaliev.itblogback.dto.UpdateUser;
 import com.github.airatgaliev.itblogback.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -49,8 +51,15 @@ public class UserController {
 
   @GetMapping("/authors")
   @Operation(summary = "Get all authors")
-  public ResponseEntity<List<GetUser>> getAllAuthors() {
-    List<GetUser> users = userService.getAllAuthors();
+  @Parameters({@Parameter(name = "categoryId", description = "Category id to filter authors")})
+  public ResponseEntity<List<GetUser>> getAllAuthors(
+      @RequestParam(required = false) Long categoryId) {
+    List<GetUser> users;
+    if (categoryId != null) {
+      users = userService.getAllAuthorsByCategoryId(categoryId);
+    } else {
+      users = userService.getAllAuthors();
+    }
     return ResponseEntity.ok(users);
   }
 

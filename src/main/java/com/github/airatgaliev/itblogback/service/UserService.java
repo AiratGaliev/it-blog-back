@@ -46,6 +46,13 @@ public class UserService {
   }
 
   @Transactional
+  public List<GetUser> getAllAuthorsByCategoryId(Long categoryId) {
+    return userRepository.findAuthorsByCategoryId(categoryId).stream()
+        .map(this::convertUserModelToDto)
+        .collect(Collectors.toList());
+  }
+
+  @Transactional
   public Optional<GetUser> getUserByUsername(String username) {
     return userRepository.findByUsername(username).map(this::convertUserModelToDto);
   }

@@ -5,12 +5,18 @@ import com.github.airatgaliev.itblogback.model.UserModel;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserRepository extends JpaRepository<UserModel, Long> {
 
   List<UserModel> findAllByRole(Role role);
+
+  @Query("SELECT DISTINCT u FROM UserModel u " + "JOIN u.articles a " + "JOIN a.categories c "
+      + "WHERE c.id = :categoryId")
+  List<UserModel> findAuthorsByCategoryId(@Param("categoryId") Long categoryId);
 
   Optional<UserModel> findByUsername(String name);
 
