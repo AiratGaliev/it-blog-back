@@ -1,14 +1,10 @@
 package com.github.airatgaliev.itblogback.controller;
 
-import static com.github.airatgaliev.itblogback.repository.specifications.ArticleSpecifications.hasAuthorId;
-import static com.github.airatgaliev.itblogback.repository.specifications.ArticleSpecifications.hasCategoryId;
-import static com.github.airatgaliev.itblogback.repository.specifications.ArticleSpecifications.hasContentContaining;
-import static com.github.airatgaliev.itblogback.repository.specifications.ArticleSpecifications.hasTagName;
-
 import com.github.airatgaliev.itblogback.dto.CreateArticle;
 import com.github.airatgaliev.itblogback.dto.GetArticle;
 import com.github.airatgaliev.itblogback.dto.UpdateArticle;
 import com.github.airatgaliev.itblogback.model.ArticleModel;
+import com.github.airatgaliev.itblogback.repository.specifications.ArticleSpecifications;
 import com.github.airatgaliev.itblogback.service.ArticleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -71,12 +67,19 @@ public class ArticleController {
     Sort.Direction sortDirection = Sort.Direction.fromString(order);
     Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
 
-    Specification<ArticleModel> spec = Specification.where(hasCategoryId(categoryId))
-        .and(hasTagName(tag))
-        .and(hasAuthorId(authorId))
-        .and(hasContentContaining(content));
+    Specification<ArticleModel> spec = Specification.where(
+            ArticleSpecifications.hasCategoryId(categoryId))
+        .and(ArticleSpecifications.hasTagName(tag))
+        .and(ArticleSpecifications.hasAuthorId(authorId));
 
-    Page<GetArticle> articles = articleService.getArticles(spec, pageable);
+    Page<GetArticle> articles;
+
+    if (content != null && !content.isEmpty()) {
+      articles = articleService.searchAndFilterArticles(content, spec, pageable);
+    } else {
+      articles = articleService.getArticles(spec, pageable);
+    }
+
     return ResponseEntity.ok(articles);
   }
 

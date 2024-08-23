@@ -38,6 +38,7 @@ public class ArticleModel {
   @Column(nullable = false)
   private Long id;
 
+  @FullTextField
   @Column(nullable = false)
   private String title;
 

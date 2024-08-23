@@ -15,6 +15,7 @@ import com.github.airatgaliev.itblogback.repository.CategoryRepository;
 import com.github.airatgaliev.itblogback.repository.TagRepository;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
 import com.github.airatgaliev.itblogback.util.FileUploadUtil;
+import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.search.mapper.orm.Search;
+import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -38,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ArticleService {
 
+  private final EntityManager entityManager;
   private final ArticleRepository articleRepository;
   private final UserRepository userRepository;
   private final CategoryRepository categoryRepository;
@@ -46,10 +52,45 @@ public class ArticleService {
 
   @Value("${server.servlet.context-path}")
   private String contextPath;
+  @Value("${search.results.limit}")
+  private int searchResultsLimit;
 
   @Transactional
   public Page<GetArticle> getArticles(Specification<ArticleModel> spec, Pageable pageable) {
     return articleRepository.findAll(spec, pageable).map(this::convertArticleModelToDTO);
+  }
+
+  @EventListener(ContextRefreshedEvent.class)
+  @Transactional
+  public void onApplicationEvent(ContextRefreshedEvent event) {
+    initializeSearchIndexing();
+  }
+
+  @Transactional
+  public void initializeSearchIndexing() {
+    SearchSession searchSession = Search.session(entityManager);
+    searchSession.massIndexer(ArticleModel.class).threadsToLoadObjects(5).start()
+        .thenRun(() -> log.info("Indexing completed successfully.")).exceptionally(e -> {
+          log.error("Error occurred during indexing.", e);
+          return null;
+        });
+  }
+
+  @Transactional
+  public Page<GetArticle> searchAndFilterArticles(String content, Specification<ArticleModel> spec,
+      Pageable pageable) {
+    List<Long> articleIds = searchArticleIdsByContent(content);
+    Specification<ArticleModel> combinedSpec = spec.and(
+        (root, query, builder) -> root.get("id").in(articleIds));
+    return articleRepository.findAll(combinedSpec, pageable).map(this::convertArticleModelToDTO);
+  }
+
+  private List<Long> searchArticleIdsByContent(String content) {
+    SearchSession searchSession = Search.session(entityManager);
+    return searchSession.search(ArticleModel.class)
+        .where(f -> f.match().fields("content", "title").matching(content).fuzzy())
+        .fetchHits(searchResultsLimit)
+        .stream().map(ArticleModel::getId).collect(Collectors.toList());
   }
 
   @Transactional

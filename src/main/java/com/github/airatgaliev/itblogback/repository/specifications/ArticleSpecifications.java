@@ -19,9 +19,4 @@ public class ArticleSpecifications {
     return (root, query, builder) -> authorId != null ? builder.equal(root.get("user").get("id"),
         authorId) : null;
   }
-
-  public static Specification<ArticleModel> hasContentContaining(String content) {
-    return (root, query, builder) -> content != null ? builder.like(
-        builder.lower(root.get("content")), "%" + content.toLowerCase() + "%") : null;
-  }
 }
