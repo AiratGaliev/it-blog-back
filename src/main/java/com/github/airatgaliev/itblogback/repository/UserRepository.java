@@ -12,7 +12,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserRepository extends JpaRepository<UserModel, Long> {
 
-  List<UserModel> findAllByRole(Role role);
+  List<UserModel> findAllByRoleIsNot(Role role);
+
+  List<UserModel> findAllByRoleAndRoleIsNot(Role role, Role role2);
 
   @Query("SELECT DISTINCT u FROM UserModel u " + "JOIN u.articles a " + "JOIN a.categories c "
       + "WHERE c.id = :categoryId")

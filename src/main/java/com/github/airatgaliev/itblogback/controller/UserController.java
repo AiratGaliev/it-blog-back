@@ -2,10 +2,12 @@ package com.github.airatgaliev.itblogback.controller;
 
 import com.github.airatgaliev.itblogback.dto.GetUser;
 import com.github.airatgaliev.itblogback.dto.UpdateUser;
+import com.github.airatgaliev.itblogback.dto.UserRole;
 import com.github.airatgaliev.itblogback.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -44,21 +46,18 @@ public class UserController {
 
   @GetMapping
   @Operation(summary = "Get all users")
-  public ResponseEntity<List<GetUser>> getAllUsers() {
-    List<GetUser> users = userService.getAllUsers();
-    return ResponseEntity.ok(users);
-  }
-
-  @GetMapping("/authors")
-  @Operation(summary = "Get all authors")
-  @Parameters({@Parameter(name = "categoryId", description = "Category id to filter authors")})
-  public ResponseEntity<List<GetUser>> getAllAuthors(
+  @Parameters({
+      @Parameter(name = "role", description = "Role to filter users", schema = @Schema(implementation = UserRole.class)),
+      @Parameter(name = "categoryId", description = "Category id to filter authors")})
+  public ResponseEntity<List<GetUser>> getAllAuthors(@RequestParam(required = false) UserRole role,
       @RequestParam(required = false) Long categoryId) {
     List<GetUser> users;
-    if (categoryId != null) {
+    if (categoryId != null && role == UserRole.ROLE_AUTHOR) {
       users = userService.getAllAuthorsByCategoryId(categoryId);
+    } else if (role != null) {
+      users = userService.getAllByRole(role.toRole());
     } else {
-      users = userService.getAllAuthors();
+      users = userService.getAllUsers();
     }
     return ResponseEntity.ok(users);
   }

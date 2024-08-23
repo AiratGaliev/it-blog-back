@@ -35,21 +35,21 @@ public class UserService {
 
   @Transactional
   public List<GetUser> getAllUsers() {
-    return userRepository.findAll().stream().map(this::convertUserModelToDto)
+    return userRepository.findAllByRoleIsNot(Role.ROLE_ADMIN).stream()
+        .map(this::convertUserModelToDto)
         .collect(Collectors.toList());
   }
 
   @Transactional
-  public List<GetUser> getAllAuthors() {
-    return userRepository.findAllByRole(Role.ROLE_AUTHOR).stream().map(this::convertUserModelToDto)
-        .collect(Collectors.toList());
+  public List<GetUser> getAllByRole(Role role) {
+    return userRepository.findAllByRoleAndRoleIsNot(role, Role.ROLE_ADMIN).stream()
+        .map(this::convertUserModelToDto).collect(Collectors.toList());
   }
 
   @Transactional
   public List<GetUser> getAllAuthorsByCategoryId(Long categoryId) {
     return userRepository.findAuthorsByCategoryId(categoryId).stream()
-        .map(this::convertUserModelToDto)
-        .collect(Collectors.toList());
+        .map(this::convertUserModelToDto).collect(Collectors.toList());
   }
 
   @Transactional
