@@ -54,6 +54,8 @@ public class ArticleService {
   private String contextPath;
   @Value("${search.results.limit}")
   private int searchResultsLimit;
+  @Value("${search.massindexer.threads}")
+  private int searchMassIndexerThreads;
 
   @Transactional
   public Page<GetArticle> getArticles(Specification<ArticleModel> spec, Pageable pageable) {
@@ -69,7 +71,8 @@ public class ArticleService {
   @Transactional
   public void initializeSearchIndexing() {
     SearchSession searchSession = Search.session(entityManager);
-    searchSession.massIndexer(ArticleModel.class).threadsToLoadObjects(5).start()
+    searchSession.massIndexer(ArticleModel.class).threadsToLoadObjects(searchMassIndexerThreads)
+        .start()
         .thenRun(() -> log.info("Indexing completed successfully.")).exceptionally(e -> {
           log.error("Error occurred during indexing.", e);
           return null;
@@ -88,7 +91,7 @@ public class ArticleService {
   private List<Long> searchArticleIdsByContent(String content) {
     SearchSession searchSession = Search.session(entityManager);
     return searchSession.search(ArticleModel.class)
-        .where(f -> f.match().fields("content", "title").matching(content).fuzzy())
+        .where(f -> f.match().fields("content", "title").matching(content).fuzzy(1))
         .fetchHits(searchResultsLimit)
         .stream().map(ArticleModel::getId).collect(Collectors.toList());
   }
