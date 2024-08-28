@@ -43,6 +43,7 @@ public class SecurityConfiguration {
                 .permitAll().requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/articles/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/users/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/tags/**").permitAll().anyRequest()
                 .authenticated())
         .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))

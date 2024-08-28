@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,9 +28,6 @@ public class UserService {
   private final CategoryRepository categoryRepository;
   private final FileUploadUtil fileUploadUtil;
   private final PasswordEncoder passwordEncoder;
-
-  @Value("${server.servlet.context-path}")
-  private String contextPath;
 
   @Transactional
   public List<GetUser> getAllUsers() {
@@ -96,9 +92,8 @@ public class UserService {
       }
     }
     if (updateUser.getAvatar() != null && !updateUser.getAvatar().isEmpty()) {
-      String avatarFilename = fileUploadUtil.uploadUserAvatar(updateUser.getAvatar(),
+      String avatarUrl = fileUploadUtil.uploadUserAvatar(updateUser.getAvatar(),
           user.getUsername());
-      String avatarUrl = String.format("%s/users/avatars/%s", contextPath, avatarFilename);
       user.setAvatarUrl(avatarUrl);
     }
     return convertUserModelToDto(userRepository.save(user));

@@ -16,7 +16,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -27,9 +26,6 @@ public class CategoryService {
   private final CategoryRepository categoryRepository;
   private final TagRepository tagRepository;
   private final FileUploadUtil fileUploadUtil;
-
-  @Value("${server.servlet.context-path}")
-  private String contextPath;
 
   @Transactional
   public List<GetCategory> getAllCategories() {
@@ -49,9 +45,8 @@ public class CategoryService {
     category.setDescription(createCategory.getDescription());
     CategoryModel savedCategory = categoryRepository.save(category);
     if (createCategory.getImage() != null && !createCategory.getImage().isEmpty()) {
-      String imageFilename = fileUploadUtil.uploadCategoryAvatar(createCategory.getImage(),
+      String imagerUrl = fileUploadUtil.uploadCategoryAvatar(createCategory.getImage(),
           savedCategory.getId());
-      String imagerUrl = String.format("%s/categories/images/%s", contextPath, imageFilename);
       category.setImageUrl(imagerUrl);
     }
     savedCategory = categoryRepository.save(category);
@@ -65,9 +60,8 @@ public class CategoryService {
     category.setName(updateCategory.getName());
     category.setDescription(updateCategory.getDescription());
     if (updateCategory.getImage() != null && !updateCategory.getImage().isEmpty()) {
-      String imageFilename = fileUploadUtil.uploadCategoryAvatar(updateCategory.getImage(),
+      String imagerUrl = fileUploadUtil.uploadCategoryAvatar(updateCategory.getImage(),
           category.getId());
-      String imagerUrl = String.format("%s/categories/images/%s", contextPath, imageFilename);
       category.setImageUrl(imagerUrl);
     }
     categoryRepository.save(category);

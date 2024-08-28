@@ -1,5 +1,6 @@
 package com.github.airatgaliev.itblogback.util;
 
+import com.github.airatgaliev.itblogback.exception.FileStorageException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,6 +23,9 @@ public class FileUploadUtil {
   @Value("${category.image.upload-dir}")
   private String categoryImageUploadDir;
 
+  @Value("${server.servlet.context-path}")
+  private String contextPath;
+
   public String uploadUserAvatar(MultipartFile file, String username) {
     if (file == null || file.isEmpty()) {
       throw new IllegalArgumentException("File is empty or null");
@@ -29,17 +33,17 @@ public class FileUploadUtil {
 
     String filename = username + "_avatar" + getFileExtension(file);
     saveFile(file, avatarUploadDir, filename);
-    return filename;
+    return String.format("%s/users/avatars/%s", contextPath, filename);
   }
 
-  public String uploadArticleImage(MultipartFile file, Long articleId) {
+  public String uploadArticleImage(MultipartFile file) {
     if (file == null || file.isEmpty()) {
       throw new IllegalArgumentException("File is empty or null");
     }
 
-    String filename = articleId + "_" + UUID.randomUUID() + getFileExtension(file);
+    String filename = UUID.randomUUID() + getFileExtension(file);
     saveFile(file, articleImageUploadDir, filename);
-    return filename;
+    return String.format("%s/articles/images/%s", contextPath, filename);
   }
 
   public String uploadCategoryAvatar(MultipartFile file, Long categoryId) {
@@ -49,7 +53,7 @@ public class FileUploadUtil {
 
     String filename = categoryId + "_image" + getFileExtension(file);
     saveFile(file, categoryImageUploadDir, filename);
-    return filename;
+    return String.format("%s/categories/images/%s", contextPath, filename);
   }
 
   private void saveFile(MultipartFile file, String dir, String filename) {
@@ -58,7 +62,7 @@ public class FileUploadUtil {
       Files.createDirectories(path.getParent());
       Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
     } catch (IOException e) {
-      throw new RuntimeException("Failed to store file", e);
+      throw new FileStorageException(e.getMessage());
     }
   }
 

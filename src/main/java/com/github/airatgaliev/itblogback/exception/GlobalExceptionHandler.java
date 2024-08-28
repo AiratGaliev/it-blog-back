@@ -52,7 +52,7 @@ public class GlobalExceptionHandler {
   public ResponseEntity<String> handleEmailNotFoundException(EmailNotFoundException ex) {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
   }
-  
+
   @ExceptionHandler(EmailAlreadyExistsException.class)
   public ResponseEntity<String> handleEmailAlreadyExistsException(EmailAlreadyExistsException ex) {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
@@ -82,5 +82,10 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(TokenExpiredException.class)
   public ResponseEntity<String> handleTokenExpiredException(TokenExpiredException ex) {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNAUTHORIZED);
+  }
+
+  @ExceptionHandler(FileStorageException.class)
+  public ResponseEntity<String> handleFileStorageException(FileStorageException ex) {
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
   }
 }

@@ -16,7 +16,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,9 +37,6 @@ public class AuthenticationService {
   private final JwtService jwtService;
   private final FileUploadUtil fileUploadUtil;
 
-  @Value("${server.servlet.context-path}")
-  private String contextPath;
-
   @Transactional
   public GetUser signup(SignUpRequest signUpRequest) {
     UserModel user = UserModel.builder().username(signUpRequest.getUsername())
@@ -48,9 +44,8 @@ public class AuthenticationService {
         .password(passwordEncoder.encode(signUpRequest.getPassword())).role(Role.ROLE_USER).build();
 
     if (signUpRequest.getAvatar() != null && !signUpRequest.getAvatar().isEmpty()) {
-      String avatarFilename = fileUploadUtil.uploadUserAvatar(signUpRequest.getAvatar(),
+      String avatarUrl = fileUploadUtil.uploadUserAvatar(signUpRequest.getAvatar(),
           user.getUsername());
-      String avatarUrl = String.format("%s/users/avatars/%s", contextPath, avatarFilename);
       user.setAvatarUrl(avatarUrl);
     }
 

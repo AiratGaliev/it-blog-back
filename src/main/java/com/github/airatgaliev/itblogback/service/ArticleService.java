@@ -14,7 +14,6 @@ import com.github.airatgaliev.itblogback.repository.ArticleRepository;
 import com.github.airatgaliev.itblogback.repository.CategoryRepository;
 import com.github.airatgaliev.itblogback.repository.TagRepository;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
-import com.github.airatgaliev.itblogback.util.FileUploadUtil;
 import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,10 +47,7 @@ public class ArticleService {
   private final UserRepository userRepository;
   private final CategoryRepository categoryRepository;
   private final TagRepository tagRepository;
-  private final FileUploadUtil fileUploadUtil;
 
-  @Value("${server.servlet.context-path}")
-  private String contextPath;
   @Value("${search.results.limit}")
   private int searchResultsLimit;
   @Value("${search.massindexer.threads}")
@@ -72,8 +68,7 @@ public class ArticleService {
   public void initializeSearchIndexing() {
     SearchSession searchSession = Search.session(entityManager);
     searchSession.massIndexer(ArticleModel.class).threadsToLoadObjects(searchMassIndexerThreads)
-        .start()
-        .thenRun(() -> log.info("Indexing completed successfully.")).exceptionally(e -> {
+        .start().thenRun(() -> log.info("Indexing completed successfully.")).exceptionally(e -> {
           log.error("Error occurred during indexing.", e);
           return null;
         });
@@ -92,8 +87,8 @@ public class ArticleService {
     SearchSession searchSession = Search.session(entityManager);
     return searchSession.search(ArticleModel.class)
         .where(f -> f.match().fields("content", "title").matching(content).fuzzy(1))
-        .fetchHits(searchResultsLimit)
-        .stream().map(ArticleModel::getId).collect(Collectors.toList());
+        .fetchHits(searchResultsLimit).stream().map(ArticleModel::getId)
+        .collect(Collectors.toList());
   }
 
   @Transactional
@@ -130,13 +125,6 @@ public class ArticleService {
     articleModel.setTags(tagModels);
     articleModel.setUser(userModel);
     ArticleModel savedArticle = articleRepository.save(articleModel);
-    if (createArticle.getImages() != null && !createArticle.getImages().isEmpty()) {
-      savedArticle.setImageUrls(createArticle.getImages().stream().map(image -> {
-        String filename = fileUploadUtil.uploadArticleImage(image, savedArticle.getId());
-        return String.format("%s/articles/images/%s", contextPath, filename);
-      }).collect(Collectors.toList()));
-      articleRepository.save(savedArticle);
-    }
     return convertArticleModelToDTO(savedArticle);
   }
 
@@ -193,8 +181,7 @@ public class ArticleService {
   private GetArticle convertArticleModelToDTO(ArticleModel articleModel) {
     return GetArticle.builder().id(articleModel.getId()).title(articleModel.getTitle())
         .content(articleModel.getContent()).username(articleModel.getUser().getUsername())
-        .authorAvatarUrl(articleModel.getUser().getAvatarUrl())
-        .imageUrls(articleModel.getImageUrls().stream().toList()).categories(
+        .authorAvatarUrl(articleModel.getUser().getAvatarUrl()).categories(
             articleModel.getCategories().stream().map(
                 categoryModel -> GetCategory.builder().id(categoryModel.getId())
                     .name(categoryModel.getName()).build()).collect(Collectors.toList())).tags(
