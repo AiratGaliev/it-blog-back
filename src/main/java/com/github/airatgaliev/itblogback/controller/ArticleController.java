@@ -47,7 +47,7 @@ public class ArticleController {
   @Operation(summary = "Get all articles or filter articles by various criteria", description = "Retrieve all articles or filter articles by category, tag, and/or content. Supports pagination and multiple filter combinations to narrow down search results.")
   @Parameters({@Parameter(name = "categoryId", description = "Category id to filter articles"),
       @Parameter(name = "tag", description = "Tag to filter articles"),
-      @Parameter(name = "authorId", description = "Author id to filter articles"),
+      @Parameter(name = "username", description = "Author username to filter articles"),
       @Parameter(name = "content", description = "Content to filter articles"),
       @Parameter(name = "page", description = "Page number to retrieve"),
       @Parameter(name = "size", description = "Number of articles per page"),
@@ -55,7 +55,8 @@ public class ArticleController {
       @Parameter(name = "order", description = "Order direction, either 'asc' or 'desc'")})
   public ResponseEntity<Page<GetArticle>> getAllArticles(
       @RequestParam(required = false) Long categoryId, @RequestParam(required = false) String tag,
-      @RequestParam(required = false) Long authorId, @RequestParam(required = false) String content,
+      @RequestParam(required = false) String username,
+      @RequestParam(required = false) String content,
       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "createdAt") String sort,
       @RequestParam(defaultValue = "desc") String order) {
@@ -65,7 +66,7 @@ public class ArticleController {
 
     Specification<ArticleModel> spec = Specification.where(
             ArticleSpecifications.hasCategoryId(categoryId)).and(ArticleSpecifications.hasTagName(tag))
-        .and(ArticleSpecifications.hasAuthorId(authorId));
+        .and(ArticleSpecifications.hasUsername(username));
 
     Page<GetArticle> articles;
 

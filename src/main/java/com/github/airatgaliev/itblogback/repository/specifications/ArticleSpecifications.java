@@ -15,8 +15,8 @@ public class ArticleSpecifications {
         builder.lower(root.join("tags").get("name")), "%" + tagName.toLowerCase() + "%") : null;
   }
 
-  public static Specification<ArticleModel> hasAuthorId(Long authorId) {
-    return (root, query, builder) -> authorId != null ? builder.equal(root.get("user").get("id"),
-        authorId) : null;
+  public static Specification<ArticleModel> hasUsername(String username) {
+    return (root, query, builder) -> username != null ? builder.equal(
+        root.get("user").get("username"), username) : null;
   }
 }

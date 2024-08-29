@@ -1,5 +1,7 @@
 package com.github.airatgaliev.itblogback.service;
 
+import static com.github.airatgaliev.itblogback.util.ContentUtil.createHtmlPreview;
+
 import com.github.airatgaliev.itblogback.dto.CreateArticle;
 import com.github.airatgaliev.itblogback.dto.GetArticle;
 import com.github.airatgaliev.itblogback.dto.GetCategory;
@@ -55,7 +57,12 @@ public class ArticleService {
 
   @Transactional
   public Page<GetArticle> getArticles(Specification<ArticleModel> spec, Pageable pageable) {
-    return articleRepository.findAll(spec, pageable).map(this::convertArticleModelToDTO);
+    return articleRepository.findAll(spec, pageable).map(this::convertArticleModelToDTO)
+        .map(article -> {
+          String previewContent = createHtmlPreview(article.getContent(), 1100);
+          article.setContent(previewContent);
+          return article;
+        });
   }
 
   @EventListener(ContextRefreshedEvent.class)
