@@ -18,7 +18,10 @@ public class UpdateUser {
   @Schema(description = "Last name of the user", example = "Doe")
   private String lastName;
 
-  @Schema(description = "Bio of the user", example = "I am John Doe")
+  @Schema(description = "Short info of the user", example = "I am a programmer")
+  private String shortInfo;
+
+  @Schema(description = "Bio of the user", example = "My name is John Doe, I am a programmer")
   private String bio;
 
   @Schema(description = "Email", example = "test@test.com")

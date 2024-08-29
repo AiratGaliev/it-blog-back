@@ -49,6 +49,8 @@ public class UserModel implements UserDetails {
   @Column(name = "last_name")
   private String lastName;
   @Column
+  private String shortInfo;
+  @Column
   private String bio;
   @Column(name = "avatar_url")
   private String avatarUrl;

@@ -72,6 +72,9 @@ public class UserService {
     if (updateUser.getLastName() != null) {
       user.setLastName(updateUser.getLastName());
     }
+    if (updateUser.getShortInfo() != null) {
+      user.setShortInfo(updateUser.getShortInfo());
+    }
     if (updateUser.getBio() != null) {
       user.setBio(updateUser.getBio());
     }
@@ -108,7 +111,8 @@ public class UserService {
     List<CategoryModel> categories = categoryRepository.findCategoriesByUserId(userModel.getId());
     return GetUser.builder().username(userModel.getUsername()).email(userModel.getEmail())
         .firstName(userModel.getFirstName()).lastName(userModel.getLastName())
-        .bio(userModel.getBio()).avatarUrl(userModel.getAvatarUrl()).categories(categories.stream()
+        .shortInfo(userModel.getShortInfo()).bio(userModel.getBio())
+        .avatarUrl(userModel.getAvatarUrl()).categories(categories.stream()
             .map((categoryModel -> GetCategory.builder().id(categoryModel.getId())
                 .name(categoryModel.getName()).build())).toList()).role(userModel.getRole())
         .build();
