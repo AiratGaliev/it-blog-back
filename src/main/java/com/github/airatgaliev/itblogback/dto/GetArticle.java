@@ -1,21 +1,29 @@
 package com.github.airatgaliev.itblogback.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import java.util.Date;
 import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(name = "Get Article")
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class GetArticle {
 
   @Schema(description = "ID of the article", example = "1")
   private Long id;
   @Schema(description = "Title of the article", example = "My First Blog Article")
   private String title;
+  @Schema(description = "Preview content of the article", example = "This is the preview content of the article")
+  private String previewContent;
   @Schema(description = "Content of the article", example = "This is the content of the article")
   private String content;
   @Schema(description = "Username associated with the article", example = "JohnDoe")

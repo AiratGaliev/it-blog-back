@@ -2,10 +2,16 @@ package com.github.airatgaliev.itblogback.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(name = "Update User")
 public class UpdateUser {
 

@@ -57,12 +57,7 @@ public class ArticleService {
 
   @Transactional
   public Page<GetArticle> getArticles(Specification<ArticleModel> spec, Pageable pageable) {
-    return articleRepository.findAll(spec, pageable).map(this::convertArticleModelToDTO)
-        .map(article -> {
-          String previewContent = createHtmlPreview(article.getContent(), 1100);
-          article.setContent(previewContent);
-          return article;
-        });
+    return getArticles(pageable, spec);
   }
 
   @EventListener(ContextRefreshedEvent.class)
@@ -87,7 +82,22 @@ public class ArticleService {
     List<Long> articleIds = searchArticleIdsByContent(content);
     Specification<ArticleModel> combinedSpec = spec.and(
         (root, query, builder) -> root.get("id").in(articleIds));
-    return articleRepository.findAll(combinedSpec, pageable).map(this::convertArticleModelToDTO);
+    return getArticles(pageable, combinedSpec);
+  }
+
+  private Page<GetArticle> getArticles(Pageable pageable,
+      Specification<ArticleModel> combinedSpec) {
+    return articleRepository.findAll(combinedSpec, pageable).map(this::convertArticleModelToDTO)
+        .map(article -> {
+          if (article.getPreviewContent().isEmpty()) {
+            String previewContent = createHtmlPreview(article.getContent(), 1100);
+            article.setPreviewContent(previewContent);
+          } else {
+            article.setPreviewContent(article.getPreviewContent());
+          }
+          article.setContent(null);
+          return article;
+        });
   }
 
   private List<Long> searchArticleIdsByContent(String content) {
@@ -127,6 +137,7 @@ public class ArticleService {
     }
     ArticleModel articleModel = new ArticleModel();
     articleModel.setTitle(createArticle.getTitle());
+    articleModel.setPreviewContent(createArticle.getPreviewContent());
     articleModel.setContent(createArticle.getContent());
     articleModel.setCategories(categories);
     articleModel.setTags(tagModels);
@@ -163,7 +174,7 @@ public class ArticleService {
       });
     }
     articleModel.setTitle(updateArticle.getTitle());
-    articleModel.setContent(updateArticle.getContent());
+    articleModel.setPreviewContent(updateArticle.getPreviewContent());
     articleModel.setContent(updateArticle.getContent());
     articleModel.setCategories(categories);
     articleModel.setTags(tagModels);
@@ -187,7 +198,8 @@ public class ArticleService {
 
   private GetArticle convertArticleModelToDTO(ArticleModel articleModel) {
     return GetArticle.builder().id(articleModel.getId()).title(articleModel.getTitle())
-        .content(articleModel.getContent()).username(articleModel.getUser().getUsername())
+        .previewContent(articleModel.getPreviewContent()).content(articleModel.getContent())
+        .username(articleModel.getUser().getUsername())
         .authorAvatarUrl(articleModel.getUser().getAvatarUrl()).categories(
             articleModel.getCategories().stream().map(
                 categoryModel -> GetCategory.builder().id(categoryModel.getId())

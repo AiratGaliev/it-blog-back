@@ -44,6 +44,10 @@ public class ArticleModel {
 
   @FullTextField
   @Column(nullable = false, columnDefinition = "TEXT")
+  private String previewContent;
+
+  @FullTextField
+  @Column(nullable = false, columnDefinition = "TEXT")
   private String content;
 
   @IndexedEmbedded
