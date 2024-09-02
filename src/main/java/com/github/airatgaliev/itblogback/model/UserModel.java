@@ -62,8 +62,11 @@ public class UserModel implements UserDetails {
   @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
   private List<ArticleModel> articles;
 
-  @OneToMany(mappedBy = "subscriber")
+  @OneToMany(mappedBy = "subscriber", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
   private List<SubscriptionModel> subscriptions = new ArrayList<>();
+
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+  private List<SubscriptionModel> subscribers = new ArrayList<>();
 
   @CreationTimestamp
   @Column(nullable = false, name = "created_at")

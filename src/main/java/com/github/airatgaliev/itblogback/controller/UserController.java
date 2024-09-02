@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -68,6 +69,38 @@ public class UserController {
     return userService.getUserByUsername(username)
         .map(createGetUser -> new ResponseEntity<>(createGetUser, HttpStatus.OK))
         .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+  }
+
+  @PostMapping("/{username}/subscribe")
+  @Operation(summary = "Subscribe to a user")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
+  public ResponseEntity<Void> subscribeToUser(@PathVariable String username,
+      @AuthenticationPrincipal UserDetails userDetails) {
+    userService.subscribeUser(userDetails.getUsername(), username);
+    return new ResponseEntity<>(HttpStatus.OK);
+  }
+
+  @GetMapping("/{username}/is-subscribed")
+  @Operation(summary = "Check if the authenticated user is subscribed to another user")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
+  public ResponseEntity<Boolean> isSubscribed(
+      @PathVariable String username,
+      @AuthenticationPrincipal UserDetails userDetails) {
+    String authenticatedUsername = userDetails.getUsername();
+    boolean isSubscribed = userService.isSubscribed(authenticatedUsername, username);
+    return ResponseEntity.ok(isSubscribed);
+  }
+
+  @DeleteMapping("/{username}/unsubscribe")
+  @Operation(summary = "Unsubscribe from a user")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
+  public ResponseEntity<Void> unsubscribeFromUser(@PathVariable String username,
+      @AuthenticationPrincipal UserDetails userDetails) {
+    userService.unsubscribeUser(userDetails.getUsername(), username);
+    return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

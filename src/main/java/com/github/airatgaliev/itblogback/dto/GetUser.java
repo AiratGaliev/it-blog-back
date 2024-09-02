@@ -1,5 +1,6 @@
 package com.github.airatgaliev.itblogback.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.github.airatgaliev.itblogback.model.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
@@ -13,6 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(name = "Get User")
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class GetUser {
 
   @Schema(description = "Username of the user", example = "JohnDoe")
@@ -41,4 +43,10 @@ public class GetUser {
 
   @Schema(description = "List of categories associated with the user")
   private List<GetCategory> categories;
+
+  @Schema(description = "List of user subscriptions")
+  private List<GetUser> subscriptions;
+
+  @Schema(description = "List of user subscribers")
+  private List<GetUser> subscribers;
 }

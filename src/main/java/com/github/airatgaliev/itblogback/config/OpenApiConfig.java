@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.security.SecuritySchemes;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@OpenAPIDefinition(info = @Info(title = "IT Blog API", version = "0.9.9.9.2", description = "API documentation for IT Blog", contact = @Contact(name = "Email", email = "your.email@example.com"), license = @License(name = "Apache 2.0", url = "http://springdoc.org")))
+@OpenAPIDefinition(info = @Info(title = "IT Blog API", version = "0.9.9.9.3", description = "API documentation for IT Blog", contact = @Contact(name = "Email", email = "your.email@example.com"), license = @License(name = "Apache 2.0", url = "http://springdoc.org")))
 @SecuritySchemes({
     @SecurityScheme(name = "bearerAuth", type = SecuritySchemeType.HTTP, scheme = "bearer", bearerFormat = "JWT", in = SecuritySchemeIn.HEADER)})
 public class OpenApiConfig {

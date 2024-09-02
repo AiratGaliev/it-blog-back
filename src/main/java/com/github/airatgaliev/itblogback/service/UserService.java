@@ -5,8 +5,10 @@ import com.github.airatgaliev.itblogback.dto.GetUser;
 import com.github.airatgaliev.itblogback.dto.UpdateUser;
 import com.github.airatgaliev.itblogback.model.CategoryModel;
 import com.github.airatgaliev.itblogback.model.Role;
+import com.github.airatgaliev.itblogback.model.SubscriptionModel;
 import com.github.airatgaliev.itblogback.model.UserModel;
 import com.github.airatgaliev.itblogback.repository.CategoryRepository;
+import com.github.airatgaliev.itblogback.repository.SubscriptionRepository;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
 import com.github.airatgaliev.itblogback.util.FileUploadUtil;
 import java.util.List;
@@ -26,14 +28,14 @@ public class UserService {
 
   private final UserRepository userRepository;
   private final CategoryRepository categoryRepository;
+  private final SubscriptionRepository subscriptionRepository;
   private final FileUploadUtil fileUploadUtil;
   private final PasswordEncoder passwordEncoder;
 
   @Transactional
   public List<GetUser> getAllUsers() {
     return userRepository.findAllByRoleIsNot(Role.ROLE_ADMIN).stream()
-        .map(this::convertUserModelToDto)
-        .collect(Collectors.toList());
+        .map(this::convertUserModelToDto).collect(Collectors.toList());
   }
 
   @Transactional
@@ -107,14 +109,61 @@ public class UserService {
     userRepository.deleteByUsername(username);
   }
 
+  @Transactional
+  public void subscribeUser(String subscriberUsername, String targetUsername) {
+    if (subscriberUsername.equals(targetUsername)) {
+      throw new IllegalArgumentException("User cannot subscribe to themselves.");
+    }
+
+    UserModel subscriber = userRepository.findByUsername(subscriberUsername)
+        .orElseThrow(() -> new UsernameNotFoundException("Subscriber not found"));
+    UserModel targetUser = userRepository.findByUsername(targetUsername)
+        .orElseThrow(() -> new UsernameNotFoundException("Target user not found"));
+
+    if (!subscriptionRepository.existsBySubscriberAndUser(subscriber, targetUser)) {
+      SubscriptionModel subscription = SubscriptionModel.builder().subscriber(subscriber)
+          .user(targetUser).build();
+      subscriptionRepository.save(subscription);
+    }
+  }
+
+  @Transactional
+  public boolean isSubscribed(String subscriberUsername, String targetUsername) {
+    UserModel subscriber = userRepository.findByUsername(subscriberUsername)
+        .orElseThrow(() -> new UsernameNotFoundException("Subscriber not found"));
+    UserModel targetUser = userRepository.findByUsername(targetUsername)
+        .orElseThrow(() -> new UsernameNotFoundException("Target user not found"));
+
+    return subscriptionRepository.existsBySubscriberAndUser(subscriber, targetUser);
+  }
+
+  @Transactional
+  public void unsubscribeUser(String subscriberUsername, String targetUsername) {
+    UserModel subscriber = userRepository.findByUsername(subscriberUsername)
+        .orElseThrow(() -> new UsernameNotFoundException("Subscriber not found"));
+    UserModel targetUser = userRepository.findByUsername(targetUsername)
+        .orElseThrow(() -> new UsernameNotFoundException("Target user not found"));
+
+    subscriptionRepository.deleteBySubscriberAndUser(subscriber, targetUser);
+  }
+
   private GetUser convertUserModelToDto(UserModel userModel) {
     List<CategoryModel> categories = categoryRepository.findCategoriesByUserId(userModel.getId());
     return GetUser.builder().username(userModel.getUsername()).email(userModel.getEmail())
         .firstName(userModel.getFirstName()).lastName(userModel.getLastName())
         .shortInfo(userModel.getShortInfo()).bio(userModel.getBio())
-        .avatarUrl(userModel.getAvatarUrl()).categories(categories.stream()
-            .map((categoryModel -> GetCategory.builder().id(categoryModel.getId())
+        .avatarUrl(userModel.getAvatarUrl()).categories(categories.stream().map(
+            (categoryModel -> GetCategory.builder().id(categoryModel.getId())
                 .name(categoryModel.getName()).build())).toList()).role(userModel.getRole())
-        .build();
+        .subscriptions(userModel.getSubscriptions().stream().map(
+            sub -> GetUser.builder().username(sub.getUser().getUsername())
+                .firstName(sub.getUser().getFirstName()).lastName(sub.getUser().getLastName())
+                .avatarUrl(sub.getUser().getAvatarUrl()).shortInfo(sub.getUser().getShortInfo())
+                .build()).collect(Collectors.toList())).subscribers(
+            userModel.getSubscribers().stream().map(
+                sub -> GetUser.builder().username(sub.getUser().getUsername())
+                    .firstName(sub.getUser().getFirstName()).lastName(sub.getUser().getLastName())
+                    .avatarUrl(sub.getUser().getAvatarUrl()).shortInfo(sub.getUser().getShortInfo())
+                    .build()).collect(Collectors.toList())).build();
   }
 }
