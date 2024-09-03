@@ -45,7 +45,7 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(UsernameNotFoundException.class)
   public ResponseEntity<String> handleUsernameNotFoundException(UsernameNotFoundException ex) {
-    return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
   }
 
   @ExceptionHandler(EmailNotFoundException.class)
@@ -87,5 +87,10 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(FileStorageException.class)
   public ResponseEntity<String> handleFileStorageException(FileStorageException ex) {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  @ExceptionHandler(CommentNotFoundException.class)
+  public ResponseEntity<String> handleCommentNotFoundException(CommentNotFoundException ex) {
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
   }
 }

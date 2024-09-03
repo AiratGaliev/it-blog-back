@@ -44,6 +44,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/articles/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/users/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/comments/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/tags/**").permitAll().anyRequest()
                 .authenticated())
         .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
