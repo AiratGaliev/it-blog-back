@@ -161,9 +161,11 @@ public class UserService {
                 .avatarUrl(sub.getUser().getAvatarUrl()).shortInfo(sub.getUser().getShortInfo())
                 .build()).collect(Collectors.toList())).subscribers(
             userModel.getSubscribers().stream().map(
-                sub -> GetUser.builder().username(sub.getUser().getUsername())
-                    .firstName(sub.getUser().getFirstName()).lastName(sub.getUser().getLastName())
-                    .avatarUrl(sub.getUser().getAvatarUrl()).shortInfo(sub.getUser().getShortInfo())
-                    .build()).collect(Collectors.toList())).build();
+                    sub -> GetUser.builder().username(sub.getSubscriber().getUsername())
+                        .firstName(sub.getSubscriber().getFirstName())
+                        .lastName(sub.getSubscriber().getLastName())
+                        .avatarUrl(sub.getSubscriber().getAvatarUrl())
+                        .shortInfo(sub.getSubscriber().getShortInfo()).build())
+                .collect(Collectors.toList())).build();
   }
 }
