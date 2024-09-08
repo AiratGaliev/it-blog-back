@@ -42,18 +42,13 @@ public class AuthenticationService {
     UserModel user = UserModel.builder().username(signUpRequest.getUsername())
         .email(signUpRequest.getEmail())
         .password(passwordEncoder.encode(signUpRequest.getPassword())).role(Role.ROLE_USER).build();
-
     if (signUpRequest.getAvatar() != null && !signUpRequest.getAvatar().isEmpty()) {
       String avatarUrl = fileUploadUtil.uploadUserAvatar(signUpRequest.getAvatar(),
           user.getUsername());
       user.setAvatarUrl(avatarUrl);
     }
-
     userRepository.save(user);
-
-    return GetUser.builder().username(user.getUsername()).email(user.getEmail())
-        .firstName(user.getFirstName()).lastName(user.getLastName()).role(user.getRole())
-        .avatarUrl(user.getAvatarUrl()).build();
+    return convertUserModelToDto(user);
   }
 
   public AuthenticationResponse authenticate(SignInRequest input, HttpServletResponse response) {
@@ -99,10 +94,7 @@ public class AuthenticationService {
     String token = extractToken(request);
     if (token != null) {
       String username = jwtService.extractUsername(token);
-      return userRepository.findByUsername(username).map(
-          user -> GetUser.builder().username(user.getUsername()).email(user.getEmail())
-              .firstName(user.getFirstName()).lastName(user.getLastName()).bio(user.getBio())
-              .role(user.getRole()).avatarUrl(user.getAvatarUrl()).build());
+      return userRepository.findByUsername(username).map(this::convertUserModelToDto);
     }
     return Optional.empty();
   }
@@ -114,5 +106,12 @@ public class AuthenticationService {
     if (token != null && jwtService.isTokenValid(token, userDetails)) {
       invalidateToken(response);
     }
+  }
+
+  private GetUser convertUserModelToDto(UserModel userModel) {
+    return GetUser.builder().username(userModel.getUsername()).email(userModel.getEmail())
+        .firstName(userModel.getFirstName()).lastName(userModel.getLastName())
+        .bio(userModel.getBio()).role(userModel.getRole()).avatarUrl(userModel.getAvatarUrl())
+        .build();
   }
 }

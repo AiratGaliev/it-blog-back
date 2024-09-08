@@ -25,13 +25,6 @@ public class TagService {
         .collect(Collectors.toList());
   }
 
-  @Transactional
-  public GetTag createTag(CreateTag tag) {
-    TagModel tagModel = TagModel.builder().name(tag.getName()).build();
-    tagRepository.save(tagModel);
-    return convertTagToDTO(tagModel);
-  }
-
   private GetTag convertTagToDTO(TagModel tag) {
     return GetTag.builder().id(tag.getId()).name(tag.getName()).build();
   }

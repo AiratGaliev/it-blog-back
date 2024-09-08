@@ -35,13 +35,4 @@ public class TagController {
     List<GetTag> tags = tagService.getTagsByNameContaining(name);
     return ResponseEntity.ok(tags);
   }
-
-  @PostMapping
-  @Operation(summary = "Create a new tag")
-  @SecurityRequirement(name = "bearerAuth")
-  @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
-  public ResponseEntity<GetTag> createTag(@Valid @RequestBody CreateTag tag) {
-    GetTag createdTag = tagService.createTag(tag);
-    return new ResponseEntity<>(createdTag, HttpStatus.CREATED);
-  }
 }
