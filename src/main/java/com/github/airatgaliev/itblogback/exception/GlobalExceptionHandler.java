@@ -53,6 +53,17 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
   }
 
+  @ExceptionHandler(EmailAlreadyConfirmedException.class)
+  public ResponseEntity<String> handleEmailAlreadyConfirmedException(
+      EmailAlreadyConfirmedException ex) {
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(EmailNotConfirmedException.class)
+  public ResponseEntity<String> handleEmailNotConfirmedException(EmailNotConfirmedException ex) {
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+  }
+
   @ExceptionHandler(EmailAlreadyExistsException.class)
   public ResponseEntity<String> handleEmailAlreadyExistsException(EmailAlreadyExistsException ex) {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
@@ -81,6 +92,11 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(TokenExpiredException.class)
   public ResponseEntity<String> handleTokenExpiredException(TokenExpiredException ex) {
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNAUTHORIZED);
+  }
+
+  @ExceptionHandler(InvalidTokenException.class)
+  public ResponseEntity<String> handleInvalidTokenException(InvalidTokenException ex) {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNAUTHORIZED);
   }
 

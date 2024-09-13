@@ -1,0 +1,112 @@
+spring:
+  application:
+    name: it-blog-back
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+      properties:
+        hibernate:
+          format_sql: true
+      database: postgresql
+      database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        search:
+          backend:
+            directory:
+              root: ${user.home}/it-blog/lucene/indexes
+            type: lucene
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  doc:
+    api-docs:
+      path: /v3/api-docs
+    swagger-ui:
+      path: /swagger-ui.html
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          starttls:
+            enable: true
+          auth: true
+  security:
+    jwt:
+      secret-key: ${SECURITY_JWT_SECRET_KEY}
+      expiration-time: ${SECURITY_JWT_EXPIRATION_TIME}
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: authorization_code
+            scope: user:email
+            redirect-uri: "{baseUrl}/login/oauth2/code/github"
+            client-name: GitHub
+          gitlab:
+            client-id: ${GITLAB_CLIENT_ID}
+            client-secret: ${GITLAB_CLIENT_SECRET}
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: authorization_code
+            scope: read_user
+            redirect-uri: "{baseUrl}/login/oauth2/code/gitlab"
+            client-name: GitLab
+        provider:
+          github:
+            authorization-uri: https://github.com/login/oauth/authorize
+            token-uri: https://github.com/login/oauth/access_token
+            user-info-uri: https://api.github.com/user
+            user-name-attribute: id
+          gitlab:
+            authorization-uri: https://gitlab.com/oauth/authorize
+            token-uri: https://gitlab.com/oauth/token
+            user-info-uri: https://gitlab.com/api/v4/user
+            user-name-attribute: id
+
+server:
+  servlet:
+    context-path: /api
+  port: 9000
+
+logging:
+  level:
+    root: INFO
+    org:
+      springframework:
+        security: DEBUG
+        web: DEBUG
+    com:
+      yourpackage: DEBUG
+
+user:
+  avatar:
+    upload-dir: ${user.home}/it-blog/users/avatars
+
+article:
+  image:
+    upload-dir: ${user.home}/it-blog/articles/images
+
+category:
+  image:
+    upload-dir: ${user.home}/it-blog/categories/images
+
+search:
+  results:
+    limit: 1000
+  massindexer:
+    threads: 5

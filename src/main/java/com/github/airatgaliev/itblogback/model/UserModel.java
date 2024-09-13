@@ -7,6 +7,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
@@ -36,9 +37,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 public class UserModel implements UserDetails {
 
   @Id
-  @GeneratedValue
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(nullable = false)
   private Long id;
+  @Column(unique = true)
+  private Integer githubId;
+  @Column(unique = true)
+  private Integer gitlabId;
   @Column(unique = true, nullable = false)
   private String username;
   @Column(unique = true, nullable = false)
@@ -55,6 +60,8 @@ public class UserModel implements UserDetails {
   private String bio;
   @Column(name = "avatar_url")
   private String avatarUrl;
+  @Column(nullable = false)
+  private boolean enabled = false;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
@@ -81,6 +88,15 @@ public class UserModel implements UserDetails {
   @Column(name = "updated_at")
   private Date updatedAt;
 
+  public void updateFrom(UserModel other) {
+    if (other.getGitlabId() != null) {
+      this.gitlabId = other.getGitlabId();
+    }
+    if (other.getGithubId() != null) {
+      this.githubId = other.getGithubId();
+    }
+  }
+
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     return List.of(new SimpleGrantedAuthority(role.name()));
@@ -103,6 +119,6 @@ public class UserModel implements UserDetails {
 
   @Override
   public boolean isEnabled() {
-    return true;
+    return enabled;
   }
 }

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,18 +40,26 @@ public class AuthenticationController {
   @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @Operation(summary = "Register a new user")
   public ResponseEntity<String> register(@Valid SignUpRequest signUpRequest,
-      @ModelAttribute @RequestParam("avatar") MultipartFile avatar) {
+      @ModelAttribute @RequestParam("avatar") MultipartFile avatar,
+      @RequestHeader("Origin") String origin) {
     signUpRequest.setAvatar(avatar);
-    String username = authenticationService.signup(signUpRequest).getUsername();
+    String username = authenticationService.signUp(signUpRequest, origin).getUsername();
     return ResponseEntity.status(HttpStatus.CREATED)
         .body("User registered successfully with username: " + username);
+  }
+
+  @PostMapping("/confirm-email")
+  @Operation(summary = "Email confirmation")
+  public ResponseEntity<String> confirmEmail(@RequestParam("token") String token) {
+    authenticationService.confirmEmail(token);
+    return ResponseEntity.ok("Email confirmed successfully");
   }
 
   @PostMapping("/login")
   @Operation(summary = "Authenticate a user")
   public ResponseEntity<AuthenticationResponse> authenticate(
       @Valid @RequestBody SignInRequest signInRequest, HttpServletResponse response) {
-    AuthenticationResponse authenticatedUser = authenticationService.authenticate(signInRequest,
+    AuthenticationResponse authenticatedUser = authenticationService.signIn(signInRequest,
         response);
     return ResponseEntity.ok(authenticatedUser);
   }
@@ -59,8 +68,7 @@ public class AuthenticationController {
   @Operation(summary = "Get the current authenticated user")
   @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<GetUser> getCurrentUser(HttpServletRequest request) {
-    return authenticationService.currentUser(request)
-        .map(ResponseEntity::ok)
+    return authenticationService.currentUser(request).map(ResponseEntity::ok)
         .orElseGet(() -> new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
   }
 

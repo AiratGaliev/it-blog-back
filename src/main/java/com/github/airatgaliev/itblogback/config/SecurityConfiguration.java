@@ -2,7 +2,9 @@ package com.github.airatgaliev.itblogback.config;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
+import com.github.airatgaliev.itblogback.handler.oauth.CustomOAuth2SuccessHandler;
 import com.github.airatgaliev.itblogback.security.JwtAuthenticationFilter;
+import com.github.airatgaliev.itblogback.security.RedirectUriFilter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +15,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.authority.mapping.SimpleAuthorityMapper;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -25,6 +29,8 @@ public class SecurityConfiguration {
 
   private final AuthenticationProvider authenticationProvider;
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final CustomOAuth2SuccessHandler customOAuth2SuccessHandler;
+  private final RedirectUriFilter redirectUriFilter;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -46,9 +52,13 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/comments/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/tags/**").permitAll().anyRequest()
-                .authenticated())
+                .authenticated()).oauth2Login(
+            oauth2 -> oauth2.successHandler(customOAuth2SuccessHandler)
+                .userInfoEndpoint(
+                    userInfo -> userInfo.userAuthoritiesMapper(new SimpleAuthorityMapper())))
         .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
         .authenticationProvider(authenticationProvider)
+        .addFilterBefore(redirectUriFilter, OAuth2AuthorizationRequestRedirectFilter.class)
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .build();
   }
