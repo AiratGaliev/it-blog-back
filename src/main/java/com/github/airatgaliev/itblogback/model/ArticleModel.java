@@ -1,5 +1,6 @@
 package com.github.airatgaliev.itblogback.model;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -12,6 +13,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.Date;
@@ -64,6 +67,10 @@ public class ArticleModel {
   @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(name = "article_tags", joinColumns = @JoinColumn(name = "article_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
   private List<TagModel> tags = new ArrayList<>();
+
+  @OneToMany(mappedBy = "article", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OrderBy("createdAt ASC")
+  private List<CommentModel> comments = new ArrayList<>();
 
   @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(name = "article_images", joinColumns = @JoinColumn(name = "article_id"))

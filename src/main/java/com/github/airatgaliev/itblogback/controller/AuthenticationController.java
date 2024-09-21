@@ -37,9 +37,9 @@ public class AuthenticationController {
 
   private final AuthenticationService authenticationService;
 
-  @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "/sign-up", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @Operation(summary = "Register a new user")
-  public ResponseEntity<String> register(@Valid SignUpRequest signUpRequest,
+  public ResponseEntity<String> signUp(@Valid SignUpRequest signUpRequest,
       @ModelAttribute @RequestParam("avatar") MultipartFile avatar,
       @RequestHeader("Origin") String origin) {
     signUpRequest.setAvatar(avatar);
@@ -55,9 +55,9 @@ public class AuthenticationController {
     return ResponseEntity.ok("Email confirmed successfully");
   }
 
-  @PostMapping("/login")
+  @PostMapping("/sign-in")
   @Operation(summary = "Authenticate a user")
-  public ResponseEntity<AuthenticationResponse> authenticate(
+  public ResponseEntity<AuthenticationResponse> signIn(
       @Valid @RequestBody SignInRequest signInRequest, HttpServletResponse response) {
     AuthenticationResponse authenticatedUser = authenticationService.signIn(signInRequest,
         response);
@@ -67,18 +67,17 @@ public class AuthenticationController {
   @GetMapping("/current-user")
   @Operation(summary = "Get the current authenticated user")
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<GetUser> getCurrentUser(HttpServletRequest request) {
+  public ResponseEntity<GetUser> currentUser(HttpServletRequest request) {
     return authenticationService.currentUser(request).map(ResponseEntity::ok)
-        .orElseGet(() -> new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
+        .orElseGet(() -> ResponseEntity.noContent().build());
   }
 
   @PostMapping("/refresh-token")
-  @Operation(summary = "Refresh the JWT token")
-  public ResponseEntity<AuthenticationResponse> refreshToken(HttpServletRequest request,
+  @Operation(summary = "Refresh the HttpOnly cookie 'auth-token'")
+  public ResponseEntity<Void> refreshToken(HttpServletRequest request,
       HttpServletResponse response) {
-    AuthenticationResponse refreshedToken = authenticationService.handleTokenRefresh(request,
-        response);
-    return ResponseEntity.ok(refreshedToken);
+    authenticationService.refreshToken(request, response);
+    return ResponseEntity.noContent().build();
   }
 
   @PostMapping("/logout")

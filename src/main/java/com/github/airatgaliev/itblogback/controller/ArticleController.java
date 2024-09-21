@@ -56,8 +56,8 @@ public class ArticleController {
   public ResponseEntity<Page<GetArticle>> getAllArticles(
       @RequestParam(required = false) Long categoryId, @RequestParam(required = false) String tag,
       @RequestParam(required = false) String username,
-      @RequestParam(required = false) String content,
-      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
+      @RequestParam(required = false) String content, @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "createdAt") String sort,
       @RequestParam(defaultValue = "desc") String order) {
 
@@ -112,9 +112,9 @@ public class ArticleController {
   @Operation(summary = "Delete a article")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
-  public ResponseEntity<String> deleteArticle(@PathVariable Long id,
+  public ResponseEntity<Void> deleteArticle(@PathVariable Long id,
       @AuthenticationPrincipal UserDetails userDetails) {
     articleService.deleteArticle(id, userDetails);
-    return new ResponseEntity<>("Article deleted successfully", HttpStatus.NO_CONTENT);
+    return ResponseEntity.noContent().build();
   }
 }

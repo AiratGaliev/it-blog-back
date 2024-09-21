@@ -55,8 +55,8 @@ spring:
             client-secret: ${GITHUB_CLIENT_SECRET}
             client-authentication-method: client_secret_basic
             authorization-grant-type: authorization_code
-            scope: user:email
-            redirect-uri: "{baseUrl}/login/oauth2/code/github"
+            scope: read:user,user:email
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             client-name: GitHub
           gitlab:
             client-id: ${GITLAB_CLIENT_ID}
@@ -64,7 +64,7 @@ spring:
             client-authentication-method: client_secret_basic
             authorization-grant-type: authorization_code
             scope: read_user
-            redirect-uri: "{baseUrl}/login/oauth2/code/gitlab"
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             client-name: GitLab
         provider:
           github:

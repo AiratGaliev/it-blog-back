@@ -1,6 +1,5 @@
 package com.github.airatgaliev.itblogback.service;
 
-import com.github.airatgaliev.itblogback.dto.CreateTag;
 import com.github.airatgaliev.itblogback.dto.GetTag;
 import com.github.airatgaliev.itblogback.model.TagModel;
 import com.github.airatgaliev.itblogback.repository.TagRepository;

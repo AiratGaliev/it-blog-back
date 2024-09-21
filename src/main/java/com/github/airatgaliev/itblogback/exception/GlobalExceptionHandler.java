@@ -2,6 +2,7 @@ package com.github.airatgaliev.itblogback.exception;
 
 import java.util.HashMap;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -108,5 +110,11 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(CommentNotFoundException.class)
   public ResponseEntity<String> handleCommentNotFoundException(CommentNotFoundException ex) {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<String> handleAllExceptions(Exception ex) {
+    log.error("Unhandled exception occurred: ", ex);
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
   }
 }

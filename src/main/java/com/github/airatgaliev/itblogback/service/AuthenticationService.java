@@ -135,12 +135,11 @@ public class AuthenticationService implements OAuth2UserService<OAuth2UserReques
     UserModel user = handler.processOAuth2User(oAuth2User);
     user.setPassword(passwordEncoder.encode(generateRandomPassword()));
 
-    UserModel existingUser = userRepository.findByEmail(user.getEmail())
-        .orElseGet(() -> {
-          UserModel newUser = userRepository.save(user);
-          newUser.setUsername("username_" + newUser.getId());
-          return newUser;
-        });
+    UserModel existingUser = userRepository.findByEmail(user.getEmail()).orElseGet(() -> {
+      UserModel newUser = userRepository.save(user);
+      newUser.setUsername("username_" + newUser.getId());
+      return newUser;
+    });
     existingUser.setEnabled(true);
     existingUser.updateFrom(user);
     userRepository.save(existingUser);
@@ -155,25 +154,20 @@ public class AuthenticationService implements OAuth2UserService<OAuth2UserReques
     return oAuth2User;
   }
 
-  public AuthenticationResponse handleTokenRefresh(HttpServletRequest request,
-      HttpServletResponse response) {
+  public void refreshToken(HttpServletRequest request, HttpServletResponse response) {
     String token = extractToken(request);
-    if (token == null || jwtService.isTokenExpired(token)) {
-      throw new TokenExpiredException("Token has expired or is invalid");
+    if (token != null) {
+      if (jwtService.isTokenExpired(token)) {
+        throw new TokenExpiredException("Token has expired or is invalid");
+      }
+      String username = jwtService.extractUsername(token);
+      UserModel user = userRepository.findByUsername(username)
+          .orElseThrow(() -> new UsernameNotFoundException("User not found " + username));
+      String newToken = jwtService.generateToken(user);
+      setAuthCookie(response, newToken);
+    } else {
+      invalidateToken(request, response);
     }
-    AuthenticationResponse refreshedToken = refreshToken(token);
-    setAuthCookie(response, refreshedToken.getToken());
-    return refreshedToken;
-  }
-
-  public AuthenticationResponse refreshToken(String token) {
-    String username = jwtService.extractUsername(token);
-    UserModel user = userRepository.findByUsername(username)
-        .orElseThrow(() -> new UsernameNotFoundException("User not found " + username));
-
-    String newToken = jwtService.generateToken(user);
-    return AuthenticationResponse.builder().token(newToken)
-        .expiresIn(jwtService.getExpirationTime()).build();
   }
 
   public Optional<GetUser> currentUser(HttpServletRequest request) {
