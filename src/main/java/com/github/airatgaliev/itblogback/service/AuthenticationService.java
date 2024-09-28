@@ -68,12 +68,13 @@ public class AuthenticationService implements OAuth2UserService<OAuth2UserReques
     UserModel user = UserModel.builder().username(signUpRequest.getUsername())
         .email(signUpRequest.getEmail())
         .password(passwordEncoder.encode(signUpRequest.getPassword())).role(Role.ROLE_USER).build();
+    UserModel savedUser = userRepository.save(user);
     if (signUpRequest.getAvatar() != null && !signUpRequest.getAvatar().isEmpty()) {
       String avatarUrl = fileUploadUtil.uploadUserAvatar(signUpRequest.getAvatar(),
-          user.getUsername());
+          savedUser.getId());
       user.setAvatarUrl(avatarUrl);
+      userRepository.save(user);
     }
-    userRepository.save(user);
     String token = jwtService.generateToken(user);
     ConfirmationToken confirmationToken = ConfirmationToken.builder().token(token).user(user)
         .createdAt(LocalDateTime.now()).expiresAt(LocalDateTime.now().plusHours(24)).build();

@@ -33,4 +33,4 @@ RUN mkdir -p /app/users/avatars && mkdir -p /app/articles/images && mkdir -p /ap
 EXPOSE 9000
 
 # Command to run the JAR file
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "--enable-native-access=ALL-UNNAMED", "-jar", "app.jar"]

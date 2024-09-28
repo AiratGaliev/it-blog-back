@@ -26,22 +26,23 @@ public class FileUploadUtil {
   @Value("${server.servlet.context-path}")
   private String contextPath;
 
-  public String uploadUserAvatar(MultipartFile file, String username) {
+  public String uploadUserAvatar(MultipartFile file, Long userId) {
     if (file == null || file.isEmpty()) {
       throw new IllegalArgumentException("File is empty or null");
     }
 
-    String filename = username + "_avatar" + getFileExtension(file);
+    String filename = "user_" + userId + "_avatar_" + UUID.randomUUID() + getFileExtension(file);
     saveFile(file, avatarUploadDir, filename);
     return String.format("%s/users/avatars/%s", contextPath, filename);
   }
 
-  public String uploadArticleImage(MultipartFile file) {
+  public String uploadArticleImage(MultipartFile file, String articleId) {
     if (file == null || file.isEmpty()) {
       throw new IllegalArgumentException("File is empty or null");
     }
 
-    String filename = UUID.randomUUID() + getFileExtension(file);
+    String filename =
+        "article_" + articleId + "_image_" + UUID.randomUUID() + getFileExtension(file);
     saveFile(file, articleImageUploadDir, filename);
     return String.format("%s/articles/images/%s", contextPath, filename);
   }
@@ -51,7 +52,8 @@ public class FileUploadUtil {
       throw new IllegalArgumentException("File is empty or null");
     }
 
-    String filename = categoryId + "_image" + getFileExtension(file);
+    String filename =
+        "category_" + categoryId + "_image_" + UUID.randomUUID() + getFileExtension(file);
     saveFile(file, categoryImageUploadDir, filename);
     return String.format("%s/categories/images/%s", contextPath, filename);
   }

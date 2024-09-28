@@ -11,7 +11,7 @@ public class ImageUploadService {
 
   private final FileUploadUtil fileUploadUtil;
 
-  public String uploadArticleImage(MultipartFile file) {
-    return fileUploadUtil.uploadArticleImage(file);
+  public String uploadArticleImage(MultipartFile file, String articleId) {
+    return fileUploadUtil.uploadArticleImage(file, articleId);
   }
 }

@@ -97,8 +97,7 @@ public class UserService {
       }
     }
     if (updateUser.getAvatar() != null && !updateUser.getAvatar().isEmpty()) {
-      String avatarUrl = fileUploadUtil.uploadUserAvatar(updateUser.getAvatar(),
-          user.getUsername());
+      String avatarUrl = fileUploadUtil.uploadUserAvatar(updateUser.getAvatar(), user.getId());
       user.setAvatarUrl(avatarUrl);
     }
     return convertUserModelToDto(userRepository.save(user));
