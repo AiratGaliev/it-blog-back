@@ -8,16 +8,22 @@ import com.github.airatgaliev.itblogback.dto.GetCategory;
 import com.github.airatgaliev.itblogback.dto.GetTag;
 import com.github.airatgaliev.itblogback.dto.UpdateArticle;
 import com.github.airatgaliev.itblogback.exception.ArticleNotFoundException;
+import com.github.airatgaliev.itblogback.exception.BookmarkAlreadyExistsException;
+import com.github.airatgaliev.itblogback.interceptor.localization.LocalizationContext;
 import com.github.airatgaliev.itblogback.model.ArticleModel;
+import com.github.airatgaliev.itblogback.model.BookmarkModel;
 import com.github.airatgaliev.itblogback.model.CategoryModel;
+import com.github.airatgaliev.itblogback.model.Language;
 import com.github.airatgaliev.itblogback.model.TagModel;
 import com.github.airatgaliev.itblogback.model.UserModel;
 import com.github.airatgaliev.itblogback.repository.ArticleRepository;
+import com.github.airatgaliev.itblogback.repository.BookmarkRepository;
 import com.github.airatgaliev.itblogback.repository.CategoryRepository;
 import com.github.airatgaliev.itblogback.repository.TagRepository;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
 import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,6 +55,8 @@ public class ArticleService {
   private final UserRepository userRepository;
   private final CategoryRepository categoryRepository;
   private final TagRepository tagRepository;
+  private final BookmarkRepository bookmarkRepository;
+  private final LocalizationContext localizationContext;
 
   @Value("${search.results.limit}")
   private int searchResultsLimit;
@@ -136,6 +144,13 @@ public class ArticleService {
       });
     }
     ArticleModel articleModel = new ArticleModel();
+    articleModel.setLanguage(createArticle.getLanguage());
+    Long originalArticleId = createArticle.getOriginalArticleId();
+    if (originalArticleId != null) {
+      articleRepository.findById(originalArticleId)
+          .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+      articleModel.setOriginalArticleId(originalArticleId);
+    }
     articleModel.setTitle(createArticle.getTitle());
     articleModel.setPreviewContent(createArticle.getPreviewContent());
     articleModel.setContent(createArticle.getContent());
@@ -196,17 +211,57 @@ public class ArticleService {
     }
   }
 
+  @Transactional
+  public void bookmark(String bookmarkingUsername, Long articleId) {
+    UserModel userModel = userRepository.findByUsername(bookmarkingUsername)
+        .orElseThrow(() -> new UsernameNotFoundException("Bookmarking user not found"));
+    ArticleModel article = articleRepository.findById(articleId).orElseThrow(
+        () -> new ArticleNotFoundException("Article with id " + articleId + " not found"));
+    boolean bookmarkExists = bookmarkRepository.existsByUserAndArticle(userModel, article);
+    if (bookmarkExists) {
+      throw new BookmarkAlreadyExistsException("Article already bookmarked");
+    }
+    BookmarkModel bookmark = BookmarkModel.builder().user(userModel).article(article)
+        .createdAt(new Date()).build();
+    bookmarkRepository.save(bookmark);
+  }
+
+  @Transactional
+  public boolean isBookmarked(String bookmarkingUsername, Long articleId) {
+    UserModel userModel = userRepository.findByUsername(bookmarkingUsername)
+        .orElseThrow(() -> new UsernameNotFoundException("Bookmarking user not found"));
+    ArticleModel article = articleRepository.findById(articleId).orElseThrow(
+        () -> new ArticleNotFoundException("Article with id " + articleId + " not found"));
+    return bookmarkRepository.existsByUserAndArticle(userModel, article);
+  }
+
+  @Transactional
+  public void unbookmark(String bookmarkingUsername, Long articleId) {
+    UserModel userModel = userRepository.findByUsername(bookmarkingUsername)
+        .orElseThrow(() -> new UsernameNotFoundException("Bookmarking user not found"));
+    ArticleModel article = articleRepository.findById(articleId).orElseThrow(
+        () -> new ArticleNotFoundException("Article with id " + articleId + " not found"));
+    bookmarkRepository.deleteByUserAndArticle(userModel, article);
+  }
+
   private GetArticle convertArticleModelToDTO(ArticleModel articleModel) {
-    return GetArticle.builder().id(articleModel.getId()).title(articleModel.getTitle())
+    ArticleModel originalArticle =
+        articleModel.getOriginalArticleId() != null ? articleRepository.findById(
+            articleModel.getOriginalArticleId()).orElse(null) : null;
+    Language interfaceLanguage = Language.valueOf(localizationContext.getLocale().toUpperCase());
+    return GetArticle.builder().id(articleModel.getId()).language(articleModel.getLanguage())
+        .originalArticle(originalArticle != null ? GetArticle.builder().id(originalArticle.getId())
+            .title(originalArticle.getTitle()).build() : null).title(articleModel.getTitle())
         .previewContent(articleModel.getPreviewContent()).content(articleModel.getContent())
         .username(articleModel.getUser().getUsername())
-        .authorAvatarUrl(articleModel.getUser().getAvatarUrl()).categories(
-            articleModel.getCategories().stream().map(
-                categoryModel -> GetCategory.builder().id(categoryModel.getId())
-                    .name(categoryModel.getName()).build()).collect(Collectors.toList())).tags(
-            articleModel.getTags().stream().map(
-                    tagModel -> GetTag.builder().id(tagModel.getId()).name(tagModel.getName()).build())
-                .collect(Collectors.toList())).createdAt(articleModel.getCreatedAt())
-        .updatedAt(articleModel.getUpdatedAt()).build();
+        .authorAvatarUrl(articleModel.getUser().getAvatarUrl())
+        .categories(articleModel.getCategories().stream().map(category -> {
+          String localizedCategoryName = category.getName()
+              .getOrDefault(interfaceLanguage, category.getName().get(Language.EN));
+          return GetCategory.builder().id(category.getId()).name(localizedCategoryName).build();
+        }).toList()).tags(articleModel.getTags().stream()
+            .map(tagModel -> GetTag.builder().id(tagModel.getId()).name(tagModel.getName()).build())
+            .collect(Collectors.toList())).bookmarksCount(articleModel.getBookmarks().size())
+        .createdAt(articleModel.getCreatedAt()).updatedAt(articleModel.getUpdatedAt()).build();
   }
 }

@@ -27,14 +27,8 @@ public class TagModel {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(nullable = false)
   private Long id;
-
   @Column(nullable = false, unique = true)
   private String name;
-
-//  @ManyToMany(fetch = FetchType.LAZY)
-//  @JoinTable(name = "tag_categories", joinColumns = @JoinColumn(name = "tag_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
-//  private List<CategoryModel> categories = new ArrayList<>();
-
   @ManyToMany(fetch = FetchType.LAZY, mappedBy = "tags")
   private List<ArticleModel> articles = new ArrayList<>();
 }

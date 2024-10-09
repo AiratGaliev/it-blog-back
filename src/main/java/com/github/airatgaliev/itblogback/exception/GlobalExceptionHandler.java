@@ -112,6 +112,18 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
   }
 
+  @ExceptionHandler(SubscriptionAlreadyExistsException.class)
+  public ResponseEntity<String> handleSubscribeAlreadyExistsException(
+      SubscriptionAlreadyExistsException ex) {
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(BookmarkAlreadyExistsException.class)
+  public ResponseEntity<String> handleBookmarkAlreadyExistsException(
+      BookmarkAlreadyExistsException ex) {
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+  }
+
   @ExceptionHandler(Exception.class)
   public ResponseEntity<String> handleAllExceptions(Exception ex) {
     log.error("Unhandled exception occurred: ", ex);

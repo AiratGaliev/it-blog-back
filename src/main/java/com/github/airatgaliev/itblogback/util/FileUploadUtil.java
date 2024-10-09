@@ -31,18 +31,17 @@ public class FileUploadUtil {
       throw new IllegalArgumentException("File is empty or null");
     }
 
-    String filename = "user_" + userId + "_avatar_" + UUID.randomUUID() + getFileExtension(file);
+    String filename = "user-" + userId + "-avatar-" + UUID.randomUUID() + getFileExtension(file);
     saveFile(file, avatarUploadDir, filename);
     return String.format("%s/users/avatars/%s", contextPath, filename);
   }
 
-  public String uploadArticleImage(MultipartFile file, String articleId) {
+  public String uploadArticleImage(MultipartFile file) {
     if (file == null || file.isEmpty()) {
       throw new IllegalArgumentException("File is empty or null");
     }
 
-    String filename =
-        "article_" + articleId + "_image_" + UUID.randomUUID() + getFileExtension(file);
+    String filename = "image-" + UUID.randomUUID() + getFileExtension(file);
     saveFile(file, articleImageUploadDir, filename);
     return String.format("%s/articles/images/%s", contextPath, filename);
   }
@@ -53,7 +52,7 @@ public class FileUploadUtil {
     }
 
     String filename =
-        "category_" + categoryId + "_image_" + UUID.randomUUID() + getFileExtension(file);
+        "category-" + categoryId + "-image-" + UUID.randomUUID() + getFileExtension(file);
     saveFile(file, categoryImageUploadDir, filename);
     return String.format("%s/categories/images/%s", contextPath, filename);
   }

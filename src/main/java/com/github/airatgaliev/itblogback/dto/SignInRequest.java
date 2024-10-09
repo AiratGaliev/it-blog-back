@@ -20,7 +20,6 @@ public class SignInRequest {
   @Size(min = 3, max = 50, message = "Username or Email must be between 3 and 50 characters")
   @Schema(description = "Username or Email of the user", example = "JohnDoe or test@test.com", requiredMode = RequiredMode.REQUIRED)
   private String usernameOrEmail;
-
   @NotBlank(message = "Password cannot be empty")
   @Schema(description = "Password", example = "P@ssword", requiredMode = RequiredMode.REQUIRED)
   @Size(min = 8, max = 255, message = "Password must be between 8 and 255 characters")

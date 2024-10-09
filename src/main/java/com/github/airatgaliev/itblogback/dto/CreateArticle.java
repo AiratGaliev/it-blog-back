@@ -1,5 +1,6 @@
 package com.github.airatgaliev.itblogback.dto;
 
+import com.github.airatgaliev.itblogback.model.Language;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import jakarta.validation.constraints.NotNull;
@@ -18,6 +19,11 @@ import org.springframework.web.multipart.MultipartFile;
 @Schema(name = "Create Article")
 public class CreateArticle {
 
+  @NotNull(message = "Language cannot be empty")
+  @Schema(description = "Language of the article", requiredMode = RequiredMode.REQUIRED)
+  private Language language;
+  @Schema(description = "ID of the article", example = "1")
+  private Long originalArticleId;
   @NotNull(message = "Title cannot be empty")
   @Schema(description = "Title of the article", example = "My First Blog Article", requiredMode = RequiredMode.REQUIRED)
   private String title;

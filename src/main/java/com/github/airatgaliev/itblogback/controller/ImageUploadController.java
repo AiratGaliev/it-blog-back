@@ -9,7 +9,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,9 +28,8 @@ public class ImageUploadController {
   @Operation(summary = "Upload image")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
-  public ResponseEntity<String> upload(@RequestParam("image") MultipartFile image,
-      @PathVariable String articleId) {
-    String imageUrl = imageUploadService.uploadArticleImage(image, articleId);
+  public ResponseEntity<String> upload(@RequestParam("image") MultipartFile image) {
+    String imageUrl = imageUploadService.uploadArticleImage(image);
     return ResponseEntity.ok(imageUrl);
   }
 }

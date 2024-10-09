@@ -18,6 +18,6 @@ public class CreateComment {
   private Long articleId;
   @Schema(description = "ID of the parent comment", example = "1")
   private Long parentCommentId;
-  @Schema(description = "Content of the comment", example = "This is the content of the comment", requiredMode = RequiredMode.REQUIRED)
+  @Schema(description = "Content of the comment", example = "This is the content of the comment", requiredMode = RequiredMode.REQUIRED, minLength = 2, maxLength = 1000)
   private String content;
 }

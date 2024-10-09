@@ -39,7 +39,7 @@ public class AuthenticationController {
 
   @PostMapping(value = "/sign-up", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @Operation(summary = "Register a new user")
-  public ResponseEntity<String> signUp(@Valid SignUpRequest signUpRequest,
+  public ResponseEntity<String> signUp(@Valid @RequestBody SignUpRequest signUpRequest,
       @ModelAttribute @RequestParam("avatar") MultipartFile avatar,
       @RequestHeader("Origin") String origin) {
     signUpRequest.setAvatar(avatar);
@@ -67,8 +67,9 @@ public class AuthenticationController {
   @GetMapping("/current-user")
   @Operation(summary = "Get the current authenticated user")
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<GetUser> currentUser(HttpServletRequest request) {
-    return authenticationService.currentUser(request).map(ResponseEntity::ok)
+  public ResponseEntity<GetUser> currentUser(HttpServletRequest request,
+      HttpServletResponse response) {
+    return authenticationService.currentUser(request, response).map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.noContent().build());
   }
 

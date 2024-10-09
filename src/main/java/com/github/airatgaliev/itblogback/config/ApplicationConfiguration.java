@@ -1,6 +1,7 @@
 package com.github.airatgaliev.itblogback.config;
 
 
+import com.github.airatgaliev.itblogback.interceptor.localization.LocalizationInterceptor;
 import com.github.airatgaliev.itblogback.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.EncodedResourceResolver;
@@ -23,6 +25,7 @@ import org.springframework.web.servlet.resource.EncodedResourceResolver;
 public class ApplicationConfiguration implements WebMvcConfigurer {
 
   private final UserRepository userRepository;
+  private final LocalizationInterceptor localizationInterceptor;
 
   @Value("${user.avatar.upload-dir}")
   private String avatarUploadDir;
@@ -40,6 +43,11 @@ public class ApplicationConfiguration implements WebMvcConfigurer {
     registry.addResourceHandler("/categories/images/**")
         .addResourceLocations("file:" + categoryImageUploadDir + "/").setCachePeriod(3600)
         .resourceChain(true).addResolver(new EncodedResourceResolver());
+  }
+
+  @Override
+  public void addInterceptors(InterceptorRegistry registry) {
+    registry.addInterceptor(localizationInterceptor);
   }
 
   @Bean

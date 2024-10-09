@@ -31,19 +31,12 @@ public class TokenUtils {
     response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
   }
 
-  public static void invalidateToken(HttpServletRequest request, HttpServletResponse response) {
-    Cookie[] cookies = request.getCookies();
-    if (cookies != null) {
-      for (Cookie cookie : cookies) {
-        cookie.setValue(null);
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
-      }
-    }
-
-    ResponseCookie cookie = ResponseCookie.from("auth-token", "").httpOnly(true).secure(false)
+  public static void invalidateToken(HttpServletResponse response) {
+    ResponseCookie authTokenCookie = ResponseCookie.from("auth-token", "").httpOnly(true)
+        .secure(false).path("/").maxAge(0).build();
+    response.addHeader(HttpHeaders.SET_COOKIE, authTokenCookie.toString());
+    ResponseCookie userCookie = ResponseCookie.from("user", "").httpOnly(true).secure(false)
         .path("/").maxAge(0).build();
-    response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    response.addHeader(HttpHeaders.SET_COOKIE, userCookie.toString());
   }
 }

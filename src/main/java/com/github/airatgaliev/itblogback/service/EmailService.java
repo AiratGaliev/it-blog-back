@@ -1,5 +1,6 @@
 package com.github.airatgaliev.itblogback.service;
 
+import com.github.airatgaliev.itblogback.interceptor.localization.LocalizationContext;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -14,9 +15,11 @@ import org.springframework.stereotype.Service;
 public class EmailService {
 
   private final JavaMailSender mailSender;
+  private final LocalizationContext localizationContext;
 
   public void sendEmailVerification(String email, String token, String origin) {
-    String confirmationUrl = String.format("%s/confirm?token=%s", origin, token);
+    String language = localizationContext.getLocale();
+    String confirmationUrl = String.format("%s/%s/confirm?token=%s", origin, language, token);
     String message =
         "To confirm your email address, please click the following link: " + confirmationUrl;
     sendEmail(email, "Email Confirmation", message);

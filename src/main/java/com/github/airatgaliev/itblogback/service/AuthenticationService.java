@@ -134,7 +134,7 @@ public class AuthenticationService implements OAuth2UserService<OAuth2UserReques
         .orElseThrow(() -> new OAuth2AuthenticationException("Unknown provider"));
 
     UserModel user = handler.processOAuth2User(oAuth2User);
-    user.setPassword(passwordEncoder.encode(generateRandomPassword()));
+    user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
 
     UserModel existingUser = userRepository.findByEmail(user.getEmail()).orElseGet(() -> {
       UserModel newUser = userRepository.save(user);
@@ -167,15 +167,17 @@ public class AuthenticationService implements OAuth2UserService<OAuth2UserReques
       String newToken = jwtService.generateToken(user);
       setAuthCookie(response, newToken);
     } else {
-      invalidateToken(request, response);
+      invalidateToken(response);
     }
   }
 
-  public Optional<GetUser> currentUser(HttpServletRequest request) {
+  public Optional<GetUser> currentUser(HttpServletRequest request, HttpServletResponse response) {
     String token = extractToken(request);
     if (token != null) {
       String username = jwtService.extractUsername(token);
       return userRepository.findByUsername(username).map(this::convertUserModelToDto);
+    } else {
+      invalidateToken(response);
     }
     return Optional.empty();
   }
@@ -188,15 +190,15 @@ public class AuthenticationService implements OAuth2UserService<OAuth2UserReques
         String username = jwtService.extractUsername(token);
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         if (jwtService.isTokenValid(token, userDetails)) {
-          invalidateToken(request, response);
+          invalidateToken(response);
           log.info("User logged out successfully: {}", username);
         }
       } catch (Exception e) {
         log.error("Error during logout", e);
-        invalidateToken(request, response);
+        invalidateToken(response);
       }
     } else {
-      invalidateToken(request, response);
+      invalidateToken(response);
     }
   }
 
@@ -205,9 +207,5 @@ public class AuthenticationService implements OAuth2UserService<OAuth2UserReques
         .firstName(userModel.getFirstName()).lastName(userModel.getLastName())
         .bio(userModel.getBio()).role(userModel.getRole()).avatarUrl(userModel.getAvatarUrl())
         .build();
-  }
-
-  private String generateRandomPassword() {
-    return UUID.randomUUID().toString();
   }
 }

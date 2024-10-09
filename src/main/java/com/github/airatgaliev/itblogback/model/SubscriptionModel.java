@@ -26,11 +26,9 @@ public class SubscriptionModel {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(nullable = false)
   private Long id;
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
   private UserModel user;
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "subscriber_id", nullable = false)
   private UserModel subscriber;

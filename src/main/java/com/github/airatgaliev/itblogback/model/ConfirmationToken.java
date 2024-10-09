@@ -26,18 +26,13 @@ public class ConfirmationToken {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(nullable = false)
   private Long id;
-
   @Column(nullable = false, unique = true)
   private String token;
-
   @Column(nullable = false)
   private LocalDateTime createdAt;
-
   @Column(nullable = false)
   private LocalDateTime expiresAt;
-
   private LocalDateTime confirmedAt;
-
   @OneToOne
   @JoinColumn(nullable = false, name = "user_id")
   private UserModel user;

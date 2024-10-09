@@ -3,7 +3,10 @@ package com.github.airatgaliev.itblogback.service;
 import com.github.airatgaliev.itblogback.dto.GetCategory;
 import com.github.airatgaliev.itblogback.dto.GetUser;
 import com.github.airatgaliev.itblogback.dto.UpdateUser;
+import com.github.airatgaliev.itblogback.exception.SubscriptionAlreadyExistsException;
+import com.github.airatgaliev.itblogback.interceptor.localization.LocalizationContext;
 import com.github.airatgaliev.itblogback.model.CategoryModel;
+import com.github.airatgaliev.itblogback.model.Language;
 import com.github.airatgaliev.itblogback.model.Role;
 import com.github.airatgaliev.itblogback.model.SubscriptionModel;
 import com.github.airatgaliev.itblogback.model.UserModel;
@@ -31,6 +34,7 @@ public class UserService {
   private final SubscriptionRepository subscriptionRepository;
   private final FileUploadUtil fileUploadUtil;
   private final PasswordEncoder passwordEncoder;
+  private final LocalizationContext localizationContext;
 
   @Transactional
   public List<GetUser> getAllUsers() {
@@ -109,21 +113,22 @@ public class UserService {
   }
 
   @Transactional
-  public void subscribeUser(String subscriberUsername, String targetUsername) {
+  public void subscribe(String subscriberUsername, String targetUsername) {
     if (subscriberUsername.equals(targetUsername)) {
       throw new IllegalArgumentException("User cannot subscribe to themselves.");
     }
-
     UserModel subscriber = userRepository.findByUsername(subscriberUsername)
         .orElseThrow(() -> new UsernameNotFoundException("Subscriber not found"));
     UserModel targetUser = userRepository.findByUsername(targetUsername)
         .orElseThrow(() -> new UsernameNotFoundException("Target user not found"));
-
-    if (!subscriptionRepository.existsBySubscriberAndUser(subscriber, targetUser)) {
-      SubscriptionModel subscription = SubscriptionModel.builder().subscriber(subscriber)
-          .user(targetUser).build();
-      subscriptionRepository.save(subscription);
+    boolean subscribedExists = subscriptionRepository.existsBySubscriberAndUser(subscriber,
+        targetUser);
+    if (subscribedExists) {
+      throw new SubscriptionAlreadyExistsException("User already subscribed");
     }
+    SubscriptionModel subscription = SubscriptionModel.builder().subscriber(subscriber)
+        .user(targetUser).build();
+    subscriptionRepository.save(subscription);
   }
 
   @Transactional
@@ -132,28 +137,30 @@ public class UserService {
         .orElseThrow(() -> new UsernameNotFoundException("Subscriber not found"));
     UserModel targetUser = userRepository.findByUsername(targetUsername)
         .orElseThrow(() -> new UsernameNotFoundException("Target user not found"));
-
     return subscriptionRepository.existsBySubscriberAndUser(subscriber, targetUser);
   }
 
   @Transactional
-  public void unsubscribeUser(String subscriberUsername, String targetUsername) {
+  public void unsubscribe(String subscriberUsername, String targetUsername) {
     UserModel subscriber = userRepository.findByUsername(subscriberUsername)
         .orElseThrow(() -> new UsernameNotFoundException("Subscriber not found"));
     UserModel targetUser = userRepository.findByUsername(targetUsername)
         .orElseThrow(() -> new UsernameNotFoundException("Target user not found"));
-
     subscriptionRepository.deleteBySubscriberAndUser(subscriber, targetUser);
   }
 
   private GetUser convertUserModelToDto(UserModel userModel) {
     List<CategoryModel> categories = categoryRepository.findCategoriesByUserId(userModel.getId());
+    Language interfaceLanguage = Language.valueOf(localizationContext.getLocale().toUpperCase());
     return GetUser.builder().username(userModel.getUsername()).email(userModel.getEmail())
         .firstName(userModel.getFirstName()).lastName(userModel.getLastName())
         .shortInfo(userModel.getShortInfo()).bio(userModel.getBio())
-        .avatarUrl(userModel.getAvatarUrl()).categories(categories.stream().map(
-            (categoryModel -> GetCategory.builder().id(categoryModel.getId())
-                .name(categoryModel.getName()).build())).toList()).role(userModel.getRole())
+        .avatarUrl(userModel.getAvatarUrl()).categories(categories.stream().map(category -> {
+          String localizedCategoryName = category.getName()
+              .getOrDefault(interfaceLanguage, category.getName().get(Language.EN));
+          return GetCategory.builder().id(category.getId()).name(localizedCategoryName)
+              .build();
+        }).toList()).role(userModel.getRole())
         .subscriptions(userModel.getSubscriptions().stream().map(
             sub -> GetUser.builder().username(sub.getUser().getUsername())
                 .firstName(sub.getUser().getFirstName()).lastName(sub.getUser().getLastName())

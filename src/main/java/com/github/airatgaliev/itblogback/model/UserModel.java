@@ -50,40 +50,30 @@ public class UserModel implements UserDetails {
   private String email;
   @Column(nullable = false)
   private String password;
-  @Column(name = "first_name")
   private String firstName;
-  @Column(name = "last_name")
   private String lastName;
-  @Column
   private String shortInfo;
-  @Column
   private String bio;
-  @Column(name = "avatar_url")
   private String avatarUrl;
   @Column(nullable = false)
   private boolean enabled = false;
-
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private Role role;
-
   @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
   private List<ArticleModel> articles;
-
   @OneToMany(mappedBy = "subscriber", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
   private List<SubscriptionModel> subscriptions = new ArrayList<>();
-
   @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
   private List<SubscriptionModel> subscribers = new ArrayList<>();
-
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<BookmarkModel> bookmarks = new ArrayList<>();
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("createdAt ASC")
   private List<CommentModel> comments = new ArrayList<>();
-
   @CreationTimestamp
   @Column(nullable = false, name = "created_at")
   private Date createdAt;
-
   @UpdateTimestamp
   @Column(name = "updated_at")
   private Date updatedAt;

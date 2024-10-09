@@ -3,6 +3,7 @@ package com.github.airatgaliev.itblogback.controller;
 import com.github.airatgaliev.itblogback.dto.CreateArticle;
 import com.github.airatgaliev.itblogback.dto.GetArticle;
 import com.github.airatgaliev.itblogback.dto.UpdateArticle;
+import com.github.airatgaliev.itblogback.interceptor.localization.LocalizationContext;
 import com.github.airatgaliev.itblogback.model.ArticleModel;
 import com.github.airatgaliev.itblogback.repository.specifications.ArticleSpecifications;
 import com.github.airatgaliev.itblogback.service.ArticleService;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -42,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ArticleController {
 
   private final ArticleService articleService;
+  private final LocalizationContext localizationContext;
 
   @GetMapping
   @Operation(summary = "Get all articles or filter articles by various criteria", description = "Retrieve all articles or filter articles by category, tag, and/or content. Supports pagination and multiple filter combinations to narrow down search results.")
@@ -63,10 +66,11 @@ public class ArticleController {
 
     Sort.Direction sortDirection = Sort.Direction.fromString(order);
     Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
-
+    List<String> supportedLanguages = localizationContext.getSupportedLanguages();
     Specification<ArticleModel> spec = Specification.where(
             ArticleSpecifications.hasCategoryId(categoryId)).and(ArticleSpecifications.hasTagName(tag))
-        .and(ArticleSpecifications.hasUsername(username));
+        .and(ArticleSpecifications.hasUsername(username))
+        .and(ArticleSpecifications.hasSupportedLanguage(supportedLanguages));
 
     Page<GetArticle> articles;
 
@@ -116,5 +120,36 @@ public class ArticleController {
       @AuthenticationPrincipal UserDetails userDetails) {
     articleService.deleteArticle(id, userDetails);
     return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping("/{id}/bookmark")
+  @Operation(summary = "Add article to bookmarks")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
+  public ResponseEntity<Void> bookmark(@PathVariable Long id,
+      @AuthenticationPrincipal UserDetails userDetails) {
+    articleService.bookmark(userDetails.getUsername(), id);
+    return new ResponseEntity<>(HttpStatus.OK);
+  }
+
+  @GetMapping("/{id}/is-bookmarked")
+  @Operation(summary = "Check if the authenticated user has added the article to bookmarks")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
+  public ResponseEntity<Boolean> isBookmarked(@PathVariable Long id,
+      @AuthenticationPrincipal UserDetails userDetails) {
+    String authenticatedUsername = userDetails.getUsername();
+    boolean isSubscribed = articleService.isBookmarked(authenticatedUsername, id);
+    return ResponseEntity.ok(isSubscribed);
+  }
+
+  @DeleteMapping("/{id}/unbookmark")
+  @Operation(summary = "Unbookmark an article")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
+  public ResponseEntity<Void> unbookmark(@PathVariable Long id,
+      @AuthenticationPrincipal UserDetails userDetails) {
+    articleService.unbookmark(userDetails.getUsername(), id);
+    return new ResponseEntity<>(HttpStatus.OK);
   }
 }
