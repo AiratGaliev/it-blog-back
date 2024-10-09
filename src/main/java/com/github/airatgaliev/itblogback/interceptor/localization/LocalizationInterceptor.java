@@ -31,12 +31,13 @@ public class LocalizationInterceptor implements HandlerInterceptor {
     String contlCookie = Arrays.stream(
             Optional.ofNullable(request.getCookies()).orElse(new Cookie[0]))
         .filter(cookie -> "contl".equals(cookie.getName())).map(Cookie::getValue).findFirst()
-        .orElse(Language.EN.getCode().toUpperCase());
+        .orElse(Language.EN.getCode());
+    System.out.println(contlCookie);
     contlCookie = URLDecoder.decode(contlCookie, StandardCharsets.UTF_8);
-    List<String> supportedLanguages;
     String[] languages = contlCookie.split(",");
-    supportedLanguages = Arrays.stream(languages).map(String::trim).filter(Language::isSupported)
-        .map(String::toUpperCase).collect(Collectors.toList());
+    System.out.println(Arrays.toString(languages));
+    List<String> supportedLanguages = Arrays.stream(languages).map(String::trim)
+        .filter(Language::isSupported).map(String::toUpperCase).collect(Collectors.toList());
     localizationContext.setSupportedLanguages(supportedLanguages);
     return true;
   }

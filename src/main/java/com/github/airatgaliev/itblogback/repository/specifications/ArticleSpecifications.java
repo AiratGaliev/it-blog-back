@@ -22,11 +22,6 @@ public class ArticleSpecifications {
   }
 
   public static Specification<ArticleModel> hasSupportedLanguage(List<String> supportedLanguages) {
-    return (root, query, builder) -> {
-      if (supportedLanguages != null && !supportedLanguages.isEmpty()) {
-        return root.get("language").in(supportedLanguages);
-      }
-      return null;
-    };
+    return (root, query, builder) -> root.get("language").in(supportedLanguages);
   }
 }
