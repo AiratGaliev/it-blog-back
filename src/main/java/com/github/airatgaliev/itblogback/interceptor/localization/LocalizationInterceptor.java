@@ -35,7 +35,7 @@ public class LocalizationInterceptor implements HandlerInterceptor {
     contlCookie = URLDecoder.decode(contlCookie, StandardCharsets.UTF_8);
     String[] languages = contlCookie.split(",");
     List<String> supportedLanguages = Arrays.stream(languages).map(String::trim)
-        .filter(Language::isSupported).map(String::toUpperCase).collect(Collectors.toList());
+        .filter(Language::isSupported).map(String::toUpperCase).toList();
     localizationContext.setSupportedLanguages(supportedLanguages);
     return true;
   }

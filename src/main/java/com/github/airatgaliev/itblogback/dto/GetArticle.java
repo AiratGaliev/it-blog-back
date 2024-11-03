@@ -2,6 +2,7 @@ package com.github.airatgaliev.itblogback.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.github.airatgaliev.itblogback.model.Language;
+import com.github.airatgaliev.itblogback.model.Status;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Date;
 import java.util.List;
@@ -20,6 +21,8 @@ public class GetArticle {
 
   @Schema(description = "ID of the article", example = "1")
   private Long id;
+  @Schema(description = "Status of the article")
+  private Status status;
   @Schema(description = "Language of the article")
   private Language language;
   @Schema(description = "Original article")

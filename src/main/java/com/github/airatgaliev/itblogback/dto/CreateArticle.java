@@ -33,7 +33,7 @@ public class CreateArticle {
   @NotNull(message = "Content cannot be empty")
   @Schema(description = "Content of the article", example = "This is the content of the article", requiredMode = RequiredMode.REQUIRED)
   private String content;
-  @NotNull(message = "Content cannot be empty")
+  @NotNull(message = "Categories cannot be empty")
   @Schema(description = "Categories associated with the article")
   private List<Long> categoryIds;
   @Schema(description = "Tags associated with the article", requiredMode = RequiredMode.NOT_REQUIRED)

@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -39,11 +40,9 @@ public class AuthenticationController {
 
   @PostMapping(value = "/sign-up", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @Operation(summary = "Register a new user")
-  public ResponseEntity<String> signUp(@Valid @RequestBody SignUpRequest signUpRequest,
-      @ModelAttribute @RequestParam("avatar") MultipartFile avatar,
-      @RequestHeader("Origin") String origin) {
-    signUpRequest.setAvatar(avatar);
-    String username = authenticationService.signUp(signUpRequest, origin).getUsername();
+  public ResponseEntity<String> signUp(@Valid @ModelAttribute SignUpRequest signUpRequest,
+      @RequestPart(value = "avatar") MultipartFile avatar, @RequestHeader("Origin") String origin) {
+    String username = authenticationService.signUp(signUpRequest, avatar, origin).getUsername();
     return ResponseEntity.status(HttpStatus.CREATED)
         .body("User registered successfully with username: " + username);
   }

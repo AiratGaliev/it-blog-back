@@ -35,8 +35,7 @@ public class CategoryService {
 
   @Transactional
   public List<GetCategory> getAllCategories() {
-    return categoryRepository.findAll().stream().map(this::convertCategoryToDTO)
-        .collect(Collectors.toList());
+    return categoryRepository.findAll().stream().map(this::convertCategoryToDTO).toList();
   }
 
   @Transactional
@@ -96,7 +95,7 @@ public class CategoryService {
         .description(localizedCategoryDescription).imageUrl(category.getImageUrl()).tags(
             topTags.stream().map(
                     tagModel -> GetTag.builder().id(tagModel.getId()).name(tagModel.getName()).build())
-                .collect(Collectors.toList())).build();
+                .toList()).build();
   }
 
   private String getLocalizedValue(Map<Language, String> values, Language preferredLanguage) {

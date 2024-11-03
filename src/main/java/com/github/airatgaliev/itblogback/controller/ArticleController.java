@@ -1,10 +1,12 @@
 package com.github.airatgaliev.itblogback.controller;
 
-import com.github.airatgaliev.itblogback.dto.CreateArticle;
+import com.github.airatgaliev.itblogback.dto.CreateDraftArticle;
 import com.github.airatgaliev.itblogback.dto.GetArticle;
 import com.github.airatgaliev.itblogback.dto.UpdateArticle;
+import com.github.airatgaliev.itblogback.dto.UpdateDraftArticle;
 import com.github.airatgaliev.itblogback.interceptor.localization.LocalizationContext;
 import com.github.airatgaliev.itblogback.model.ArticleModel;
+import com.github.airatgaliev.itblogback.model.Status;
 import com.github.airatgaliev.itblogback.repository.specifications.ArticleSpecifications;
 import com.github.airatgaliev.itblogback.service.ArticleService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,6 +30,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -70,7 +73,8 @@ public class ArticleController {
     Specification<ArticleModel> spec = Specification.where(
             ArticleSpecifications.hasCategoryId(categoryId)).and(ArticleSpecifications.hasTagName(tag))
         .and(ArticleSpecifications.hasUsername(username))
-        .and(ArticleSpecifications.hasSupportedLanguage(supportedLanguages));
+        .and(ArticleSpecifications.hasSupportedLanguage(supportedLanguages))
+        .and(ArticleSpecifications.hasStatus(Status.PUBLISHED));
 
     Page<GetArticle> articles;
 
@@ -84,36 +88,77 @@ public class ArticleController {
   }
 
   @GetMapping("/{id}")
-  @Operation(summary = "Get an article by id")
+  @Operation(summary = "Get an article")
   public ResponseEntity<GetArticle> getArticleById(@PathVariable Long id) {
     return articleService.getArticleById(id)
         .map(article -> new ResponseEntity<>(article, HttpStatus.OK))
         .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
-  @PostMapping
-  @Operation(summary = "Create a new article")
+  @GetMapping("/drafts")
+  @Operation(summary = "Get the author's draft articles")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
-  public ResponseEntity<GetArticle> createArticle(@Valid @RequestBody CreateArticle createArticle,
+  public ResponseEntity<List<GetArticle>> getDraftArticles(
       @AuthenticationPrincipal UserDetails userDetails) {
-    GetArticle createdArticle = articleService.createArticle(createArticle, userDetails);
-    return new ResponseEntity<>(createdArticle, HttpStatus.CREATED);
+    List<GetArticle> articles = articleService.getDraftArticles(userDetails);
+    return ResponseEntity.ok(articles);
+  }
+
+  @PostMapping("/drafts")
+  @Operation(summary = "Create draft article")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
+  public ResponseEntity<GetArticle> createDraftArticle(
+      @Valid @RequestBody CreateDraftArticle draftArticle,
+      @AuthenticationPrincipal UserDetails userDetails) {
+    GetArticle article = articleService.createDraftArticle(draftArticle, userDetails);
+    return new ResponseEntity<>(article, HttpStatus.CREATED);
+  }
+
+  @PatchMapping("/drafts/{id}")
+  @Operation(summary = "Update draft article")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
+  public ResponseEntity<Void> updateDraftArticle(@PathVariable Long id,
+      @Valid @RequestBody UpdateDraftArticle draftArticle,
+      @AuthenticationPrincipal UserDetails userDetails) {
+    articleService.updateDraftArticle(id, draftArticle, userDetails);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PatchMapping("/{id}/publish")
+  @Operation(summary = "Publish an article")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_AUTHOR')")
+  public ResponseEntity<Void> publishArticle(@PathVariable Long id,
+      @AuthenticationPrincipal UserDetails userDetails) {
+    articleService.publishArticle(id, userDetails);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PatchMapping("/{id}/hide")
+  @Operation(summary = "Hide an article")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAnyAuthority('ROLE_AUTHOR')")
+  public ResponseEntity<Void> hideArticle(@PathVariable Long id,
+      @AuthenticationPrincipal UserDetails userDetails) {
+    articleService.hideArticle(id, userDetails);
+    return ResponseEntity.noContent().build();
   }
 
   @PutMapping("/{id}")
-  @Operation(summary = "Update an article by id")
+  @Operation(summary = "Update an article")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
-  public ResponseEntity<GetArticle> updateArticle(@PathVariable Long id,
-      @Valid @RequestBody UpdateArticle updateArticle,
-      @AuthenticationPrincipal UserDetails userDetails) {
-    GetArticle updatedArticle = articleService.updateArticle(id, updateArticle, userDetails);
-    return new ResponseEntity<>(updatedArticle, HttpStatus.OK);
+  public ResponseEntity<Void> updateArticle(@PathVariable Long id,
+      @Valid @RequestBody UpdateArticle article, @AuthenticationPrincipal UserDetails userDetails) {
+    articleService.updateArticle(id, article, userDetails);
+    return ResponseEntity.noContent().build();
   }
 
   @DeleteMapping("/{id}")
-  @Operation(summary = "Delete a article")
+  @Operation(summary = "Delete an article")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
   public ResponseEntity<Void> deleteArticle(@PathVariable Long id,
@@ -128,8 +173,8 @@ public class ArticleController {
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
   public ResponseEntity<Void> bookmark(@PathVariable Long id,
       @AuthenticationPrincipal UserDetails userDetails) {
-    articleService.bookmark(userDetails.getUsername(), id);
-    return new ResponseEntity<>(HttpStatus.OK);
+    articleService.bookmark(id, userDetails);
+    return ResponseEntity.noContent().build();
   }
 
   @GetMapping("/{id}/is-bookmarked")
@@ -150,6 +195,6 @@ public class ArticleController {
   public ResponseEntity<Void> unbookmark(@PathVariable Long id,
       @AuthenticationPrincipal UserDetails userDetails) {
     articleService.unbookmark(userDetails.getUsername(), id);
-    return new ResponseEntity<>(HttpStatus.OK);
+    return ResponseEntity.noContent().build();
   }
 }

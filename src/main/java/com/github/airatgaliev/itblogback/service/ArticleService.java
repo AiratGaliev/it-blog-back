@@ -2,11 +2,12 @@ package com.github.airatgaliev.itblogback.service;
 
 import static com.github.airatgaliev.itblogback.util.ContentUtil.createHtmlPreview;
 
-import com.github.airatgaliev.itblogback.dto.CreateArticle;
+import com.github.airatgaliev.itblogback.dto.CreateDraftArticle;
 import com.github.airatgaliev.itblogback.dto.GetArticle;
 import com.github.airatgaliev.itblogback.dto.GetCategory;
 import com.github.airatgaliev.itblogback.dto.GetTag;
 import com.github.airatgaliev.itblogback.dto.UpdateArticle;
+import com.github.airatgaliev.itblogback.dto.UpdateDraftArticle;
 import com.github.airatgaliev.itblogback.exception.ArticleNotFoundException;
 import com.github.airatgaliev.itblogback.exception.BookmarkAlreadyExistsException;
 import com.github.airatgaliev.itblogback.interceptor.localization.LocalizationContext;
@@ -14,6 +15,8 @@ import com.github.airatgaliev.itblogback.model.ArticleModel;
 import com.github.airatgaliev.itblogback.model.BookmarkModel;
 import com.github.airatgaliev.itblogback.model.CategoryModel;
 import com.github.airatgaliev.itblogback.model.Language;
+import com.github.airatgaliev.itblogback.model.Role;
+import com.github.airatgaliev.itblogback.model.Status;
 import com.github.airatgaliev.itblogback.model.TagModel;
 import com.github.airatgaliev.itblogback.model.UserModel;
 import com.github.airatgaliev.itblogback.repository.ArticleRepository;
@@ -95,7 +98,8 @@ public class ArticleService {
 
   private Page<GetArticle> getArticles(Pageable pageable,
       Specification<ArticleModel> combinedSpec) {
-    return articleRepository.findAll(combinedSpec, pageable).map(this::convertArticleModelToDTO)
+    return articleRepository.findAll(combinedSpec, pageable)
+        .map(this::convertArticleModelToDTO)
         .map(article -> {
           if (article.getPreviewContent().isEmpty()) {
             String previewContent = createHtmlPreview(article.getContent(), 1100);
@@ -108,12 +112,19 @@ public class ArticleService {
         });
   }
 
+  @Transactional
+  public List<GetArticle> getDraftArticles(UserDetails userDetails) {
+    UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
+        () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+    return articleRepository.findAllByUserAndStatus(userModel, Status.DRAFT).stream()
+        .map(this::convertArticleModelToDTO).toList();
+  }
+
   private List<Long> searchArticleIdsByContent(String content) {
     SearchSession searchSession = Search.session(entityManager);
     return searchSession.search(ArticleModel.class)
         .where(f -> f.match().fields("content", "title").matching(content).fuzzy(1))
-        .fetchHits(searchResultsLimit).stream().map(ArticleModel::getId)
-        .collect(Collectors.toList());
+        .fetchHits(searchResultsLimit).stream().map(ArticleModel::getId).toList();
   }
 
   @Transactional
@@ -122,14 +133,54 @@ public class ArticleService {
   }
 
   @Transactional
-  public GetArticle createArticle(CreateArticle createArticle, UserDetails userDetails) {
-    UserModel userModel = userRepository.findByUsername(userDetails.getUsername())
-        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-    List<CategoryModel> categories = new ArrayList<>(
-        categoryRepository.findAllById(createArticle.getCategoryIds()));
-    List<String> tags = createArticle.getTags();
-    List<TagModel> tagModels = new ArrayList<>();
+  public GetArticle createDraftArticle(CreateDraftArticle draftArticle, UserDetails userDetails) {
+    UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
+        () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+    ArticleModel articleModel = ArticleModel.builder().user(userModel)
+        .title(draftArticle.getTitle()).content(draftArticle.getContent()).build();
+    ArticleModel savedArticle = articleRepository.save(articleModel);
+    return convertArticleModelToDTO(savedArticle);
+  }
+
+  @Transactional
+  public void updateDraftArticle(Long id, UpdateDraftArticle draftArticle,
+      UserDetails userDetails) {
+    UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
+        () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+    ArticleModel articleModel = articleRepository.findById(id)
+        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+    if (articleModel.getStatus() != Status.DRAFT && !userModel.getId()
+        .equals(articleModel.getUser().getId())) {
+      throw new AccessDeniedException("You are not allowed to edit this article");
+    }
+    Language language = draftArticle.getLanguage();
+    if (language != null) {
+      articleModel.setLanguage(draftArticle.getLanguage());
+    }
+    Long originalArticleId = draftArticle.getOriginalArticleId();
+    if (originalArticleId != null) {
+      articleRepository.findById(originalArticleId)
+          .orElseThrow(() -> new ArticleNotFoundException("Original article not found"));
+      articleModel.setOriginalArticleId(originalArticleId);
+    }
+    if (draftArticle.getTitle() != null) {
+      articleModel.setTitle(draftArticle.getTitle());
+    }
+    if (draftArticle.getPreviewContent() != null) {
+      articleModel.setPreviewContent(draftArticle.getPreviewContent());
+    }
+    if (draftArticle.getContent() != null) {
+      articleModel.setContent(draftArticle.getContent());
+    }
+    List<Long> categoryIds = draftArticle.getCategoryIds();
+    if (categoryIds != null && !categoryIds.isEmpty()) {
+      List<CategoryModel> categories = new ArrayList<>(
+          categoryRepository.findAllById(draftArticle.getCategoryIds()));
+      articleModel.setCategories(categories);
+    }
+    List<String> tags = draftArticle.getTags();
     if (tags != null && !tags.isEmpty()) {
+      List<TagModel> tagModels = new ArrayList<>();
       List<TagModel> existingTags = tagRepository.findAllByNameIgnoreCaseIn(tags);
       Map<String, TagModel> existingTagMap = existingTags.stream()
           .collect(Collectors.toMap(tag -> tag.getName().toLowerCase(), tag -> tag));
@@ -142,32 +193,56 @@ public class ArticleService {
         }
         tagModels.add(tagModel);
       });
+      articleModel.setTags(tagModels);
     }
-    ArticleModel articleModel = new ArticleModel();
-    articleModel.setLanguage(createArticle.getLanguage());
-    Long originalArticleId = createArticle.getOriginalArticleId();
-    if (originalArticleId != null) {
-      articleRepository.findById(originalArticleId)
-          .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
-      articleModel.setOriginalArticleId(originalArticleId);
-    }
-    articleModel.setTitle(createArticle.getTitle());
-    articleModel.setPreviewContent(createArticle.getPreviewContent());
-    articleModel.setContent(createArticle.getContent());
-    articleModel.setCategories(categories);
-    articleModel.setTags(tagModels);
-    articleModel.setUser(userModel);
-    ArticleModel savedArticle = articleRepository.save(articleModel);
-    return convertArticleModelToDTO(savedArticle);
+    articleRepository.save(articleModel);
   }
 
   @Transactional
-  public GetArticle updateArticle(Long id, UpdateArticle updateArticle, UserDetails userDetails) {
+  public void publishArticle(Long id, UserDetails userDetails) {
     UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
         () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
     ArticleModel articleModel = articleRepository.findById(id)
         .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
-    if (!Objects.equals(userModel.getId(), articleModel.getUser().getId())) {
+    Status articleStatus = articleModel.getStatus();
+    if (articleStatus != Status.MODERATION && articleStatus != Status.HIDDEN) {
+      throw new AccessDeniedException("Publishing not allowed for status: " + articleStatus);
+    }
+    if (articleStatus == Status.MODERATION && userModel.getRole() != Role.ROLE_ADMIN) {
+      throw new AccessDeniedException("Only admins can publish articles under moderation");
+    }
+    if (articleStatus == Status.HIDDEN && !userModel.getId()
+        .equals(articleModel.getUser().getId())) {
+      throw new AccessDeniedException("Only the author can publish their hidden article");
+    }
+    articleModel.setStatus(Status.PUBLISHED);
+    articleRepository.save(articleModel);
+  }
+
+  @Transactional
+  public void hideArticle(Long id, UserDetails userDetails) {
+    UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
+        () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+    ArticleModel articleModel = articleRepository.findById(id)
+        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+    Status articleStatus = articleModel.getStatus();
+    if (articleStatus != Status.PUBLISHED) {
+      throw new AccessDeniedException("Hiding not allowed for status: " + articleStatus);
+    }
+    if (!userModel.getId().equals(articleModel.getUser().getId())) {
+      throw new AccessDeniedException("Only the author can hide their published article");
+    }
+    articleModel.setStatus(Status.HIDDEN);
+    articleRepository.save(articleModel);
+  }
+
+  @Transactional
+  public void updateArticle(Long id, UpdateArticle updateArticle, UserDetails userDetails) {
+    UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
+        () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+    ArticleModel articleModel = articleRepository.findById(id)
+        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+    if (!userModel.getId().equals(articleModel.getUser().getId())) {
       throw new AccessDeniedException("You are not allowed to update this article");
     }
     List<CategoryModel> categories = new ArrayList<>(
@@ -188,14 +263,21 @@ public class ArticleService {
         tagModels.add(tagModel);
       });
     }
+    Long originalArticleId = updateArticle.getOriginalArticleId();
+    if (originalArticleId != null) {
+      articleRepository.findById(originalArticleId)
+          .orElseThrow(() -> new ArticleNotFoundException("Original article not found"));
+      articleModel.setOriginalArticleId(originalArticleId);
+    }
+    articleModel.setLanguage(updateArticle.getLanguage());
+    articleModel.setStatus(Status.MODERATION);
     articleModel.setTitle(updateArticle.getTitle());
     articleModel.setPreviewContent(updateArticle.getPreviewContent());
     articleModel.setContent(updateArticle.getContent());
     articleModel.setCategories(categories);
     articleModel.setTags(tagModels);
     articleModel.setUser(userModel);
-    ArticleModel savedArticle = articleRepository.save(articleModel);
-    return convertArticleModelToDTO(savedArticle);
+    articleRepository.save(articleModel);
   }
 
   @Transactional
@@ -212,8 +294,8 @@ public class ArticleService {
   }
 
   @Transactional
-  public void bookmark(String bookmarkingUsername, Long articleId) {
-    UserModel userModel = userRepository.findByUsername(bookmarkingUsername)
+  public void bookmark(Long articleId, UserDetails userDetails) {
+    UserModel userModel = userRepository.findByUsername(userDetails.getUsername())
         .orElseThrow(() -> new UsernameNotFoundException("Bookmarking user not found"));
     ArticleModel article = articleRepository.findById(articleId).orElseThrow(
         () -> new ArticleNotFoundException("Article with id " + articleId + " not found"));
@@ -249,9 +331,10 @@ public class ArticleService {
         articleModel.getOriginalArticleId() != null ? articleRepository.findById(
             articleModel.getOriginalArticleId()).orElse(null) : null;
     Language interfaceLanguage = Language.valueOf(localizationContext.getLocale().toUpperCase());
-    return GetArticle.builder().id(articleModel.getId()).language(articleModel.getLanguage())
-        .originalArticle(originalArticle != null ? GetArticle.builder().id(originalArticle.getId())
-            .title(originalArticle.getTitle()).build() : null).title(articleModel.getTitle())
+    return GetArticle.builder().id(articleModel.getId()).status(articleModel.getStatus())
+        .language(articleModel.getLanguage()).originalArticle(
+            originalArticle != null ? GetArticle.builder().id(originalArticle.getId())
+                .title(originalArticle.getTitle()).build() : null).title(articleModel.getTitle())
         .previewContent(articleModel.getPreviewContent()).content(articleModel.getContent())
         .username(articleModel.getUser().getUsername())
         .authorAvatarUrl(articleModel.getUser().getAvatarUrl())
@@ -261,7 +344,7 @@ public class ArticleService {
           return GetCategory.builder().id(category.getId()).name(localizedCategoryName).build();
         }).toList()).tags(articleModel.getTags().stream()
             .map(tagModel -> GetTag.builder().id(tagModel.getId()).name(tagModel.getName()).build())
-            .collect(Collectors.toList())).bookmarksCount(articleModel.getBookmarks().size())
+            .toList()).bookmarksCount(articleModel.getBookmarks().size())
         .createdAt(articleModel.getCreatedAt()).updatedAt(articleModel.getUpdatedAt()).build();
   }
 }

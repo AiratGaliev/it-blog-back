@@ -31,12 +31,10 @@ public class JwtService {
     return claimsResolver.apply(claims);
   }
 
-  public String generateToken(UserDetails userDetails) {
+  public String generateToken(UserModel userModel) {
     Map<String, Object> claims = new HashMap<>();
-    if (userDetails instanceof UserModel) {
-      claims.put("role", ((UserModel) userDetails).getRole().name());
-    }
-    return buildToken(claims, userDetails, jwtExpiration);
+    claims.put("role", userModel.getRole().name());
+    return buildToken(claims, userModel, jwtExpiration);
   }
 
   public long getExpirationTime() {

@@ -1,6 +1,7 @@
 package com.github.airatgaliev.itblogback.repository.specifications;
 
 import com.github.airatgaliev.itblogback.model.ArticleModel;
+import com.github.airatgaliev.itblogback.model.Status;
 import java.util.List;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -23,5 +24,9 @@ public class ArticleSpecifications {
 
   public static Specification<ArticleModel> hasSupportedLanguage(List<String> supportedLanguages) {
     return (root, query, builder) -> root.get("language").in(supportedLanguages);
+  }
+
+  public static Specification<ArticleModel> hasStatus(Status status) {
+    return (root, query, builder) -> root.get("status").in(status);
   }
 }

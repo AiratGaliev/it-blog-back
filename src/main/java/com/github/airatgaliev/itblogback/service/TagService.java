@@ -20,8 +20,7 @@ public class TagService {
   @Transactional
   public List<GetTag> getTagsByNameContaining(String name) {
     return tagRepository.findTop10ByNameStartingWithIgnoreCase(name).stream()
-        .map(this::convertTagToDTO)
-        .collect(Collectors.toList());
+        .map(this::convertTagToDTO).toList();
   }
 
   private GetTag convertTagToDTO(TagModel tag) {

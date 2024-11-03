@@ -43,6 +43,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
@@ -60,7 +61,7 @@ public class AuthenticationService implements OAuth2UserService<OAuth2UserReques
   private final ConfirmationTokenService tokenService;
 
   @Transactional
-  public GetUser signUp(SignUpRequest signUpRequest, String origin) {
+  public GetUser signUp(SignUpRequest signUpRequest, MultipartFile avatar, String origin) {
     userRepository.findByUsernameOrEmail(signUpRequest.getUsername(), signUpRequest.getEmail())
         .ifPresent((user) -> {
           throw new UserAlreadyExistsException("User with this username or email already exists");
@@ -69,9 +70,8 @@ public class AuthenticationService implements OAuth2UserService<OAuth2UserReques
         .email(signUpRequest.getEmail())
         .password(passwordEncoder.encode(signUpRequest.getPassword())).role(Role.ROLE_USER).build();
     UserModel savedUser = userRepository.save(user);
-    if (signUpRequest.getAvatar() != null && !signUpRequest.getAvatar().isEmpty()) {
-      String avatarUrl = fileUploadUtil.uploadUserAvatar(signUpRequest.getAvatar(),
-          savedUser.getId());
+    if (avatar != null) {
+      String avatarUrl = fileUploadUtil.uploadUserAvatar(avatar, savedUser.getId());
       user.setAvatarUrl(avatarUrl);
       userRepository.save(user);
     }

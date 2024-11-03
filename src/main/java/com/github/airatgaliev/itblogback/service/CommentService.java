@@ -34,7 +34,7 @@ public class CommentService {
     articleRepository.findById(articleId)
         .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
     return commentRepository.findByArticleIdAndParentCommentIsNullOrderByCreatedAtAsc(articleId)
-        .stream().map(this::convertCommentModelToDTO).collect(Collectors.toList());
+        .stream().map(this::convertCommentModelToDTO).toList();
   }
 
   @Transactional
@@ -83,7 +83,7 @@ public class CommentService {
           .title(commentModel.getArticle().getTitle()).build());
       getComment.setReplies(null);
       return getComment;
-    }).collect(Collectors.toList());
+    }).toList();
   }
 
   @Transactional
@@ -98,7 +98,7 @@ public class CommentService {
 
   private GetComment convertCommentModelToDTO(CommentModel commentModel) {
     List<GetComment> replies = commentModel.getReplies().stream()
-        .map(this::convertCommentModelToDTO).collect(Collectors.toList());
+        .map(this::convertCommentModelToDTO).toList();
 
     return GetComment.builder().id(commentModel.getId()).content(commentModel.getContent()).user(
             GetUser.builder().username(commentModel.getUser().getUsername())

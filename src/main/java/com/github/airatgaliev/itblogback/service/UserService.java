@@ -39,19 +39,19 @@ public class UserService {
   @Transactional
   public List<GetUser> getAllUsers() {
     return userRepository.findAllByRoleIsNot(Role.ROLE_ADMIN).stream()
-        .map(this::convertUserModelToDto).collect(Collectors.toList());
+        .map(this::convertUserModelToDto).toList();
   }
 
   @Transactional
   public List<GetUser> getAllByRole(Role role) {
     return userRepository.findAllByRoleAndRoleIsNot(role, Role.ROLE_ADMIN).stream()
-        .map(this::convertUserModelToDto).collect(Collectors.toList());
+        .map(this::convertUserModelToDto).toList();
   }
 
   @Transactional
   public List<GetUser> getAllAuthorsByCategoryId(Long categoryId) {
     return userRepository.findAuthorsByCategoryId(categoryId).stream()
-        .map(this::convertUserModelToDto).collect(Collectors.toList());
+        .map(this::convertUserModelToDto).toList();
   }
 
   @Transactional
@@ -165,13 +165,13 @@ public class UserService {
             sub -> GetUser.builder().username(sub.getUser().getUsername())
                 .firstName(sub.getUser().getFirstName()).lastName(sub.getUser().getLastName())
                 .avatarUrl(sub.getUser().getAvatarUrl()).shortInfo(sub.getUser().getShortInfo())
-                .build()).collect(Collectors.toList())).subscribers(
+                .build()).toList()).subscribers(
             userModel.getSubscribers().stream().map(
                     sub -> GetUser.builder().username(sub.getSubscriber().getUsername())
                         .firstName(sub.getSubscriber().getFirstName())
                         .lastName(sub.getSubscriber().getLastName())
                         .avatarUrl(sub.getSubscriber().getAvatarUrl())
                         .shortInfo(sub.getSubscriber().getShortInfo()).build())
-                .collect(Collectors.toList())).build();
+                .toList()).build();
   }
 }
