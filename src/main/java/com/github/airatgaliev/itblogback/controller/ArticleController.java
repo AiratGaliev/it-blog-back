@@ -105,6 +105,16 @@ public class ArticleController {
     return ResponseEntity.ok(articles);
   }
 
+  @GetMapping("/drafts/{id}")
+  @Operation(summary = "Get the author's drafted article")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
+  public ResponseEntity<GetArticle> getDraftedArticleById(@PathVariable Long id,
+      @AuthenticationPrincipal UserDetails userDetails) {
+    GetArticle article = articleService.getDraftedArticleById(id, userDetails);
+    return new ResponseEntity<>(article, HttpStatus.OK);
+  }
+
   @PostMapping("/drafts")
   @Operation(summary = "Create draft article")
   @SecurityRequirement(name = "bearerAuth")

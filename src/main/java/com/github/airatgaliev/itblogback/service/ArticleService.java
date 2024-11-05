@@ -133,6 +133,20 @@ public class ArticleService {
   }
 
   @Transactional
+  public GetArticle getDraftedArticleById(Long id, UserDetails userDetails) {
+    UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
+        () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+    ArticleModel articleModel = articleRepository.findById(id)
+        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+    if (!userModel.getId().equals(articleModel.getUser().getId())) {
+      throw new AccessDeniedException("You are not allowed to edit this article");
+    }
+    articleModel.setStatus(Status.DRAFT);
+    ArticleModel savedArticle = articleRepository.save(articleModel);
+    return convertArticleModelToDTO(savedArticle);
+  }
+
+  @Transactional
   public GetArticle createDraftArticle(CreateDraftArticle draftArticle, UserDetails userDetails) {
     UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
         () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
@@ -149,10 +163,10 @@ public class ArticleService {
         () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
     ArticleModel articleModel = articleRepository.findById(id)
         .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
-    if (articleModel.getStatus() != Status.DRAFT && !userModel.getId()
-        .equals(articleModel.getUser().getId())) {
+    if (!userModel.getId().equals(articleModel.getUser().getId())) {
       throw new AccessDeniedException("You are not allowed to edit this article");
     }
+    articleModel.setStatus(Status.DRAFT);
     Language language = draftArticle.getLanguage();
     if (language != null) {
       articleModel.setLanguage(draftArticle.getLanguage());
