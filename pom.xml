@@ -7,13 +7,13 @@
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
     <version>3.3.4</version>
-    <relativePath/> <!-- lookup parent from repository -->
+    <relativePath/>
   </parent>
-  <groupId>com.github.airatgaliev</groupId>
-  <artifactId>it-blog-back</artifactId>
-  <version>0.9.11</version>
-  <name>it-blog-back</name>
-  <description>it-blog-back</description>
+  <groupId>com.github.codogma</groupId>
+  <artifactId>codogma-back</artifactId>
+  <version>0.9.12</version>
+  <name>codogma-back</name>
+  <description>codogma-back</description>
   <properties>
     <java.version>21</java.version>
   </properties>
