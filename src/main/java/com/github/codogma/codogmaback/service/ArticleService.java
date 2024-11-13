@@ -149,6 +149,10 @@ public class ArticleService {
     if (!userModel.getId().equals(articleModel.getUser().getId())) {
       throw new AccessDeniedException("You are not allowed to edit this article");
     }
+    Status articleStatus = articleModel.getStatus();
+    if (articleStatus == Status.BLOCKED) {
+      throw new AccessDeniedException("Editing not allowed for this article");
+    }
     articleModel.setStatus(Status.DRAFT);
     ArticleModel savedArticle = articleRepository.save(articleModel);
     return convertArticleModelToDTO(savedArticle);
@@ -174,7 +178,10 @@ public class ArticleService {
     if (!userModel.getId().equals(articleModel.getUser().getId())) {
       throw new AccessDeniedException("You are not allowed to edit this article");
     }
-    articleModel.setStatus(Status.DRAFT);
+    Status articleStatus = articleModel.getStatus();
+    if (articleStatus != Status.DRAFT) {
+      throw new AccessDeniedException("Editing not allowed for this article");
+    }
     Language language = draftArticle.getLanguage();
     if (language != null) {
       articleModel.setLanguage(draftArticle.getLanguage());
@@ -227,11 +234,11 @@ public class ArticleService {
     ArticleModel articleModel = articleRepository.findById(id)
         .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
     Status articleStatus = articleModel.getStatus();
-    if (articleStatus != Status.MODERATION && articleStatus != Status.HIDDEN) {
-      throw new AccessDeniedException("Publishing not allowed for status: " + articleStatus);
+    if (articleStatus == Status.DRAFT || articleStatus == Status.BLOCKED) {
+      throw new AccessDeniedException("Publishing not allowed for this article");
     }
-    if (articleStatus == Status.MODERATION && userModel.getRole() != Role.ROLE_ADMIN) {
-      throw new AccessDeniedException("Only admins can publish articles under moderation");
+    if ((articleStatus == Status.MODERATION) && userModel.getRole() != Role.ROLE_ADMIN) {
+      throw new AccessDeniedException("Only admins can publish this article");
     }
     if (articleStatus == Status.HIDDEN && !userModel.getId()
         .equals(articleModel.getUser().getId())) {
@@ -247,14 +254,38 @@ public class ArticleService {
         () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
     ArticleModel articleModel = articleRepository.findById(id)
         .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+    if (!userModel.getId().equals(articleModel.getUser().getId())) {
+      throw new AccessDeniedException("Only the author can hide their published article");
+    }
     Status articleStatus = articleModel.getStatus();
     if (articleStatus != Status.PUBLISHED) {
       throw new AccessDeniedException("Hiding not allowed for status: " + articleStatus);
     }
-    if (!userModel.getId().equals(articleModel.getUser().getId())) {
-      throw new AccessDeniedException("Only the author can hide their published article");
-    }
     articleModel.setStatus(Status.HIDDEN);
+    articleRepository.save(articleModel);
+  }
+
+  @Transactional
+  public void blockArticle(Long id) {
+    ArticleModel articleModel = articleRepository.findById(id)
+        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+    Status articleStatus = articleModel.getStatus();
+    if (articleStatus == Status.DRAFT) {
+      throw new AccessDeniedException("Blocking not allowed for draft article");
+    }
+    articleModel.setStatus(Status.BLOCKED);
+    articleRepository.save(articleModel);
+  }
+
+  @Transactional
+  public void unblockArticle(Long id) {
+    ArticleModel articleModel = articleRepository.findById(id)
+        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+    Status articleStatus = articleModel.getStatus();
+    if (articleStatus != Status.BLOCKED) {
+      throw new AccessDeniedException("Unblocking not allowed for this article");
+    }
+    articleModel.setStatus(Status.DRAFT);
     articleRepository.save(articleModel);
   }
 
@@ -266,6 +297,10 @@ public class ArticleService {
         .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
     if (!userModel.getId().equals(articleModel.getUser().getId())) {
       throw new AccessDeniedException("You are not allowed to update this article");
+    }
+    Status articleStatus = articleModel.getStatus();
+    if (articleStatus != Status.DRAFT) {
+      throw new AccessDeniedException("Editing not allowed for this article");
     }
     List<CategoryModel> categories = new ArrayList<>(
         categoryRepository.findAllById(updateArticle.getCategoryIds()));

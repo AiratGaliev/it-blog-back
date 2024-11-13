@@ -158,6 +158,24 @@ public class ArticleController {
     return ResponseEntity.noContent().build();
   }
 
+  @PatchMapping("/{id}/block")
+  @Operation(summary = "Block an article")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+  public ResponseEntity<Void> blockArticle(@PathVariable Long id) {
+    articleService.blockArticle(id);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PatchMapping("/{id}/unblock")
+  @Operation(summary = "Unblock an article")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+  public ResponseEntity<Void> unblockArticle(@PathVariable Long id) {
+    articleService.unblockArticle(id);
+    return ResponseEntity.noContent().build();
+  }
+
   @PutMapping("/{id}")
   @Operation(summary = "Update an article")
   @SecurityRequirement(name = "bearerAuth")

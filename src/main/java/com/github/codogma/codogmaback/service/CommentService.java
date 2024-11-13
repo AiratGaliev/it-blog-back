@@ -91,7 +91,26 @@ public class CommentService {
     comment.setContent(createComment.getContent());
     comment.setUser(user);
     comment.setArticle(article);
-    return convertCommentModelToDTO(commentRepository.save(comment));
+    CommentModel savedComment = commentRepository.save(comment);
+    return convertCommentModelToDTO(savedComment);
+  }
+
+  @Transactional
+  public GetComment publishComment(Long commentId) {
+    CommentModel comment = commentRepository.findById(commentId)
+        .orElseThrow(() -> new CommentNotFoundException("Comment not found by id " + commentId));
+    comment.setStatus(Status.PUBLISHED);
+    CommentModel savedComment = commentRepository.save(comment);
+    return convertCommentModelToDTO(savedComment);
+  }
+
+  @Transactional
+  public GetComment blockComment(Long commentId) {
+    CommentModel comment = commentRepository.findById(commentId)
+        .orElseThrow(() -> new CommentNotFoundException("Comment not found by id " + commentId));
+    comment.setStatus(Status.BLOCKED);
+    CommentModel savedComment = commentRepository.save(comment);
+    return convertCommentModelToDTO(savedComment);
   }
 
   @Transactional
@@ -99,18 +118,13 @@ public class CommentService {
       UserModel userModel) {
     CommentModel comment = commentRepository.findById(commentId)
         .orElseThrow(() -> new CommentNotFoundException("Comment not found by id " + commentId));
-    Status status = updateComment.getStatus();
-    if (status != null && userModel.getRole().equals(Role.ROLE_ADMIN)) {
-      comment.setStatus(status);
-    }
     String content = updateComment.getContent();
-    if (content != null && !content.isEmpty()) {
-      if (!comment.getUser().getUsername().equals(userModel.getUsername())) {
-        throw new SecurityException("You are not access to update this comment");
-      }
-      comment.setContent(content);
+    if (!comment.getUser().getUsername().equals(userModel.getUsername())) {
+      throw new SecurityException("You are not access to update this comment");
     }
-    return convertCommentModelToDTO(commentRepository.save(comment));
+    comment.setContent(content);
+    CommentModel savedComment = commentRepository.save(comment);
+    return convertCommentModelToDTO(savedComment);
   }
 
   @Transactional

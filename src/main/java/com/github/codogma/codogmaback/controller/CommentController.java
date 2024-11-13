@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -60,7 +61,23 @@ public class CommentController {
     return commentService.getCommentsByUsername(username, userModel);
   }
 
-  @PatchMapping("/{commentId}")
+  @PatchMapping("/{commentId}/publish")
+  @Operation(summary = "Publish a comment")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+  public GetComment publishComment(@PathVariable Long commentId) {
+    return commentService.publishComment(commentId);
+  }
+
+  @PatchMapping("/{commentId}/block")
+  @Operation(summary = "Block a comment")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+  public GetComment blockComment(@PathVariable Long commentId) {
+    return commentService.blockComment(commentId);
+  }
+
+  @PutMapping("/{commentId}")
   @Operation(summary = "Update a comment")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR', 'ROLE_ADMIN')")

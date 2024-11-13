@@ -1,7 +1,8 @@
 package com.github.codogma.codogmaback.dto;
 
-import com.github.codogma.codogmaback.model.Status;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,11 +12,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(name = "Update Comment")
+@Schema(name = "Update Comment", description = "Update the content of a comment")
 public class UpdateComment {
 
-  @Schema(description = "Status of the article")
-  private Status status;
-  @Schema(description = "Content of the comment", example = "This is the updated content of the comment", minLength = 2, maxLength = 1000)
+  @NotBlank(message = "Status cannot be null and must contain a value")
+  @Schema(description = "Content of the comment", example = "This is the updated content of the comment", minLength = 2, maxLength = 1000, requiredMode = RequiredMode.REQUIRED)
   private String content;
 }
