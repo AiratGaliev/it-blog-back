@@ -1,0 +1,8 @@
+package com.github.codogma.codogmaback.exception;
+
+public class IncorrectPasswordException extends RuntimeException {
+
+  public IncorrectPasswordException(String message) {
+    super(message);
+  }
+}

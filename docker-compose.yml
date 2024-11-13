@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: it-blog-back
+      POSTGRES_DB: codogma-back
     ports:
       - "5432:5432"
   adminer:
@@ -16,19 +16,19 @@ services:
     ports:
       - "8080:8080"
   app:
-    image: airatgaliev/it-blog-back:latest
+    image: airatgaliev/codogma-back:latest
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "9000:9000"
     volumes:
-      - ~/it-blog/users/avatars:/app/users/avatars
-      - ~/it-blog/articles/images:/app/articles/images
-      - ~/it-blog/categories/images:/app/categories/images
-      - ~/it-blog/lucene/indexes:/app/it-blog/lucene/indexes
+      - ~/codogma/users/avatars:/app/users/avatars
+      - ~/codogma/articles/images:/app/articles/images
+      - ~/codogma/categories/images:/app/categories/images
+      - ~/codogma/lucene/indexes:/app/lucene/indexes
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/it-blog-back
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/codogma-back
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SECURITY_JWT_SECRET_KEY: 3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b
@@ -36,6 +36,6 @@ services:
       user.avatar.upload-dir: /app/users/avatars
       article.image.upload-dir: /app/articles/images
       category.image.upload-dir: /app/categories/images
-      spring.jpa.properties.hibernate.search.backend.directory.root: /app/it-blog/lucene/indexes
+      spring.jpa.properties.hibernate.search.backend.directory.root: /app/lucene/indexes
     depends_on:
       - db

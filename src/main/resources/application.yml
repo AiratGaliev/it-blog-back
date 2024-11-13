@@ -1,6 +1,6 @@
 spring:
   application:
-    name: it-blog-back
+    name: codogma-back
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -21,7 +21,7 @@ spring:
         search:
           backend:
             directory:
-              root: ${user.home}/it-blog/lucene/indexes
+              root: ${user.home}/codogma/lucene/indexes
             type: lucene
   servlet:
     multipart:
@@ -95,15 +95,15 @@ logging:
 
 user:
   avatar:
-    upload-dir: ${user.home}/it-blog/users/avatars
+    upload-dir: ${user.home}/codogma/users/avatars
 
 article:
   image:
-    upload-dir: ${user.home}/it-blog/articles/images
+    upload-dir: ${user.home}/codogma/articles/images
 
 category:
   image:
-    upload-dir: ${user.home}/it-blog/categories/images
+    upload-dir: ${user.home}/codogma/categories/images
 
 search:
   results:

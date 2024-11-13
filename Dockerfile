@@ -27,7 +27,7 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
 # Create necessary directories
-RUN mkdir -p /app/users/avatars && mkdir -p /app/articles/images && mkdir -p /app/categories/images
+RUN mkdir -p /app/users/avatars && mkdir -p /app/articles/images && mkdir -p /app/categories/images && mkdir -p /app/lucene/images
 
 # Expose the port that your application runs on
 EXPOSE 9000
