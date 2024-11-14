@@ -10,6 +10,7 @@ import com.github.codogma.codogmaback.model.Language;
 import com.github.codogma.codogmaback.model.TagModel;
 import com.github.codogma.codogmaback.repository.CategoryRepository;
 import com.github.codogma.codogmaback.repository.TagRepository;
+import com.github.codogma.codogmaback.repository.specifications.CategorySpecifications;
 import com.github.codogma.codogmaback.util.FileUploadUtil;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,8 +35,11 @@ public class CategoryService {
   private final LocalizationContext localizationContext;
 
   @Transactional
-  public List<GetCategory> getAllCategories() {
-    return categoryRepository.findAll().stream().map(this::convertCategoryToDTO).toList();
+  public List<GetCategory> getAllCategories(String tag) {
+    Specification<CategoryModel> specification = CategorySpecifications.hasTag(tag);
+    return categoryRepository.findAll(specification).stream()
+        .map(this::convertCategoryToDTO)
+        .toList();
   }
 
   @Transactional
