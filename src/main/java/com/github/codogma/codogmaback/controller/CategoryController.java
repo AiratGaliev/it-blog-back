@@ -5,6 +5,8 @@ import com.github.codogma.codogmaback.dto.GetCategory;
 import com.github.codogma.codogmaback.dto.UpdateCategory;
 import com.github.codogma.codogmaback.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -37,8 +39,10 @@ public class CategoryController {
 
   @GetMapping
   @Operation(summary = "Get all categories")
-  public ResponseEntity<List<GetCategory>> getAllCategories() {
-    List<GetCategory> categories = categoryService.getAllCategories();
+  @Parameters({@Parameter(name = "tag", description = "Tag to filter articles")})
+  public ResponseEntity<List<GetCategory>> getAllCategories(
+      @RequestParam(required = false) String tag) {
+    List<GetCategory> categories = categoryService.getAllCategories(tag);
     return ResponseEntity.ok(categories);
   }
 

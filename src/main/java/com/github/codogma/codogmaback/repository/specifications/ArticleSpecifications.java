@@ -16,7 +16,7 @@ public class ArticleSpecifications {
 
   public static Specification<ArticleModel> hasTagName(String tagName) {
     return (root, query, builder) -> tagName != null ? builder.like(
-        builder.lower(root.join("tags").get("name")), "%" + tagName.toLowerCase() + "%") : null;
+        builder.lower(root.join("tags").get("name")), tagName.toLowerCase() + "%") : null;
   }
 
   public static Specification<ArticleModel> hasUsername(String username) {
