@@ -3,20 +3,29 @@ package com.github.codogma.codogmaback.service;
 import com.github.codogma.codogmaback.dto.GetCategory;
 import com.github.codogma.codogmaback.dto.GetUser;
 import com.github.codogma.codogmaback.dto.UpdateUser;
+import com.github.codogma.codogmaback.dto.UserRole;
 import com.github.codogma.codogmaback.exception.SubscriptionAlreadyExistsException;
 import com.github.codogma.codogmaback.interceptor.localization.LocalizationContext;
 import com.github.codogma.codogmaback.model.CategoryModel;
 import com.github.codogma.codogmaback.model.Language;
-import com.github.codogma.codogmaback.model.Role;
 import com.github.codogma.codogmaback.model.SubscriptionModel;
 import com.github.codogma.codogmaback.model.UserModel;
 import com.github.codogma.codogmaback.repository.CategoryRepository;
 import com.github.codogma.codogmaback.repository.SubscriptionRepository;
 import com.github.codogma.codogmaback.repository.UserRepository;
+import com.github.codogma.codogmaback.repository.specifications.UserSpecifications;
 import com.github.codogma.codogmaback.util.FileUploadUtil;
+import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.search.mapper.orm.Search;
+import org.hibernate.search.mapper.orm.session.SearchSession;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +37,7 @@ import org.springframework.validation.BindingResult;
 @RequiredArgsConstructor
 public class UserService {
 
+  private final EntityManager entityManager;
   private final UserRepository userRepository;
   private final CategoryRepository categoryRepository;
   private final SubscriptionRepository subscriptionRepository;
@@ -35,23 +45,46 @@ public class UserService {
   private final PasswordEncoder passwordEncoder;
   private final LocalizationContext localizationContext;
 
-  @Transactional
-  public List<GetUser> getAllUsers() {
-    return userRepository.findAllByRoleIsNot(Role.ROLE_ADMIN).stream()
-        .map(this::convertUserModelToDto).toList();
-  }
+  @Value("${search.results.limit}")
+  private int searchResultsLimit;
 
   @Transactional
-  public List<GetUser> getAllByRole(Role role) {
-    return userRepository.findAllByRoleAndRoleIsNot(role, Role.ROLE_ADMIN).stream()
-        .map(this::convertUserModelToDto).toList();
+  public List<GetUser> getAllUsers(Long categoryId, UserRole role, String tag, String info,
+      int page, int size, String sort, String order) {
+    Sort.Direction sortDirection = Sort.Direction.fromString(order);
+    Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
+    List<Long> usersIds = null;
+    if (info != null && !info.isEmpty()) {
+      SearchSession searchSession = Search.session(entityManager);
+      usersIds = searchSession.search(UserModel.class)
+          .where(f -> f.match().fields("username", "firstName", "lastName", "shortInfo", "bio")
+              .matching(info).fuzzy(1))
+          .fetchHits(searchResultsLimit).stream().map(UserModel::getId).toList();
+    }
+    Specification<UserModel> spec = UserSpecifications.buildSpecification(categoryId, role, tag,
+        usersIds);
+    return userRepository.findAll(spec, pageable).stream().map(this::convertUserModelToDto)
+        .toList();
   }
 
-  @Transactional
-  public List<GetUser> getAllAuthorsByCategoryId(Long categoryId) {
-    return userRepository.findAuthorsByCategoryId(categoryId).stream()
-        .map(this::convertUserModelToDto).toList();
-  }
+  // TODO delete this code after testing
+//  @Transactional
+//  public List<GetUser> getAllUsersOld() {
+//    return userRepository.findAllByRoleIsNot(Role.ROLE_ADMIN).stream()
+//        .map(this::convertUserModelToDto).toList();
+//  }
+//
+//  @Transactional
+//  public List<GetUser> getAllByRole(Role role) {
+//    return userRepository.findAllByRoleAndRoleIsNot(role, Role.ROLE_ADMIN).stream()
+//        .map(this::convertUserModelToDto).toList();
+//  }
+//
+//  @Transactional
+//  public List<GetUser> getAllAuthorsByCategoryId(Long categoryId) {
+//    return userRepository.findAuthorsByCategoryId(categoryId).stream()
+//        .map(this::convertUserModelToDto).toList();
+//  }
 
   @Transactional
   public Optional<GetUser> getUserByUsername(String username) {
@@ -157,20 +190,16 @@ public class UserService {
         .avatarUrl(userModel.getAvatarUrl()).categories(categories.stream().map(category -> {
           String localizedCategoryName = category.getName()
               .getOrDefault(interfaceLanguage, category.getName().get(Language.EN));
-          return GetCategory.builder().id(category.getId()).name(localizedCategoryName)
-              .build();
-        }).toList()).role(userModel.getRole())
-        .subscriptions(userModel.getSubscriptions().stream().map(
-            sub -> GetUser.builder().username(sub.getUser().getUsername())
+          return GetCategory.builder().id(category.getId()).name(localizedCategoryName).build();
+        }).toList()).role(userModel.getRole()).subscriptions(userModel.getSubscriptions().stream()
+            .map(sub -> GetUser.builder().username(sub.getUser().getUsername())
                 .firstName(sub.getUser().getFirstName()).lastName(sub.getUser().getLastName())
                 .avatarUrl(sub.getUser().getAvatarUrl()).shortInfo(sub.getUser().getShortInfo())
-                .build()).toList()).subscribers(
-            userModel.getSubscribers().stream().map(
-                    sub -> GetUser.builder().username(sub.getSubscriber().getUsername())
-                        .firstName(sub.getSubscriber().getFirstName())
-                        .lastName(sub.getSubscriber().getLastName())
-                        .avatarUrl(sub.getSubscriber().getAvatarUrl())
-                        .shortInfo(sub.getSubscriber().getShortInfo()).build())
-                .toList()).build();
+                .build()).toList()).subscribers(userModel.getSubscribers().stream().map(
+            sub -> GetUser.builder().username(sub.getSubscriber().getUsername())
+                .firstName(sub.getSubscriber().getFirstName())
+                .lastName(sub.getSubscriber().getLastName())
+                .avatarUrl(sub.getSubscriber().getAvatarUrl())
+                .shortInfo(sub.getSubscriber().getShortInfo()).build()).toList()).build();
   }
 }

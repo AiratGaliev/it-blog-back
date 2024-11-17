@@ -12,6 +12,7 @@ import com.github.codogma.codogmaback.repository.CategoryRepository;
 import com.github.codogma.codogmaback.repository.TagRepository;
 import com.github.codogma.codogmaback.repository.specifications.CategorySpecifications;
 import com.github.codogma.codogmaback.util.FileUploadUtil;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -19,6 +20,12 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.search.mapper.orm.Search;
+import org.hibernate.search.mapper.orm.session.SearchSession;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -29,16 +36,29 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class CategoryService {
 
+  private final EntityManager entityManager;
   private final CategoryRepository categoryRepository;
   private final TagRepository tagRepository;
   private final FileUploadUtil fileUploadUtil;
   private final LocalizationContext localizationContext;
 
+  @Value("${search.results.limit}")
+  private int searchResultsLimit;
+
   @Transactional
-  public List<GetCategory> getAllCategories(String tag) {
-    Specification<CategoryModel> specification = CategorySpecifications.hasTag(tag);
-    return categoryRepository.findAll(specification).stream()
-        .map(this::convertCategoryToDTO)
+  public List<GetCategory> getAllCategories(String order, String sort, int page, int size,
+      String tag, String info) {
+    Sort.Direction sortDirection = Sort.Direction.fromString(order);
+    Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
+    List<Long> categoryIds = null;
+    if (info != null && !info.isEmpty()) {
+      SearchSession searchSession = Search.session(entityManager);
+      categoryIds = searchSession.search(CategoryModel.class)
+          .where(f -> f.match().fields("name", "description").matching(info).fuzzy(1))
+          .fetchHits(searchResultsLimit).stream().map(CategoryModel::getId).toList();
+    }
+    Specification<CategoryModel> spec = CategorySpecifications.buildSpecification(tag, categoryIds);
+    return categoryRepository.findAll(spec, pageable).stream().map(this::convertCategoryToDTO)
         .toList();
   }
 

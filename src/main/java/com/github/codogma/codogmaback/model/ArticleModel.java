@@ -39,12 +39,12 @@ import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmb
 public class ArticleModel {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(nullable = false)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
   @Builder.Default
-  @Enumerated(EnumType.STRING)
   @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
   private Status status = Status.DRAFT;
   @Enumerated(EnumType.STRING)
   private Language language;

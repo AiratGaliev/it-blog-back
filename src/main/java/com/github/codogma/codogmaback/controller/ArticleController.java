@@ -4,10 +4,7 @@ import com.github.codogma.codogmaback.dto.CreateDraftArticle;
 import com.github.codogma.codogmaback.dto.GetArticle;
 import com.github.codogma.codogmaback.dto.UpdateArticle;
 import com.github.codogma.codogmaback.dto.UpdateDraftArticle;
-import com.github.codogma.codogmaback.interceptor.localization.LocalizationContext;
-import com.github.codogma.codogmaback.model.ArticleModel;
 import com.github.codogma.codogmaback.model.UserModel;
-import com.github.codogma.codogmaback.repository.specifications.ArticleSpecifications;
 import com.github.codogma.codogmaback.service.ArticleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,10 +15,6 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -47,7 +40,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class ArticleController {
 
   private final ArticleService articleService;
-  private final LocalizationContext localizationContext;
 
   @GetMapping
   @Operation(summary = "Get all articles or filter articles by various criteria", description = "Retrieve all articles or filter articles by category, tag, and/or content. Supports pagination and multiple filter combinations to narrow down search results.")
@@ -67,24 +59,8 @@ public class ArticleController {
       @RequestParam(defaultValue = "createdAt") String sort,
       @RequestParam(defaultValue = "desc") String order,
       @AuthenticationPrincipal UserModel userModel) {
-
-    Sort.Direction sortDirection = Sort.Direction.fromString(order);
-    Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
-    List<String> supportedLanguages = localizationContext.getSupportedLanguages();
-    Specification<ArticleModel> spec = Specification.where(
-            ArticleSpecifications.hasCategoryId(categoryId)).and(ArticleSpecifications.hasTagName(tag))
-        .and(ArticleSpecifications.hasUsername(username))
-        .and(ArticleSpecifications.hasSupportedLanguage(supportedLanguages))
-        .and(ArticleSpecifications.hasAccess(userModel));
-
-    Page<GetArticle> articles;
-
-    if (content != null && !content.isEmpty()) {
-      articles = articleService.searchAndFilterArticles(content, spec, pageable);
-    } else {
-      articles = articleService.getArticles(spec, pageable);
-    }
-
+    Page<GetArticle> articles = articleService.getArticles(order, sort, page, size, categoryId, tag,
+        username, userModel, content);
     return ResponseEntity.ok(articles);
   }
 
