@@ -23,6 +23,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -30,6 +32,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Data
 @Entity
 @Builder
+@Indexed
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "users", uniqueConstraints = {@UniqueConstraint(columnNames = "username"),
@@ -37,22 +40,28 @@ import org.springframework.security.core.userdetails.UserDetails;
 public class UserModel implements UserDetails {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(nullable = false)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
   @Column(unique = true)
   private Integer githubId;
   @Column(unique = true)
   private Integer gitlabId;
+  @FullTextField
   @Column(unique = true, nullable = false)
   private String username;
   @Column(unique = true, nullable = false)
   private String email;
   @Column(nullable = false)
   private String password;
+  @FullTextField
   private String firstName;
+  @FullTextField
   private String lastName;
+  @FullTextField
   private String shortInfo;
+  @FullTextField
+  @Column(columnDefinition = "TEXT")
   private String bio;
   private String avatarUrl;
   @Column(nullable = false)
@@ -72,7 +81,7 @@ public class UserModel implements UserDetails {
   @OrderBy("createdAt ASC")
   private List<CommentModel> comments = new ArrayList<>();
   @CreationTimestamp
-  @Column(nullable = false, name = "created_at")
+  @Column(nullable = false, updatable = false, name = "created_at")
   private Date createdAt;
   @UpdateTimestamp
   @Column(name = "updated_at")

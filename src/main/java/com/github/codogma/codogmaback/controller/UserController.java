@@ -47,19 +47,31 @@ public class UserController {
 
   @GetMapping
   @Operation(summary = "Get all users")
-  @Parameters({
+  @Parameters({@Parameter(name = "categoryId", description = "Category id to filter authors"),
       @Parameter(name = "role", description = "Role to filter users", schema = @Schema(implementation = UserRole.class)),
-      @Parameter(name = "categoryId", description = "Category id to filter authors")})
-  public ResponseEntity<List<GetUser>> getAllAuthors(@RequestParam(required = false) UserRole role,
-      @RequestParam(required = false) Long categoryId) {
-    List<GetUser> users;
-    if (categoryId != null && role == UserRole.ROLE_AUTHOR) {
-      users = userService.getAllAuthorsByCategoryId(categoryId);
-    } else if (role != null) {
-      users = userService.getAllByRole(role.toRole());
-    } else {
-      users = userService.getAllUsers();
-    }
+      @Parameter(name = "tag", description = "Tag to filter users"),
+      @Parameter(name = "info", description = "Information to filter users"),
+      @Parameter(name = "page", description = "Page number to retrieve"),
+      @Parameter(name = "size", description = "Number of categories per page"),
+      @Parameter(name = "sort", description = "Field to sort by"),
+      @Parameter(name = "order", description = "Order direction, either 'asc' or 'desc'")})
+  public ResponseEntity<List<GetUser>> getAllUsers(@RequestParam(required = false) Long categoryId,
+      @RequestParam(required = false) UserRole role, @RequestParam(required = false) String tag,
+      @RequestParam(required = false) String info, @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size,
+      @RequestParam(defaultValue = "username") String sort,
+      @RequestParam(defaultValue = "asc") String order) {
+    List<GetUser> users = userService.getAllUsers(categoryId, role, tag, info, page, size,
+        sort, order);
+    // TODO delete this code after testing
+//    List<GetUser> users;
+//    if (categoryId != null && role == UserRole.ROLE_AUTHOR) {
+//      users = userService.getAllAuthorsByCategoryId(categoryId);
+//    } else if (role != null) {
+//      users = userService.getAllByRole(role.toRole());
+//    } else {
+//      users = userService.getAllUsersOld();
+//    }
     return ResponseEntity.ok(users);
   }
 

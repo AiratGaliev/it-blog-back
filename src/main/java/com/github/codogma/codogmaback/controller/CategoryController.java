@@ -39,10 +39,19 @@ public class CategoryController {
 
   @GetMapping
   @Operation(summary = "Get all categories")
-  @Parameters({@Parameter(name = "tag", description = "Tag to filter articles")})
+  @Parameters({@Parameter(name = "tag", description = "Tag to filter categories"),
+      @Parameter(name = "info", description = "Information to filter categories"),
+      @Parameter(name = "page", description = "Page number to retrieve"),
+      @Parameter(name = "size", description = "Number of categories per page"),
+      @Parameter(name = "sort", description = "Field to sort by"),
+      @Parameter(name = "order", description = "Order direction, either 'asc' or 'desc'")})
   public ResponseEntity<List<GetCategory>> getAllCategories(
-      @RequestParam(required = false) String tag) {
-    List<GetCategory> categories = categoryService.getAllCategories(tag);
+      @RequestParam(required = false) String tag, @RequestParam(required = false) String info,
+      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
+      @RequestParam(defaultValue = "name") String sort,
+      @RequestParam(defaultValue = "asc") String order) {
+    List<GetCategory> categories = categoryService.getAllCategories(order, sort, page, size, tag,
+        info);
     return ResponseEntity.ok(categories);
   }
 

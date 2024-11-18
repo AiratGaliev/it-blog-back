@@ -24,6 +24,7 @@ import com.github.codogma.codogmaback.repository.BookmarkRepository;
 import com.github.codogma.codogmaback.repository.CategoryRepository;
 import com.github.codogma.codogmaback.repository.TagRepository;
 import com.github.codogma.codogmaback.repository.UserRepository;
+import com.github.codogma.codogmaback.repository.specifications.ArticleSpecifications;
 import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.Date;
@@ -36,10 +37,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.search.mapper.orm.Search;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -62,42 +63,23 @@ public class ArticleService {
 
   @Value("${search.results.limit}")
   private int searchResultsLimit;
-  @Value("${search.massindexer.threads}")
-  private int searchMassIndexerThreads;
 
   @Transactional
-  public Page<GetArticle> getArticles(Specification<ArticleModel> spec, Pageable pageable) {
-    return getArticles(pageable, spec);
-  }
-
-  @EventListener(ContextRefreshedEvent.class)
-  @Transactional
-  public void onApplicationEvent(ContextRefreshedEvent event) {
-    initializeSearchIndexing();
-  }
-
-  @Transactional
-  public void initializeSearchIndexing() {
-    SearchSession searchSession = Search.session(entityManager);
-    searchSession.massIndexer(ArticleModel.class).threadsToLoadObjects(searchMassIndexerThreads)
-        .start().thenRun(() -> log.info("Indexing completed successfully.")).exceptionally(e -> {
-          log.error("Error occurred during indexing.", e);
-          return null;
-        });
-  }
-
-  @Transactional
-  public Page<GetArticle> searchAndFilterArticles(String content, Specification<ArticleModel> spec,
-      Pageable pageable) {
-    List<Long> articleIds = searchArticleIdsByContent(content);
-    Specification<ArticleModel> combinedSpec = spec.and(
-        (root, query, builder) -> root.get("id").in(articleIds));
-    return getArticles(pageable, combinedSpec);
-  }
-
-  private Page<GetArticle> getArticles(Pageable pageable,
-      Specification<ArticleModel> combinedSpec) {
-    return articleRepository.findAll(combinedSpec, pageable).map(this::convertArticleModelToDTO)
+  public Page<GetArticle> getArticles(String order, String sort, int page, int size,
+      Long categoryId, String tag, String username, UserModel userModel, String content) {
+    Sort.Direction sortDirection = Sort.Direction.fromString(order);
+    Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
+    List<String> supportedLanguages = localizationContext.getSupportedLanguages();
+    List<Long> articleIds = null;
+    if (content != null && !content.isEmpty()) {
+      SearchSession searchSession = Search.session(entityManager);
+      articleIds = searchSession.search(ArticleModel.class)
+          .where(f -> f.match().fields("content", "title").matching(content).fuzzy(1))
+          .fetchHits(searchResultsLimit).stream().map(ArticleModel::getId).toList();
+    }
+    Specification<ArticleModel> spec = ArticleSpecifications.buildSpecification(categoryId, tag,
+        username, supportedLanguages, userModel, articleIds);
+    return articleRepository.findAll(spec, pageable).map(this::convertArticleModelToDTO)
         .map(article -> {
           if (article.getPreviewContent().isEmpty()) {
             String previewContent = createHtmlPreview(article.getContent(), 1100);
@@ -116,13 +98,6 @@ public class ArticleService {
         () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
     return articleRepository.findAllByUserAndStatus(userModel, Status.DRAFT).stream()
         .map(this::convertArticleModelToDTO).toList();
-  }
-
-  private List<Long> searchArticleIdsByContent(String content) {
-    SearchSession searchSession = Search.session(entityManager);
-    return searchSession.search(ArticleModel.class)
-        .where(f -> f.match().fields("content", "title").matching(content).fuzzy(1))
-        .fetchHits(searchResultsLimit).stream().map(ArticleModel::getId).toList();
   }
 
   @Transactional

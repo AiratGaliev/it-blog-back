@@ -19,30 +19,37 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 
-@Entity
-@Table(name = "categories")
 @Data
-@AllArgsConstructor
+@Entity
+@Builder
+@Indexed
 @NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "categories")
 public class CategoryModel {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(nullable = false)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
+  @FullTextField
   @ElementCollection
-  @CollectionTable(name = "category_localized_names", joinColumns = @JoinColumn(name = "category_id"))
-  @MapKeyEnumerated(EnumType.STRING)
   @MapKeyColumn(name = "language")
+  @MapKeyEnumerated(EnumType.STRING)
+  @CollectionTable(name = "category_localized_names", joinColumns = @JoinColumn(name = "category_id"))
   @Column(unique = true, nullable = false)
   private Map<Language, String> name = new HashMap<>();
+  @FullTextField
   @ElementCollection
-  @CollectionTable(name = "category_localized_descriptions", joinColumns = @JoinColumn(name = "category_id"))
-  @MapKeyEnumerated(EnumType.STRING)
   @MapKeyColumn(name = "language")
+  @MapKeyEnumerated(EnumType.STRING)
+  @CollectionTable(name = "category_localized_descriptions", joinColumns = @JoinColumn(name = "category_id"))
   private Map<Language, String> description = new HashMap<>();
   @Column(name = "image_url")
   private String imageUrl;

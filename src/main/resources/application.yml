@@ -108,5 +108,6 @@ category:
 search:
   results:
     limit: 1000
-  massindexer:
-    threads: 5
+  mass:
+    indexer:
+      threads: 5
