@@ -1,8 +1,9 @@
 package com.github.codogma.codogmaback.service;
 
-import com.github.codogma.codogmaback.interceptor.localization.LocalizationContext;
+import com.github.codogma.codogmaback.util.LocalizationUtil;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -15,14 +16,15 @@ import org.springframework.stereotype.Service;
 public class EmailService {
 
   private final JavaMailSender mailSender;
-  private final LocalizationContext localizationContext;
+  private final LocalizationUtil localizationUtil;
 
   public void sendEmailVerification(String email, String token, String origin) {
-    String language = localizationContext.getLocale();
-    String confirmationUrl = String.format("%s/%s/confirm?token=%s", origin, language, token);
-    String message =
-        "To confirm your email address, please click the following link: " + confirmationUrl;
-    sendEmail(email, "Email Confirmation", message);
+    Locale locale = localizationUtil.getLocale();
+    String confirmationUrl = String.format("%s/%s/confirm?token=%s", origin, locale, token);
+    String subject = localizationUtil.getMessage("email.verification.subject");
+    String message = localizationUtil.getMessage("email.verification.body",
+        new Object[]{confirmationUrl});
+    sendEmail(email, subject, message);
   }
 
   private void sendEmail(String to, String subject, String content) {
