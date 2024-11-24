@@ -1,5 +1,6 @@
 package com.github.codogma.codogmaback.model;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -13,8 +14,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.MapKeyEnumerated;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +25,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 
@@ -55,4 +60,12 @@ public class CategoryModel {
   private String imageUrl;
   @ManyToMany(fetch = FetchType.LAZY, mappedBy = "categories")
   private List<ArticleModel> articles = new ArrayList<>();
+  @OneToMany(mappedBy = "category", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<FavoriteModel> favorites = new ArrayList<>();
+  @CreationTimestamp
+  @Column(nullable = false, updatable = false, name = "created_at")
+  private Date createdAt;
+  @UpdateTimestamp
+  @Column(name = "updated_at")
+  private Date updatedAt;
 }

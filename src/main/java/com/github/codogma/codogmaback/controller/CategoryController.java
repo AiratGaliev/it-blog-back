@@ -3,6 +3,7 @@ package com.github.codogma.codogmaback.controller;
 import com.github.codogma.codogmaback.dto.CreateCategory;
 import com.github.codogma.codogmaback.dto.GetCategory;
 import com.github.codogma.codogmaback.dto.UpdateCategory;
+import com.github.codogma.codogmaback.model.UserModel;
 import com.github.codogma.codogmaback.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -94,5 +96,35 @@ public class CategoryController {
   public ResponseEntity<String> deleteCategory(@PathVariable Long id) {
     categoryService.deleteCategory(id);
     return new ResponseEntity<>("Category deleted successfully", HttpStatus.NO_CONTENT);
+  }
+
+  @PostMapping("/{id}/add-to-favorites")
+  @Operation(summary = "Add category to favorites")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
+  public ResponseEntity<Void> addToFavorites(@PathVariable Long id,
+      @AuthenticationPrincipal UserModel userModel) {
+    categoryService.addToFavorite(id, userModel);
+    return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/{id}/is-favorite")
+  @Operation(summary = "Check if the user has favorite the category to bookmarks")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
+  public ResponseEntity<Boolean> isFavorite(@PathVariable Long id,
+      @AuthenticationPrincipal UserModel userModel) {
+    boolean isFavorite = categoryService.isFavorite(id, userModel);
+    return ResponseEntity.ok(isFavorite);
+  }
+
+  @DeleteMapping("/{id}/unfavorite")
+  @Operation(summary = "Unfavorite an category")
+  @SecurityRequirement(name = "bearerAuth")
+  @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
+  public ResponseEntity<Void> unfavorite(@PathVariable Long id,
+      @AuthenticationPrincipal UserModel userModel) {
+    categoryService.unfavorite(id, userModel);
+    return ResponseEntity.noContent().build();
   }
 }

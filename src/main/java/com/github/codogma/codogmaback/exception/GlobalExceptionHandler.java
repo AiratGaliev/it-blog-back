@@ -81,6 +81,11 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
   }
 
+  @ExceptionHandler(CategoryNotFoundException.class)
+  public ResponseEntity<String> handleCategoryNotFoundException(CategoryNotFoundException ex) {
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+  }
+
   @ExceptionHandler(AccessDeniedException.class)
   public ResponseEntity<String> handleAccessDeniedException(AccessDeniedException ex) {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.FORBIDDEN);
@@ -121,6 +126,12 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(BookmarkAlreadyExistsException.class)
   public ResponseEntity<String> handleBookmarkAlreadyExistsException(
       BookmarkAlreadyExistsException ex) {
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(FavoriteAlreadyExistsException.class)
+  public ResponseEntity<String> handleFavoriteAlreadyExistsException(
+      FavoriteAlreadyExistsException ex) {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
   }
 

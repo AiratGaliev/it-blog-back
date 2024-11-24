@@ -3,6 +3,7 @@ package com.github.codogma.codogmaback.controller;
 import com.github.codogma.codogmaback.dto.GetUser;
 import com.github.codogma.codogmaback.dto.UpdateUser;
 import com.github.codogma.codogmaback.dto.UserRole;
+import com.github.codogma.codogmaback.model.UserModel;
 import com.github.codogma.codogmaback.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -21,7 +22,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
@@ -61,17 +61,8 @@ public class UserController {
       @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "username") String sort,
       @RequestParam(defaultValue = "asc") String order) {
-    List<GetUser> users = userService.getAllUsers(categoryId, role, tag, info, page, size,
-        sort, order);
-    // TODO delete this code after testing
-//    List<GetUser> users;
-//    if (categoryId != null && role == UserRole.ROLE_AUTHOR) {
-//      users = userService.getAllAuthorsByCategoryId(categoryId);
-//    } else if (role != null) {
-//      users = userService.getAllByRole(role.toRole());
-//    } else {
-//      users = userService.getAllUsersOld();
-//    }
+    List<GetUser> users = userService.getAllUsers(categoryId, role, tag, info, page, size, sort,
+        order);
     return ResponseEntity.ok(users);
   }
 
@@ -88,9 +79,9 @@ public class UserController {
   @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<Object> updateUser(@Valid @ModelAttribute UpdateUser updateUser,
       @RequestParam(value = "avatar", required = false) MultipartFile avatar,
-      @AuthenticationPrincipal UserDetails userDetails, BindingResult bindingResult) {
+      @AuthenticationPrincipal UserModel userModel, BindingResult bindingResult) {
     updateUser.setAvatar(avatar);
-    GetUser updatedUser = userService.updateUser(updateUser, userDetails, bindingResult);
+    GetUser updatedUser = userService.updateUser(updateUser, userModel, bindingResult);
     if (bindingResult.hasErrors()) {
       Map<String, String> errors = bindingResult.getFieldErrors().stream().collect(
           Collectors.toMap(FieldError::getField,
@@ -115,19 +106,18 @@ public class UserController {
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
   public ResponseEntity<Void> subscribe(@PathVariable String username,
-      @AuthenticationPrincipal UserDetails userDetails) {
-    userService.subscribe(userDetails.getUsername(), username);
+      @AuthenticationPrincipal UserModel userModel) {
+    userService.subscribe(username, userModel);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @GetMapping("/{username}/is-subscribed")
-  @Operation(summary = "Check if the authenticated user is subscribed to another user")
+  @Operation(summary = "Check if the user is subscribed to another user")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
   public ResponseEntity<Boolean> isSubscribed(@PathVariable String username,
-      @AuthenticationPrincipal UserDetails userDetails) {
-    String authenticatedUsername = userDetails.getUsername();
-    boolean isSubscribed = userService.isSubscribed(authenticatedUsername, username);
+      @AuthenticationPrincipal UserModel userModel) {
+    boolean isSubscribed = userService.isSubscribed(username, userModel);
     return ResponseEntity.ok(isSubscribed);
   }
 
@@ -136,8 +126,8 @@ public class UserController {
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
   public ResponseEntity<Void> unsubscribe(@PathVariable String username,
-      @AuthenticationPrincipal UserDetails userDetails) {
-    userService.unsubscribe(userDetails.getUsername(), username);
+      @AuthenticationPrincipal UserModel userModel) {
+    userService.unsubscribe(username, userModel);
     return new ResponseEntity<>(HttpStatus.OK);
   }
 }

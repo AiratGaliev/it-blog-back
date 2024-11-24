@@ -51,14 +51,12 @@ public class CommentService {
 
   @Transactional
   public GetComment createComment(CreateComment createComment, UserModel userModel) {
-    UserModel user = userRepository.findByUsername(userModel.getUsername())
-        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     ArticleModel article = articleRepository.findById(createComment.getArticleId())
         .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
     CommentModel comment = new CommentModel();
     Status articleStatus = article.getStatus();
     if ((userModel.getRole().equals(Role.ROLE_ADMIN) || article.getUser().getId()
-        .equals(user.getId()))) {
+        .equals(userModel.getId()))) {
       if (articleStatus.equals(Status.PUBLISHED)) {
         comment.setStatus(Status.PUBLISHED);
       } else {
@@ -76,7 +74,7 @@ public class CommentService {
       comment.setParentComment(parentComment);
       Status parentCommentStatus = parentComment.getStatus();
       if ((userModel.getRole().equals(Role.ROLE_ADMIN) || article.getUser().getId()
-          .equals(user.getId()))) {
+          .equals(userModel.getId()))) {
         if (parentCommentStatus.equals(Status.PUBLISHED)) {
           comment.setStatus(Status.PUBLISHED);
         } else {
@@ -89,7 +87,7 @@ public class CommentService {
       }
     }
     comment.setContent(createComment.getContent());
-    comment.setUser(user);
+    comment.setUser(userModel);
     comment.setArticle(article);
     CommentModel savedComment = commentRepository.save(comment);
     return convertCommentModelToDTO(savedComment);

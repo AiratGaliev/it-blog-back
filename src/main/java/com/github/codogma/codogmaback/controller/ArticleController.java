@@ -19,7 +19,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,7 +44,8 @@ public class ArticleController {
   @Operation(summary = "Get all articles or filter articles by various criteria", description = "Retrieve all articles or filter articles by category, tag, and/or content. Supports pagination and multiple filter combinations to narrow down search results.")
   @Parameters({@Parameter(name = "categoryId", description = "Category id to filter articles"),
       @Parameter(name = "tag", description = "Tag to filter articles"),
-      @Parameter(name = "username", description = "Author username to filter articles"),
+      @Parameter(name = "username", description = "Username to filter articles"),
+      @Parameter(name = "feedByUsername", description = "Get user's feed by username"),
       @Parameter(name = "content", description = "Content to filter articles"),
       @Parameter(name = "page", description = "Page number to retrieve"),
       @Parameter(name = "size", description = "Number of articles per page"),
@@ -77,8 +77,8 @@ public class ArticleController {
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
   public ResponseEntity<List<GetArticle>> getDraftArticles(
-      @AuthenticationPrincipal UserDetails userDetails) {
-    List<GetArticle> articles = articleService.getDraftArticles(userDetails);
+      @AuthenticationPrincipal UserModel userModel) {
+    List<GetArticle> articles = articleService.getDraftArticles(userModel);
     return ResponseEntity.ok(articles);
   }
 
@@ -87,8 +87,8 @@ public class ArticleController {
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
   public ResponseEntity<GetArticle> getDraftedArticleById(@PathVariable Long id,
-      @AuthenticationPrincipal UserDetails userDetails) {
-    GetArticle article = articleService.getDraftedArticleById(id, userDetails);
+      @AuthenticationPrincipal UserModel userModel) {
+    GetArticle article = articleService.getDraftedArticleById(id, userModel);
     return ResponseEntity.ok(article);
   }
 
@@ -98,8 +98,8 @@ public class ArticleController {
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
   public ResponseEntity<GetArticle> createDraftArticle(
       @Valid @RequestBody CreateDraftArticle draftArticle,
-      @AuthenticationPrincipal UserDetails userDetails) {
-    GetArticle article = articleService.createDraftArticle(draftArticle, userDetails);
+      @AuthenticationPrincipal UserModel userModel) {
+    GetArticle article = articleService.createDraftArticle(draftArticle, userModel);
     return new ResponseEntity<>(article, HttpStatus.CREATED);
   }
 
@@ -109,8 +109,8 @@ public class ArticleController {
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
   public ResponseEntity<Void> updateDraftArticle(@PathVariable Long id,
       @Valid @RequestBody UpdateDraftArticle draftArticle,
-      @AuthenticationPrincipal UserDetails userDetails) {
-    articleService.updateDraftArticle(id, draftArticle, userDetails);
+      @AuthenticationPrincipal UserModel userModel) {
+    articleService.updateDraftArticle(id, draftArticle, userModel);
     return ResponseEntity.noContent().build();
   }
 
@@ -119,8 +119,8 @@ public class ArticleController {
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_AUTHOR')")
   public ResponseEntity<Void> publishArticle(@PathVariable Long id,
-      @AuthenticationPrincipal UserDetails userDetails) {
-    articleService.publishArticle(id, userDetails);
+      @AuthenticationPrincipal UserModel userModel) {
+    articleService.publishArticle(id, userModel);
     return ResponseEntity.noContent().build();
   }
 
@@ -129,8 +129,8 @@ public class ArticleController {
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_AUTHOR')")
   public ResponseEntity<Void> hideArticle(@PathVariable Long id,
-      @AuthenticationPrincipal UserDetails userDetails) {
-    articleService.hideArticle(id, userDetails);
+      @AuthenticationPrincipal UserModel userModel) {
+    articleService.hideArticle(id, userModel);
     return ResponseEntity.noContent().build();
   }
 
@@ -157,8 +157,8 @@ public class ArticleController {
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
   public ResponseEntity<Void> updateArticle(@PathVariable Long id,
-      @Valid @RequestBody UpdateArticle article, @AuthenticationPrincipal UserDetails userDetails) {
-    articleService.updateArticle(id, article, userDetails);
+      @Valid @RequestBody UpdateArticle article, @AuthenticationPrincipal UserModel userModel) {
+    articleService.updateArticle(id, article, userModel);
     return ResponseEntity.noContent().build();
   }
 
@@ -167,8 +167,8 @@ public class ArticleController {
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
   public ResponseEntity<Void> deleteArticle(@PathVariable Long id,
-      @AuthenticationPrincipal UserDetails userDetails) {
-    articleService.deleteArticle(id, userDetails);
+      @AuthenticationPrincipal UserModel userModel) {
+    articleService.deleteArticle(id, userModel);
     return ResponseEntity.noContent().build();
   }
 
@@ -177,19 +177,18 @@ public class ArticleController {
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
   public ResponseEntity<Void> bookmark(@PathVariable Long id,
-      @AuthenticationPrincipal UserDetails userDetails) {
-    articleService.bookmark(id, userDetails);
+      @AuthenticationPrincipal UserModel userModel) {
+    articleService.bookmark(id, userModel);
     return ResponseEntity.noContent().build();
   }
 
   @GetMapping("/{id}/is-bookmarked")
-  @Operation(summary = "Check if the authenticated user has added the article to bookmarks")
+  @Operation(summary = "Check if the user has added the article to bookmarks")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
   public ResponseEntity<Boolean> isBookmarked(@PathVariable Long id,
-      @AuthenticationPrincipal UserDetails userDetails) {
-    String authenticatedUsername = userDetails.getUsername();
-    boolean isSubscribed = articleService.isBookmarked(authenticatedUsername, id);
+      @AuthenticationPrincipal UserModel userModel) {
+    boolean isSubscribed = articleService.isBookmarked(id, userModel);
     return ResponseEntity.ok(isSubscribed);
   }
 
@@ -198,8 +197,8 @@ public class ArticleController {
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
   public ResponseEntity<Void> unbookmark(@PathVariable Long id,
-      @AuthenticationPrincipal UserDetails userDetails) {
-    articleService.unbookmark(userDetails.getUsername(), id);
+      @AuthenticationPrincipal UserModel userModel) {
+    articleService.unbookmark(id, userModel);
     return ResponseEntity.noContent().build();
   }
 }

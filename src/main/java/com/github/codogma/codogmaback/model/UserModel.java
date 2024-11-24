@@ -77,6 +77,8 @@ public class UserModel implements UserDetails {
   private List<SubscriptionModel> subscribers = new ArrayList<>();
   @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
   private List<BookmarkModel> bookmarks = new ArrayList<>();
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<FavoriteModel> favorites = new ArrayList<>();
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("createdAt ASC")
   private List<CommentModel> comments = new ArrayList<>();
