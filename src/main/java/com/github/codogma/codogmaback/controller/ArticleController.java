@@ -45,7 +45,7 @@ public class ArticleController {
   @Parameters({@Parameter(name = "categoryId", description = "Category id to filter articles"),
       @Parameter(name = "tag", description = "Tag to filter articles"),
       @Parameter(name = "username", description = "Username to filter articles"),
-      @Parameter(name = "feedByUsername", description = "Get user's feed by username"),
+      @Parameter(name = "isFeed", description = "Get user's feed by username"),
       @Parameter(name = "content", description = "Content to filter articles"),
       @Parameter(name = "page", description = "Page number to retrieve"),
       @Parameter(name = "size", description = "Number of articles per page"),
@@ -54,13 +54,14 @@ public class ArticleController {
   public ResponseEntity<Page<GetArticle>> getAllArticles(
       @RequestParam(required = false) Long categoryId, @RequestParam(required = false) String tag,
       @RequestParam(required = false) String username,
+      @RequestParam(required = false) Boolean isFeed,
       @RequestParam(required = false) String content, @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "createdAt") String sort,
       @RequestParam(defaultValue = "desc") String order,
       @AuthenticationPrincipal UserModel userModel) {
     Page<GetArticle> articles = articleService.getArticles(order, sort, page, size, categoryId, tag,
-        username, userModel, content);
+        username, isFeed, userModel, content);
     return ResponseEntity.ok(articles);
   }
 

@@ -174,6 +174,12 @@ public class UserService {
                 .firstName(sub.getSubscriber().getFirstName())
                 .lastName(sub.getSubscriber().getLastName())
                 .avatarUrl(sub.getSubscriber().getAvatarUrl())
-                .shortInfo(sub.getSubscriber().getShortInfo()).build()).toList()).build();
+                .shortInfo(sub.getSubscriber().getShortInfo()).build()).toList())
+        .favorites(userModel.getFavorites().stream().map(favorite -> {
+          String localizedCategoryName = favorite.getCategory().getName()
+              .getOrDefault(interfaceLanguage, favorite.getCategory().getName().get(Language.EN));
+          return GetCategory.builder().id(favorite.getCategory().getId())
+              .name(localizedCategoryName).build();
+        }).toList()).build();
   }
 }

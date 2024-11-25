@@ -23,6 +23,7 @@ import com.github.codogma.codogmaback.repository.ArticleRepository;
 import com.github.codogma.codogmaback.repository.BookmarkRepository;
 import com.github.codogma.codogmaback.repository.CategoryRepository;
 import com.github.codogma.codogmaback.repository.TagRepository;
+import com.github.codogma.codogmaback.repository.UserRepository;
 import com.github.codogma.codogmaback.repository.specifications.ArticleSpecifications;
 import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
@@ -41,6 +42,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ArticleService {
 
   private final EntityManager entityManager;
+  private final UserRepository userRepository;
   private final ArticleRepository articleRepository;
   private final CategoryRepository categoryRepository;
   private final TagRepository tagRepository;
@@ -61,7 +64,10 @@ public class ArticleService {
 
   @Transactional
   public Page<GetArticle> getArticles(String order, String sort, int page, int size,
-      Long categoryId, String tag, String username, UserModel userModel, String content) {
+      Long categoryId, String tag, String username, Boolean isFeed, UserModel userModel,
+      String content) {
+    UserModel foundUser = userModel != null ? userRepository.findById(userModel.getId())
+        .orElseThrow(() -> new UsernameNotFoundException("User not found")) : null;
     Sort.Direction sortDirection = Sort.Direction.fromString(order);
     Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
     List<String> supportedLanguages = localizationContext.getSupportedLanguages();
@@ -73,7 +79,7 @@ public class ArticleService {
           .fetchHits(searchResultsLimit).stream().map(ArticleModel::getId).toList();
     }
     Specification<ArticleModel> spec = ArticleSpecifications.buildSpecification(categoryId, tag,
-        username, supportedLanguages, userModel, articleIds);
+        username, supportedLanguages, isFeed, foundUser, articleIds);
     return articleRepository.findAll(spec, pageable).map(this::convertArticleModelToDTO)
         .map(article -> {
           if (article.getPreviewContent().isEmpty()) {
