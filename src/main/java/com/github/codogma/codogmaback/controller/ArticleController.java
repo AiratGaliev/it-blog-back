@@ -45,7 +45,7 @@ public class ArticleController {
   @Parameters({@Parameter(name = "categoryId", description = "Category id to filter articles"),
       @Parameter(name = "tag", description = "Tag to filter articles"),
       @Parameter(name = "username", description = "Username to filter articles"),
-      @Parameter(name = "isFeed", description = "Get user's feed by username"),
+      @Parameter(name = "isFeed", description = "Get user's feed"),
       @Parameter(name = "content", description = "Content to filter articles"),
       @Parameter(name = "page", description = "Page number to retrieve"),
       @Parameter(name = "size", description = "Number of articles per page"),
