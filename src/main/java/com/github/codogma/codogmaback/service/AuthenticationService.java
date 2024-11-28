@@ -1,6 +1,5 @@
 package com.github.codogma.codogmaback.service;
 
-import static com.github.codogma.codogmaback.util.TokenUtils.extractToken;
 import static com.github.codogma.codogmaback.util.TokenUtils.invalidateToken;
 import static com.github.codogma.codogmaback.util.TokenUtils.setAuthCookie;
 
@@ -8,18 +7,14 @@ import com.github.codogma.codogmaback.dto.AuthenticationResponse;
 import com.github.codogma.codogmaback.dto.GetUser;
 import com.github.codogma.codogmaback.dto.SignInRequest;
 import com.github.codogma.codogmaback.dto.SignUpRequest;
-import com.github.codogma.codogmaback.exception.EmailAlreadyConfirmedException;
 import com.github.codogma.codogmaback.exception.EmailNotConfirmedException;
-import com.github.codogma.codogmaback.exception.InvalidTokenException;
-import com.github.codogma.codogmaback.exception.TokenExpiredException;
-import com.github.codogma.codogmaback.exception.UserAlreadyExistsException;
+import com.github.codogma.codogmaback.exception.ExceptionFactory;
 import com.github.codogma.codogmaback.handler.oauth.OAuth2ProviderHandler;
 import com.github.codogma.codogmaback.model.ConfirmationToken;
 import com.github.codogma.codogmaback.model.Role;
 import com.github.codogma.codogmaback.model.UserModel;
 import com.github.codogma.codogmaback.repository.UserRepository;
 import com.github.codogma.codogmaback.util.FileUploadUtil;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
@@ -31,8 +26,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -53,18 +46,18 @@ public class AuthenticationService implements OAuth2UserService<OAuth2UserReques
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final AuthenticationManager authenticationManager;
-  private final UserDetailsService userDetailsService;
   private final JwtService jwtService;
   private final FileUploadUtil fileUploadUtil;
   private final List<OAuth2ProviderHandler> providerHandlers;
   private final EmailService emailService;
   private final ConfirmationTokenService tokenService;
+  private final ExceptionFactory exceptionFactory;
 
   @Transactional
   public GetUser signUp(SignUpRequest signUpRequest, MultipartFile avatar, String origin) {
     userRepository.findByUsernameOrEmail(signUpRequest.getUsername(), signUpRequest.getEmail())
         .ifPresent((user) -> {
-          throw new UserAlreadyExistsException("User with this username or email already exists");
+          throw exceptionFactory.userAlreadyExistsException();
         });
     UserModel user = UserModel.builder().username(signUpRequest.getUsername())
         .email(signUpRequest.getEmail())
@@ -86,12 +79,12 @@ public class AuthenticationService implements OAuth2UserService<OAuth2UserReques
   @Transactional
   public void confirmEmail(String token) {
     ConfirmationToken confirmationToken = tokenService.getToken(token)
-        .orElseThrow(() -> new InvalidTokenException("Token not found"));
+        .orElseThrow(exceptionFactory::invalidTokenException);
     if (confirmationToken.getConfirmedAt() != null) {
-      throw new EmailAlreadyConfirmedException("Email already confirmed");
+      throw exceptionFactory.emailAlreadyConfirmedException();
     }
     if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-      throw new TokenExpiredException("Confirmation token has expired");
+      throw exceptionFactory.tokenExpiredException();
     }
     UserModel user = confirmationToken.getUser();
     user.setEnabled(true);
@@ -155,51 +148,21 @@ public class AuthenticationService implements OAuth2UserService<OAuth2UserReques
     return oAuth2User;
   }
 
-  public void refreshToken(HttpServletRequest request, HttpServletResponse response) {
-    String token = extractToken(request);
-    if (token != null) {
-      if (jwtService.isTokenExpired(token)) {
-        throw new TokenExpiredException("Token has expired or is invalid");
-      }
-      String username = jwtService.extractUsername(token);
-      UserModel user = userRepository.findByUsername(username)
-          .orElseThrow(() -> new UsernameNotFoundException("User not found " + username));
-      String newToken = jwtService.generateToken(user);
+  public void refreshToken(HttpServletResponse response, UserModel userModel) {
+    if (userModel != null) {
+      String newToken = jwtService.generateToken(userModel);
       setAuthCookie(response, newToken);
-    } else {
-      invalidateToken(response);
     }
   }
 
-  public Optional<GetUser> currentUser(HttpServletRequest request, HttpServletResponse response) {
-    String token = extractToken(request);
-    if (token != null) {
-      String username = jwtService.extractUsername(token);
-      return userRepository.findByUsername(username).map(this::convertUserModelToDto);
-    } else {
-      invalidateToken(response);
-    }
-    return Optional.empty();
+  public Optional<GetUser> currentUser(UserModel userModel) {
+    return Optional.ofNullable(userModel).map(this::convertUserModelToDto);
   }
 
-  public void logout(HttpServletRequest request, HttpServletResponse response) {
-    log.info("Attempting to logout user");
-    String token = extractToken(request);
-    if (token != null) {
-      try {
-        String username = jwtService.extractUsername(token);
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-        if (jwtService.isTokenValid(token, userDetails)) {
-          invalidateToken(response);
-          log.info("User logged out successfully: {}", username);
-        }
-      } catch (Exception e) {
-        log.error("Error during logout", e);
-        invalidateToken(response);
-      }
-    } else {
-      invalidateToken(response);
-    }
+  public void logout(HttpServletResponse response, UserModel userModel) {
+    log.info("Attempting to logout user: {}", userModel.getUsername());
+    invalidateToken(response);
+    log.info("User logged out successfully: {}", userModel.getUsername());
   }
 
   private GetUser convertUserModelToDto(UserModel userModel) {

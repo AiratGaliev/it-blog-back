@@ -4,11 +4,16 @@ import com.github.codogma.codogmaback.dto.CreateCategory;
 import com.github.codogma.codogmaback.dto.GetCategory;
 import com.github.codogma.codogmaback.dto.GetTag;
 import com.github.codogma.codogmaback.dto.UpdateCategory;
+import com.github.codogma.codogmaback.exception.CategoryNotFoundException;
+import com.github.codogma.codogmaback.exception.FavoriteAlreadyExistsException;
 import com.github.codogma.codogmaback.interceptor.localization.LocalizationContext;
 import com.github.codogma.codogmaback.model.CategoryModel;
+import com.github.codogma.codogmaback.model.FavoriteModel;
 import com.github.codogma.codogmaback.model.Language;
 import com.github.codogma.codogmaback.model.TagModel;
+import com.github.codogma.codogmaback.model.UserModel;
 import com.github.codogma.codogmaback.repository.CategoryRepository;
+import com.github.codogma.codogmaback.repository.FavoriteRepository;
 import com.github.codogma.codogmaback.repository.TagRepository;
 import com.github.codogma.codogmaback.repository.specifications.CategorySpecifications;
 import com.github.codogma.codogmaback.util.FileUploadUtil;
@@ -41,6 +46,7 @@ public class CategoryService {
   private final TagRepository tagRepository;
   private final FileUploadUtil fileUploadUtil;
   private final LocalizationContext localizationContext;
+  private final FavoriteRepository favoriteRepository;
 
   @Value("${search.results.limit}")
   private int searchResultsLimit;
@@ -81,7 +87,7 @@ public class CategoryService {
   @Transactional
   public void updateCategory(Long id, UpdateCategory updateCategory) {
     CategoryModel category = categoryRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("Category not found"));
+        .orElseThrow(() -> new CategoryNotFoundException("Category not found"));
     setLocalizedCategoryFields(category, updateCategory.getName(), updateCategory.getDescription());
     MultipartFile image = updateCategory.getImage();
     uploadCategoryImage(image, category);
@@ -94,6 +100,32 @@ public class CategoryService {
         .orElseThrow(EntityNotFoundException::new);
     category.getArticles().forEach(article -> article.getCategories().remove(category));
     categoryRepository.delete(category);
+  }
+
+  @Transactional
+  public void addToFavorite(Long id, UserModel userModel) {
+    CategoryModel category = categoryRepository.findById(id)
+        .orElseThrow(() -> new CategoryNotFoundException("Category not found"));
+    boolean favoriteExists = favoriteRepository.existsByUserAndCategory(userModel, category);
+    if (favoriteExists) {
+      throw new FavoriteAlreadyExistsException("Category is already in favorites");
+    }
+    FavoriteModel favorite = FavoriteModel.builder().user(userModel).category(category).build();
+    favoriteRepository.save(favorite);
+  }
+
+  @Transactional
+  public boolean isFavorite(Long id, UserModel userModel) {
+    CategoryModel category = categoryRepository.findById(id)
+        .orElseThrow(() -> new CategoryNotFoundException("Category not found"));
+    return favoriteRepository.existsByUserAndCategory(userModel, category);
+  }
+
+  @Transactional
+  public void unfavorite(Long id, UserModel userModel) {
+    CategoryModel category = categoryRepository.findById(id)
+        .orElseThrow(() -> new CategoryNotFoundException("Category not found"));
+    favoriteRepository.deleteByUserAndCategory(userModel, category);
   }
 
   private void setLocalizedCategoryFields(CategoryModel category, String name, String description) {

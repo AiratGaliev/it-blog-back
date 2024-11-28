@@ -21,8 +21,8 @@ import org.hibernate.annotations.CreationTimestamp;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "bookmarks")
-public class BookmarkModel {
+@Table(name = "favorites")
+public class FavoriteModel {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,8 +32,8 @@ public class BookmarkModel {
   @JoinColumn(name = "user_id", nullable = false)
   private UserModel user;
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "article_id", nullable = false)
-  private ArticleModel article;
+  @JoinColumn(name = "category_id", nullable = false)
+  private CategoryModel category;
   @CreationTimestamp
   @Column(nullable = false, updatable = false, name = "created_at")
   private Date createdAt;

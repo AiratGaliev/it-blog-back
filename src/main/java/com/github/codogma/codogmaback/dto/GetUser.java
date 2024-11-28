@@ -39,4 +39,6 @@ public class GetUser {
   private List<GetUser> subscriptions;
   @Schema(description = "List of user subscribers")
   private List<GetUser> subscribers;
+  @Schema(description = "List of user favorites")
+  private List<GetCategory> favorites;
 }

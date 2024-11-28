@@ -27,7 +27,6 @@ import com.github.codogma.codogmaback.repository.UserRepository;
 import com.github.codogma.codogmaback.repository.specifications.ArticleSpecifications;
 import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -43,7 +42,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,8 +52,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class ArticleService {
 
   private final EntityManager entityManager;
-  private final ArticleRepository articleRepository;
   private final UserRepository userRepository;
+  private final ArticleRepository articleRepository;
   private final CategoryRepository categoryRepository;
   private final TagRepository tagRepository;
   private final BookmarkRepository bookmarkRepository;
@@ -66,7 +64,10 @@ public class ArticleService {
 
   @Transactional
   public Page<GetArticle> getArticles(String order, String sort, int page, int size,
-      Long categoryId, String tag, String username, UserModel userModel, String content) {
+      Long categoryId, String tag, String username, Boolean isFeed, UserModel userModel,
+      String content) {
+    UserModel foundUser = userModel != null ? userRepository.findById(userModel.getId())
+        .orElseThrow(() -> new UsernameNotFoundException("User not found")) : null;
     Sort.Direction sortDirection = Sort.Direction.fromString(order);
     Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
     List<String> supportedLanguages = localizationContext.getSupportedLanguages();
@@ -78,7 +79,7 @@ public class ArticleService {
           .fetchHits(searchResultsLimit).stream().map(ArticleModel::getId).toList();
     }
     Specification<ArticleModel> spec = ArticleSpecifications.buildSpecification(categoryId, tag,
-        username, supportedLanguages, userModel, articleIds);
+        username, supportedLanguages, isFeed, foundUser, articleIds);
     return articleRepository.findAll(spec, pageable).map(this::convertArticleModelToDTO)
         .map(article -> {
           if (article.getPreviewContent().isEmpty()) {
@@ -93,9 +94,7 @@ public class ArticleService {
   }
 
   @Transactional
-  public List<GetArticle> getDraftArticles(UserDetails userDetails) {
-    UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
-        () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+  public List<GetArticle> getDraftArticles(UserModel userModel) {
     return articleRepository.findAllByUserAndStatus(userModel, Status.DRAFT).stream()
         .map(this::convertArticleModelToDTO).toList();
   }
@@ -116,9 +115,7 @@ public class ArticleService {
   }
 
   @Transactional
-  public GetArticle getDraftedArticleById(Long id, UserDetails userDetails) {
-    UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
-        () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+  public GetArticle getDraftedArticleById(Long id, UserModel userModel) {
     ArticleModel articleModel = articleRepository.findById(id)
         .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
     if (!userModel.getId().equals(articleModel.getUser().getId())) {
@@ -134,9 +131,7 @@ public class ArticleService {
   }
 
   @Transactional
-  public GetArticle createDraftArticle(CreateDraftArticle draftArticle, UserDetails userDetails) {
-    UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
-        () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+  public GetArticle createDraftArticle(CreateDraftArticle draftArticle, UserModel userModel) {
     ArticleModel articleModel = ArticleModel.builder().user(userModel)
         .title(draftArticle.getTitle()).content(draftArticle.getContent()).build();
     ArticleModel savedArticle = articleRepository.save(articleModel);
@@ -144,10 +139,7 @@ public class ArticleService {
   }
 
   @Transactional
-  public void updateDraftArticle(Long id, UpdateDraftArticle draftArticle,
-      UserDetails userDetails) {
-    UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
-        () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+  public void updateDraftArticle(Long id, UpdateDraftArticle draftArticle, UserModel userModel) {
     ArticleModel articleModel = articleRepository.findById(id)
         .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
     if (!userModel.getId().equals(articleModel.getUser().getId())) {
@@ -203,9 +195,7 @@ public class ArticleService {
   }
 
   @Transactional
-  public void publishArticle(Long id, UserDetails userDetails) {
-    UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
-        () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+  public void publishArticle(Long id, UserModel userModel) {
     ArticleModel articleModel = articleRepository.findById(id)
         .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
     Status articleStatus = articleModel.getStatus();
@@ -224,9 +214,7 @@ public class ArticleService {
   }
 
   @Transactional
-  public void hideArticle(Long id, UserDetails userDetails) {
-    UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
-        () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+  public void hideArticle(Long id, UserModel userModel) {
     ArticleModel articleModel = articleRepository.findById(id)
         .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
     if (!userModel.getId().equals(articleModel.getUser().getId())) {
@@ -265,9 +253,7 @@ public class ArticleService {
   }
 
   @Transactional
-  public void updateArticle(Long id, UpdateArticle updateArticle, UserDetails userDetails) {
-    UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
-        () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+  public void updateArticle(Long id, UpdateArticle updateArticle, UserModel userModel) {
     ArticleModel articleModel = articleRepository.findById(id)
         .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
     if (!userModel.getId().equals(articleModel.getUser().getId())) {
@@ -313,9 +299,7 @@ public class ArticleService {
   }
 
   @Transactional
-  public void deleteArticle(Long id, UserDetails userDetails) {
-    UserModel userModel = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(
-        () -> new UsernameNotFoundException("User not found " + userDetails.getUsername()));
+  public void deleteArticle(Long id, UserModel userModel) {
     ArticleModel articleModel = articleRepository.findById(id)
         .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
     if (Objects.equals(userModel.getId(), articleModel.getUser().getId())) {
@@ -326,33 +310,26 @@ public class ArticleService {
   }
 
   @Transactional
-  public void bookmark(Long articleId, UserDetails userDetails) {
-    UserModel userModel = userRepository.findByUsername(userDetails.getUsername())
-        .orElseThrow(() -> new UsernameNotFoundException("Bookmarking user not found"));
+  public void bookmark(Long articleId, UserModel userModel) {
     ArticleModel article = articleRepository.findById(articleId).orElseThrow(
         () -> new ArticleNotFoundException("Article with id " + articleId + " not found"));
     boolean bookmarkExists = bookmarkRepository.existsByUserAndArticle(userModel, article);
     if (bookmarkExists) {
       throw new BookmarkAlreadyExistsException("Article already bookmarked");
     }
-    BookmarkModel bookmark = BookmarkModel.builder().user(userModel).article(article)
-        .createdAt(new Date()).build();
+    BookmarkModel bookmark = BookmarkModel.builder().user(userModel).article(article).build();
     bookmarkRepository.save(bookmark);
   }
 
   @Transactional
-  public boolean isBookmarked(String bookmarkingUsername, Long articleId) {
-    UserModel userModel = userRepository.findByUsername(bookmarkingUsername)
-        .orElseThrow(() -> new UsernameNotFoundException("Bookmarking user not found"));
+  public boolean isBookmarked(Long articleId, UserModel userModel) {
     ArticleModel article = articleRepository.findById(articleId).orElseThrow(
         () -> new ArticleNotFoundException("Article with id " + articleId + " not found"));
     return bookmarkRepository.existsByUserAndArticle(userModel, article);
   }
 
   @Transactional
-  public void unbookmark(String bookmarkingUsername, Long articleId) {
-    UserModel userModel = userRepository.findByUsername(bookmarkingUsername)
-        .orElseThrow(() -> new UsernameNotFoundException("Bookmarking user not found"));
+  public void unbookmark(Long articleId, UserModel userModel) {
     ArticleModel article = articleRepository.findById(articleId).orElseThrow(
         () -> new ArticleNotFoundException("Article with id " + articleId + " not found"));
     bookmarkRepository.deleteByUserAndArticle(userModel, article);

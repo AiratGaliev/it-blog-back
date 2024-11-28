@@ -24,7 +24,19 @@ public class LocalizationInterceptor implements HandlerInterceptor {
       Object handler) {
     String intl = Arrays.stream(Optional.ofNullable(request.getCookies()).orElse(new Cookie[0]))
         .filter(cookie -> "intl".equals(cookie.getName())).map(Cookie::getValue)
-        .filter(Language::isSupported).findFirst().orElse(Language.EN.getCode());
+        .filter(Language::isSupported).findFirst().orElse(null);
+
+    if (intl == null) {
+      String acceptLanguage = request.getHeader("Accept-Language");
+      if (acceptLanguage != null) {
+        intl = Arrays.stream(acceptLanguage.split(",")).map(lang -> lang.split(";")[0])
+            .map(String::trim).filter(Language::isSupported).findFirst()
+            .orElse(Language.EN.getCode());
+      } else {
+        intl = Language.EN.getCode();
+      }
+    }
+
     localizationContext.setLocale(intl);
 
     String contlCookie = Arrays.stream(

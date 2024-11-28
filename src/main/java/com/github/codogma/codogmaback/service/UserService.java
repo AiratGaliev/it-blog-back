@@ -26,7 +26,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -56,10 +55,10 @@ public class UserService {
     List<Long> usersIds = null;
     if (info != null && !info.isEmpty()) {
       SearchSession searchSession = Search.session(entityManager);
-      usersIds = searchSession.search(UserModel.class)
-          .where(f -> f.match().fields("username", "firstName", "lastName", "shortInfo", "bio")
-              .matching(info).fuzzy(1))
-          .fetchHits(searchResultsLimit).stream().map(UserModel::getId).toList();
+      usersIds = searchSession.search(UserModel.class).where(
+              f -> f.match().fields("username", "firstName", "lastName", "shortInfo", "bio")
+                  .matching(info).fuzzy(1)).fetchHits(searchResultsLimit).stream().map(UserModel::getId)
+          .toList();
     }
     Specification<UserModel> spec = UserSpecifications.buildSpecification(categoryId, role, tag,
         usersIds);
@@ -67,76 +66,57 @@ public class UserService {
         .toList();
   }
 
-  // TODO delete this code after testing
-//  @Transactional
-//  public List<GetUser> getAllUsersOld() {
-//    return userRepository.findAllByRoleIsNot(Role.ROLE_ADMIN).stream()
-//        .map(this::convertUserModelToDto).toList();
-//  }
-//
-//  @Transactional
-//  public List<GetUser> getAllByRole(Role role) {
-//    return userRepository.findAllByRoleAndRoleIsNot(role, Role.ROLE_ADMIN).stream()
-//        .map(this::convertUserModelToDto).toList();
-//  }
-//
-//  @Transactional
-//  public List<GetUser> getAllAuthorsByCategoryId(Long categoryId) {
-//    return userRepository.findAuthorsByCategoryId(categoryId).stream()
-//        .map(this::convertUserModelToDto).toList();
-//  }
-
   @Transactional
   public Optional<GetUser> getUserByUsername(String username) {
     return userRepository.findByUsername(username).map(this::convertUserModelToDto);
   }
 
   @Transactional
-  public GetUser updateUser(UpdateUser updateUser, UserDetails userDetails,
+  public GetUser updateUser(UpdateUser updateUser, UserModel userModel,
       BindingResult bindingResult) {
-    UserModel user = userRepository.findByUsername(userDetails.getUsername())
-        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-    if (updateUser.getUsername() != null && !updateUser.getUsername().equals(user.getUsername())) {
+    if (updateUser.getUsername() != null && !updateUser.getUsername()
+        .equals(userModel.getUsername())) {
       boolean isExistsUser = userRepository.existsByUsername(updateUser.getUsername());
       if (isExistsUser) {
         bindingResult.rejectValue("username", "username.exists", "This username is already taken");
       } else {
-        user.setUsername(updateUser.getUsername());
+        userModel.setUsername(updateUser.getUsername());
       }
     }
     if (updateUser.getFirstName() != null) {
-      user.setFirstName(updateUser.getFirstName());
+      userModel.setFirstName(updateUser.getFirstName());
     }
     if (updateUser.getLastName() != null) {
-      user.setLastName(updateUser.getLastName());
+      userModel.setLastName(updateUser.getLastName());
     }
     if (updateUser.getShortInfo() != null) {
-      user.setShortInfo(updateUser.getShortInfo());
+      userModel.setShortInfo(updateUser.getShortInfo());
     }
     if (updateUser.getBio() != null) {
-      user.setBio(updateUser.getBio());
+      userModel.setBio(updateUser.getBio());
     }
-    if (updateUser.getNewEmail() != null && !updateUser.getNewEmail().equals(user.getEmail())) {
+    if (updateUser.getNewEmail() != null && !updateUser.getNewEmail()
+        .equals(userModel.getEmail())) {
       boolean isExistsEmail = userRepository.existsByEmail(updateUser.getNewEmail());
       if (isExistsEmail) {
         bindingResult.rejectValue("newEmail", "email.exists", "This email is already taken");
       } else {
-        user.setEmail(updateUser.getNewEmail());
+        userModel.setEmail(updateUser.getNewEmail());
       }
     }
     if (updateUser.getNewPassword() != null && !updateUser.getNewPassword().isEmpty()) {
-      if (passwordEncoder.matches(updateUser.getCurrentPassword(), user.getPassword())) {
-        user.setPassword(passwordEncoder.encode(updateUser.getNewPassword()));
+      if (passwordEncoder.matches(updateUser.getCurrentPassword(), userModel.getPassword())) {
+        userModel.setPassword(passwordEncoder.encode(updateUser.getNewPassword()));
       } else {
         bindingResult.rejectValue("currentPassword", "password.incorrect",
             "Current password is incorrect");
       }
     }
     if (updateUser.getAvatar() != null && !updateUser.getAvatar().isEmpty()) {
-      String avatarUrl = fileUploadUtil.uploadUserAvatar(updateUser.getAvatar(), user.getId());
-      user.setAvatarUrl(avatarUrl);
+      String avatarUrl = fileUploadUtil.uploadUserAvatar(updateUser.getAvatar(), userModel.getId());
+      userModel.setAvatarUrl(avatarUrl);
     }
-    return convertUserModelToDto(userRepository.save(user));
+    return convertUserModelToDto(userRepository.save(userModel));
   }
 
   @Transactional
@@ -145,12 +125,10 @@ public class UserService {
   }
 
   @Transactional
-  public void subscribe(String subscriberUsername, String targetUsername) {
-    if (subscriberUsername.equals(targetUsername)) {
+  public void subscribe(String targetUsername, UserModel subscriber) {
+    if (subscriber.getUsername().equals(targetUsername)) {
       throw new IllegalArgumentException("User cannot subscribe to themselves.");
     }
-    UserModel subscriber = userRepository.findByUsername(subscriberUsername)
-        .orElseThrow(() -> new UsernameNotFoundException("Subscriber not found"));
     UserModel targetUser = userRepository.findByUsername(targetUsername)
         .orElseThrow(() -> new UsernameNotFoundException("Target user not found"));
     boolean subscribedExists = subscriptionRepository.existsBySubscriberAndUser(subscriber,
@@ -164,18 +142,14 @@ public class UserService {
   }
 
   @Transactional
-  public boolean isSubscribed(String subscriberUsername, String targetUsername) {
-    UserModel subscriber = userRepository.findByUsername(subscriberUsername)
-        .orElseThrow(() -> new UsernameNotFoundException("Subscriber not found"));
+  public boolean isSubscribed(String targetUsername, UserModel subscriber) {
     UserModel targetUser = userRepository.findByUsername(targetUsername)
         .orElseThrow(() -> new UsernameNotFoundException("Target user not found"));
     return subscriptionRepository.existsBySubscriberAndUser(subscriber, targetUser);
   }
 
   @Transactional
-  public void unsubscribe(String subscriberUsername, String targetUsername) {
-    UserModel subscriber = userRepository.findByUsername(subscriberUsername)
-        .orElseThrow(() -> new UsernameNotFoundException("Subscriber not found"));
+  public void unsubscribe(String targetUsername, UserModel subscriber) {
     UserModel targetUser = userRepository.findByUsername(targetUsername)
         .orElseThrow(() -> new UsernameNotFoundException("Target user not found"));
     subscriptionRepository.deleteBySubscriberAndUser(subscriber, targetUser);
@@ -200,6 +174,12 @@ public class UserService {
                 .firstName(sub.getSubscriber().getFirstName())
                 .lastName(sub.getSubscriber().getLastName())
                 .avatarUrl(sub.getSubscriber().getAvatarUrl())
-                .shortInfo(sub.getSubscriber().getShortInfo()).build()).toList()).build();
+                .shortInfo(sub.getSubscriber().getShortInfo()).build()).toList())
+        .favorites(userModel.getFavorites().stream().map(favorite -> {
+          String localizedCategoryName = favorite.getCategory().getName()
+              .getOrDefault(interfaceLanguage, favorite.getCategory().getName().get(Language.EN));
+          return GetCategory.builder().id(favorite.getCategory().getId())
+              .name(localizedCategoryName).build();
+        }).toList()).build();
   }
 }

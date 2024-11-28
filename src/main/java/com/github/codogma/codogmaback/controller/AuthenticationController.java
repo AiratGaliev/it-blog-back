@@ -4,11 +4,11 @@ import com.github.codogma.codogmaback.dto.AuthenticationResponse;
 import com.github.codogma.codogmaback.dto.GetUser;
 import com.github.codogma.codogmaback.dto.SignInRequest;
 import com.github.codogma.codogmaback.dto.SignUpRequest;
+import com.github.codogma.codogmaback.model.UserModel;
 import com.github.codogma.codogmaback.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -66,24 +67,24 @@ public class AuthenticationController {
   @GetMapping("/current-user")
   @Operation(summary = "Get the current authenticated user")
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<GetUser> currentUser(HttpServletRequest request,
-      HttpServletResponse response) {
-    return authenticationService.currentUser(request, response).map(ResponseEntity::ok)
+  public ResponseEntity<GetUser> currentUser(@AuthenticationPrincipal UserModel userModel) {
+    return authenticationService.currentUser(userModel).map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.noContent().build());
   }
 
   @PostMapping("/refresh-token")
   @Operation(summary = "Refresh the HttpOnly cookie 'auth-token'")
-  public ResponseEntity<Void> refreshToken(HttpServletRequest request,
-      HttpServletResponse response) {
-    authenticationService.refreshToken(request, response);
+  public ResponseEntity<Void> refreshToken(HttpServletResponse response,
+      @AuthenticationPrincipal UserModel userModel) {
+    authenticationService.refreshToken(response, userModel);
     return ResponseEntity.noContent().build();
   }
 
   @PostMapping("/logout")
   @Operation(summary = "Logout a user")
-  public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
-    authenticationService.logout(request, response);
+  public ResponseEntity<String> logout(HttpServletResponse response,
+      @AuthenticationPrincipal UserModel userModel) {
+    authenticationService.logout(response, userModel);
     return ResponseEntity.ok("Logged out successfully");
   }
 }
