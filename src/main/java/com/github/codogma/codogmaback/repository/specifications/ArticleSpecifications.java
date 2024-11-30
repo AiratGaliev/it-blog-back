@@ -1,12 +1,11 @@
 package com.github.codogma.codogmaback.repository.specifications;
 
 import com.github.codogma.codogmaback.model.ArticleModel;
-import com.github.codogma.codogmaback.model.FavoriteModel;
 import com.github.codogma.codogmaback.model.Language;
 import com.github.codogma.codogmaback.model.Role;
 import com.github.codogma.codogmaback.model.Status;
-import com.github.codogma.codogmaback.model.SubscriptionModel;
 import com.github.codogma.codogmaback.model.UserModel;
+import jakarta.persistence.criteria.Predicate;
 import java.util.List;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -29,31 +28,20 @@ public class ArticleSpecifications {
     };
   }
 
-  public static Specification<ArticleModel> hasFavoriteCategories(UserModel userModel) {
+  public static Specification<ArticleModel> hasFeed(UserModel userModel) {
     return (root, query, builder) -> {
-      if (userModel != null) {
-        List<FavoriteModel> favorites = userModel.getFavorites();
-        if (favorites != null && !favorites.isEmpty()) {
-          List<Long> favoriteCategoriesIds = favorites.stream()
-              .map(favorite -> favorite.getCategory().getId()).toList();
-          return root.join("categories").get("id").in(favoriteCategoriesIds);
-        }
+      if (userModel == null) {
+        return builder.disjunction();
       }
-      return builder.disjunction();
-    };
-  }
-
-  public static Specification<ArticleModel> hasSubscribedArticles(UserModel userModel) {
-    return (root, query, builder) -> {
-      if (userModel != null) {
-        List<SubscriptionModel> subscriptions = userModel.getSubscriptions();
-        if (subscriptions != null && !subscriptions.isEmpty()) {
-          List<Long> subscribedUserIds = subscriptions.stream().map(sub -> sub.getUser().getId())
-              .toList();
-          return root.get("user").get("id").in(subscribedUserIds);
-        }
-      }
-      return builder.disjunction();
+      List<Long> favoriteCategoriesIds = userModel.getFavorites().stream()
+          .map(favorite -> favorite.getCategory().getId()).toList();
+      List<Long> subscribedUserIds = userModel.getSubscriptions().stream()
+          .map(sub -> sub.getUser().getId()).toList();
+      Predicate favoritePredicate = favoriteCategoriesIds.isEmpty() ? builder.disjunction()
+          : root.join("categories").get("id").in(favoriteCategoriesIds);
+      Predicate subscriptionPredicate = subscribedUserIds.isEmpty() ? builder.disjunction()
+          : root.join("user").get("id").in(subscribedUserIds);
+      return builder.or(favoritePredicate, subscriptionPredicate);
     };
   }
 
@@ -93,7 +81,7 @@ public class ArticleSpecifications {
         .and(hasSupportedLanguage(supportedLanguages)).and(hasAccess(userModel))
         .and(hasContentMatch(articleIds));
     if (Boolean.TRUE.equals(isFeed)) {
-      spec = spec.and(hasFavoriteCategories(userModel)).or(hasSubscribedArticles(userModel));
+      spec = spec.and(hasFeed(userModel));
     }
     return spec;
   }
