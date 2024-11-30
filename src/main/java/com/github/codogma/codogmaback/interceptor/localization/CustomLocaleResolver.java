@@ -1,5 +1,6 @@
 package com.github.codogma.codogmaback.interceptor.localization;
 
+import com.github.codogma.codogmaback.model.Language;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Locale;
@@ -15,11 +16,11 @@ public class CustomLocaleResolver implements LocaleResolver {
 
   @Override
   public Locale resolveLocale(HttpServletRequest request) {
-    String localeCode = localizationContext.getLocale();
-    if (localeCode == null || localeCode.isBlank()) {
+    Language localeCode = localizationContext.getLocale();
+    if (localeCode == null) {
       return Locale.ENGLISH;
     }
-    return Locale.forLanguageTag(localeCode);
+    return Locale.forLanguageTag(localeCode.getCode());
   }
 
   @Override

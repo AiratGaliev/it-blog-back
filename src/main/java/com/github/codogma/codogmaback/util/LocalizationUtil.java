@@ -14,7 +14,7 @@ public class LocalizationUtil {
   private final LocalizationContext localizationContext;
 
   public Locale getLocale() {
-    return Locale.forLanguageTag(localizationContext.getLocale());
+    return Locale.forLanguageTag(localizationContext.getLocale().getCode());
   }
 
   public String getMessage(String key, Object[] args) {

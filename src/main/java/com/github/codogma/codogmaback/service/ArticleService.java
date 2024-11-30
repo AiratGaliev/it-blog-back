@@ -33,6 +33,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.search.engine.search.predicate.dsl.BooleanPredicateClausesStep;
 import org.hibernate.search.mapper.orm.Search;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.springframework.beans.factory.annotation.Value;
@@ -70,7 +71,7 @@ public class ArticleService {
         .orElseThrow(() -> new UsernameNotFoundException("User not found")) : null;
     Sort.Direction sortDirection = Sort.Direction.fromString(order);
     Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
-    List<String> supportedLanguages = localizationContext.getSupportedLanguages();
+    List<Language> supportedLanguages = localizationContext.getSupportedLanguages();
     List<Long> articleIds = null;
     if (content != null && !content.isEmpty()) {
       SearchSession searchSession = Search.session(entityManager);
@@ -112,6 +113,33 @@ public class ArticleService {
       throw new ArticleNotFoundException("Article not found");
     }
     return convertArticleModelToDTO(articleModel);
+  }
+
+  @Transactional
+  public List<GetArticle> getRecommendationsForArticle(Long articleId) {
+    ArticleModel article = articleRepository.findById(articleId)
+        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+    List<Language> supportedLanguages = localizationContext.getSupportedLanguages();
+    List<String> categoryNames = article.getCategories().stream()
+        .flatMap(category -> category.getName().values().stream()).toList();
+    List<String> tagNames = article.getTags().stream().map(TagModel::getName).toList();
+    SearchSession searchSession = Search.session(entityManager);
+    List<ArticleModel> recommendedArticles = searchSession.search(ArticleModel.class).where(f -> {
+      BooleanPredicateClausesStep<?> boolQuery = f.bool()
+          .must(f.match().field("status").matching(Status.PUBLISHED))
+          .must(f.terms().field("language").matchingAny(supportedLanguages));
+      if (!categoryNames.isEmpty()) {
+        boolQuery.should(f.terms().fields("categories.name").matchingAny(categoryNames));
+      }
+      if (!tagNames.isEmpty()) {
+        boolQuery.should(f.terms().fields("tags.name").matchingAny(tagNames));
+      }
+      boolQuery.should(f.match().field("content").matching(article.getContent()))
+          .should(f.match().field("title").matching(article.getTitle()));
+
+      return boolQuery;
+    }).fetchHits(5);
+    return recommendedArticles.stream().map(this::convertArticleModelToDTO).toList();
   }
 
   @Transactional
@@ -339,7 +367,7 @@ public class ArticleService {
     ArticleModel originalArticle =
         articleModel.getOriginalArticleId() != null ? articleRepository.findById(
             articleModel.getOriginalArticleId()).orElse(null) : null;
-    Language interfaceLanguage = Language.valueOf(localizationContext.getLocale().toUpperCase());
+    Language interfaceLanguage = localizationContext.getLocale();
     return GetArticle.builder().id(articleModel.getId()).status(articleModel.getStatus())
         .language(articleModel.getLanguage()).originalArticle(
             originalArticle != null ? GetArticle.builder().id(originalArticle.getId())

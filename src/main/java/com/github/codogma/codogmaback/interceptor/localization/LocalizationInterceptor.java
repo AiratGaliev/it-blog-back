@@ -22,20 +22,16 @@ public class LocalizationInterceptor implements HandlerInterceptor {
   @Override
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response,
       Object handler) {
-    String intl = Arrays.stream(Optional.ofNullable(request.getCookies()).orElse(new Cookie[0]))
+    Language intl = Arrays.stream(Optional.ofNullable(request.getCookies()).orElse(new Cookie[0]))
         .filter(cookie -> "intl".equals(cookie.getName())).map(Cookie::getValue)
-        .filter(Language::isSupported).findFirst().orElse(null);
-
-    if (intl == null) {
-      String acceptLanguage = request.getHeader("Accept-Language");
-      if (acceptLanguage != null) {
-        intl = Arrays.stream(acceptLanguage.split(",")).map(lang -> lang.split(";")[0])
-            .map(String::trim).filter(Language::isSupported).findFirst()
-            .orElse(Language.EN.getCode());
-      } else {
-        intl = Language.EN.getCode();
-      }
-    }
+        .map(Language::fromCode).findFirst().orElseGet(() -> {
+          String acceptLanguage = request.getHeader("Accept-Language");
+          if (acceptLanguage != null) {
+            return Arrays.stream(acceptLanguage.split(",")).map(lang -> lang.split(";")[0])
+                .map(String::trim).map(Language::fromCode).findFirst().orElse(Language.EN);
+          }
+          return Language.EN;
+        });
 
     localizationContext.setLocale(intl);
 
@@ -45,8 +41,8 @@ public class LocalizationInterceptor implements HandlerInterceptor {
         .orElse(Language.EN.getCode());
     contlCookie = URLDecoder.decode(contlCookie, StandardCharsets.UTF_8);
     String[] languages = contlCookie.split(",");
-    List<String> supportedLanguages = Arrays.stream(languages).map(String::trim)
-        .filter(Language::isSupported).map(String::toUpperCase).toList();
+    List<Language> supportedLanguages = Arrays.stream(languages).map(String::trim)
+        .map(Language::fromCode).toList();
     localizationContext.setSupportedLanguages(supportedLanguages);
     return true;
   }

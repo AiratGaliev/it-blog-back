@@ -1,5 +1,6 @@
 package com.github.codogma.codogmaback.service;
 
+import com.github.codogma.codogmaback.exception.ExceptionFactory;
 import com.github.codogma.codogmaback.util.LocalizationUtil;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -17,6 +18,7 @@ public class EmailService {
 
   private final JavaMailSender mailSender;
   private final LocalizationUtil localizationUtil;
+  private final ExceptionFactory exceptionFactory;
 
   public void sendEmailVerification(String email, String token, String origin) {
     Locale locale = localizationUtil.getLocale();
@@ -37,7 +39,7 @@ public class EmailService {
       helper.setFrom("noreply.linkednote@gmail.com");
       mailSender.send(mimeMessage);
     } catch (MessagingException e) {
-      throw new IllegalStateException("Failed to send email", e);
+      throw exceptionFactory.emailSend();
     }
   }
 }

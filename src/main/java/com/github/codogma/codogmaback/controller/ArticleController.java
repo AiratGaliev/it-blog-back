@@ -73,6 +73,13 @@ public class ArticleController {
     return ResponseEntity.ok(article);
   }
 
+  @GetMapping("/{id}/recommendations")
+  @Operation(summary = "Get an article")
+  public ResponseEntity<List<GetArticle>> getRecommendationsForArticle(@PathVariable Long id) {
+    List<GetArticle> articles = articleService.getRecommendationsForArticle(id);
+    return ResponseEntity.ok(articles);
+  }
+
   @GetMapping("/drafts")
   @Operation(summary = "Get the author's draft articles")
   @SecurityRequirement(name = "bearerAuth")
@@ -83,7 +90,7 @@ public class ArticleController {
     return ResponseEntity.ok(articles);
   }
 
-  @GetMapping("/drafts/{id}")
+  @GetMapping("/{id}/draft")
   @Operation(summary = "Get the author's drafted article")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
@@ -104,7 +111,7 @@ public class ArticleController {
     return new ResponseEntity<>(article, HttpStatus.CREATED);
   }
 
-  @PatchMapping("/drafts/{id}")
+  @PatchMapping("/{id}/draft")
   @Operation(summary = "Update draft article")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")

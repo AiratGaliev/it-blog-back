@@ -7,7 +7,6 @@ import com.github.codogma.codogmaback.dto.AuthenticationResponse;
 import com.github.codogma.codogmaback.dto.GetUser;
 import com.github.codogma.codogmaback.dto.SignInRequest;
 import com.github.codogma.codogmaback.dto.SignUpRequest;
-import com.github.codogma.codogmaback.exception.EmailNotConfirmedException;
 import com.github.codogma.codogmaback.exception.ExceptionFactory;
 import com.github.codogma.codogmaback.handler.oauth.OAuth2ProviderHandler;
 import com.github.codogma.codogmaback.model.ConfirmationToken;
@@ -26,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -57,7 +55,7 @@ public class AuthenticationService implements OAuth2UserService<OAuth2UserReques
   public GetUser signUp(SignUpRequest signUpRequest, MultipartFile avatar, String origin) {
     userRepository.findByUsernameOrEmail(signUpRequest.getUsername(), signUpRequest.getEmail())
         .ifPresent((user) -> {
-          throw exceptionFactory.userAlreadyExistsException();
+          throw exceptionFactory.userAlreadyExists();
         });
     UserModel user = UserModel.builder().username(signUpRequest.getUsername())
         .email(signUpRequest.getEmail())
@@ -79,12 +77,12 @@ public class AuthenticationService implements OAuth2UserService<OAuth2UserReques
   @Transactional
   public void confirmEmail(String token) {
     ConfirmationToken confirmationToken = tokenService.getToken(token)
-        .orElseThrow(exceptionFactory::invalidTokenException);
+        .orElseThrow(exceptionFactory::invalidToken);
     if (confirmationToken.getConfirmedAt() != null) {
-      throw exceptionFactory.emailAlreadyConfirmedException();
+      throw exceptionFactory.emailAlreadyConfirmed();
     }
     if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-      throw exceptionFactory.tokenExpiredException();
+      throw exceptionFactory.tokenExpired();
     }
     UserModel user = confirmationToken.getUser();
     user.setEnabled(true);
@@ -98,11 +96,9 @@ public class AuthenticationService implements OAuth2UserService<OAuth2UserReques
     log.info("Attempting to authenticate user: {}", input.getUsernameOrEmail());
     try {
       UserModel user = userRepository.findByUsernameOrEmail(input.getUsernameOrEmail(),
-          input.getUsernameOrEmail()).orElseThrow(() -> new UsernameNotFoundException(
-          "User not found with these credentials " + input.getUsernameOrEmail()));
+          input.getUsernameOrEmail()).orElseThrow(exceptionFactory::usernameOrEmailNotFound);
       if (!user.isEnabled()) {
-        throw new EmailNotConfirmedException(
-            "Email not confirmed! Please confirm your email before signing in!");
+        throw exceptionFactory.emailNotConfirmed();
       }
       authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(input.getUsernameOrEmail(), input.getPassword()));

@@ -129,7 +129,7 @@ public class CategoryService {
   }
 
   private void setLocalizedCategoryFields(CategoryModel category, String name, String description) {
-    Language language = Language.valueOf(localizationContext.getLocale().toUpperCase());
+    Language language = localizationContext.getLocale();
     Optional.ofNullable(name).ifPresent(n -> category.getName().put(language, n));
     Optional.ofNullable(description).ifPresent(d -> category.getDescription().put(language, d));
   }
@@ -143,7 +143,7 @@ public class CategoryService {
 
   private GetCategory convertCategoryToDTO(CategoryModel category) {
     List<TagModel> topTags = tagRepository.findTop10TagsByCategoryId(category.getId());
-    Language interfaceLanguage = Language.valueOf(localizationContext.getLocale().toUpperCase());
+    Language interfaceLanguage = localizationContext.getLocale();
     String localizedCategoryName = getLocalizedValue(category.getName(), interfaceLanguage);
     String localizedCategoryDescription = getLocalizedValue(category.getDescription(),
         interfaceLanguage);

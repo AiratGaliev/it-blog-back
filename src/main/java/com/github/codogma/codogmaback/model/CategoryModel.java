@@ -43,7 +43,7 @@ public class CategoryModel {
   @Column(nullable = false)
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-  @FullTextField
+  @FullTextField(name = "name", analyzer = "standard")
   @ElementCollection
   @MapKeyColumn(name = "language")
   @MapKeyEnumerated(EnumType.STRING)

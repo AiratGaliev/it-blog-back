@@ -14,10 +14,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 
 @Data
 @Entity
 @Builder
+@Indexed
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "tags")
@@ -28,6 +31,7 @@ public class TagModel {
   @Column(nullable = false)
   private Long id;
   @Column(nullable = false, unique = true)
+  @FullTextField(name = "name", analyzer = "standard")
   private String name;
   @ManyToMany(fetch = FetchType.LAZY, mappedBy = "tags")
   private List<ArticleModel> articles = new ArrayList<>();
