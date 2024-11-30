@@ -1,6 +1,7 @@
 package com.github.codogma.codogmaback.config;
 
 
+import com.github.codogma.codogmaback.exception.ExceptionFactory;
 import com.github.codogma.codogmaback.interceptor.localization.LocalizationInterceptor;
 import com.github.codogma.codogmaback.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +13,6 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -26,6 +26,7 @@ public class ApplicationConfiguration implements WebMvcConfigurer {
 
   private final UserRepository userRepository;
   private final LocalizationInterceptor localizationInterceptor;
+  private final ExceptionFactory exceptionFactory;
 
   @Value("${user.avatar.upload-dir}")
   private String avatarUploadDir;
@@ -54,7 +55,7 @@ public class ApplicationConfiguration implements WebMvcConfigurer {
   UserDetailsService userDetailsService() {
     return usernameOrEmail -> userRepository.findByUsername(usernameOrEmail)
         .or(() -> userRepository.findByEmail(usernameOrEmail))
-        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        .orElseThrow(exceptionFactory::usernameOrEmailNotFound);
   }
 
   @Bean

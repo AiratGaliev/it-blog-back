@@ -6,6 +6,8 @@ import com.github.codogma.codogmaback.dto.UpdateComment;
 import com.github.codogma.codogmaback.model.UserModel;
 import com.github.codogma.codogmaback.service.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Validated
@@ -36,11 +39,14 @@ public class CommentController {
 
   private final CommentService commentService;
 
-  @GetMapping("/article/{articleId}")
+  @GetMapping
   @Operation(summary = "Get all comments for an article")
-  public List<GetComment> getCommentsByArticleId(@PathVariable Long articleId,
+  @Parameters({@Parameter(name = "articleId", description = "Article id to filter comments"),
+      @Parameter(name = "username", description = "Username to filter comments")})
+  public List<GetComment> getComments(@RequestParam(required = false) Long articleId,
+      @RequestParam(required = false) String username,
       @AuthenticationPrincipal UserModel userModel) {
-    return commentService.getCommentsByArticleId(articleId, userModel);
+    return commentService.getComments(articleId, username, userModel);
   }
 
   @PostMapping
@@ -51,14 +57,6 @@ public class CommentController {
       @AuthenticationPrincipal UserModel userModel) {
     GetComment comment = commentService.createComment(createComment, userModel);
     return new ResponseEntity<>(comment, HttpStatus.CREATED);
-  }
-
-  @GetMapping("/user/{username}")
-  @Operation(summary = "Get all comments created by a user")
-  @SecurityRequirement(name = "bearerAuth")
-  public List<GetComment> getCommentsByUsername(@PathVariable String username,
-      @AuthenticationPrincipal UserModel userModel) {
-    return commentService.getCommentsByUsername(username, userModel);
   }
 
   @PatchMapping("/{commentId}/publish")

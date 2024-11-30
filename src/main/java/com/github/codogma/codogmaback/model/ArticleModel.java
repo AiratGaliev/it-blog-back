@@ -42,10 +42,12 @@ public class ArticleModel {
   @Column(nullable = false)
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
+  @FullTextField
   @Builder.Default
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   private Status status = Status.DRAFT;
+  @FullTextField
   @Enumerated(EnumType.STRING)
   private Language language;
   private Long originalArticleId;

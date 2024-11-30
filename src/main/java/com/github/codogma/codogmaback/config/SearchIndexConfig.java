@@ -2,9 +2,12 @@ package com.github.codogma.codogmaback.config;
 
 import com.github.codogma.codogmaback.model.ArticleModel;
 import com.github.codogma.codogmaback.model.CategoryModel;
+import com.github.codogma.codogmaback.model.TagModel;
 import com.github.codogma.codogmaback.model.UserModel;
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.lucene.search.IndexSearcher;
 import org.hibernate.search.mapper.orm.Search;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,11 +39,16 @@ public class SearchIndexConfig implements ApplicationListener<ContextRefreshedEv
 
   public void initializeSearchIndexing() {
     SearchSession searchSession = Search.session(entityManager);
-    searchSession.massIndexer(ArticleModel.class, CategoryModel.class, UserModel.class)
-        .threadsToLoadObjects(searchMassIndexerThreads).start()
+    searchSession.massIndexer(ArticleModel.class, CategoryModel.class, UserModel.class,
+            TagModel.class).threadsToLoadObjects(searchMassIndexerThreads).start()
         .thenRun(() -> log.info("Indexing completed successfully.")).exceptionally(e -> {
           log.error("Error occurred during indexing.", e);
           return null;
         });
+  }
+
+  @PostConstruct
+  public void increaseMaxClauseCount() {
+    IndexSearcher.setMaxClauseCount(4096);
   }
 }

@@ -1,27 +1,28 @@
 package com.github.codogma.codogmaback.interceptor.localization;
 
+import com.github.codogma.codogmaback.model.Language;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
 public class LocalizationContext {
 
-  private static final ThreadLocal<String> localeHolder = new ThreadLocal<>();
-  private static final ThreadLocal<List<String>> supportedLanguagesHolder = new ThreadLocal<>();
+  private static final ThreadLocal<Language> localeHolder = new ThreadLocal<>();
+  private static final ThreadLocal<List<Language>> supportedLanguagesHolder = new ThreadLocal<>();
 
-  public String getLocale() {
+  public Language getLocale() {
     return localeHolder.get();
   }
 
-  public void setLocale(String locale) {
+  public void setLocale(Language locale) {
     localeHolder.set(locale);
   }
 
-  public List<String> getSupportedLanguages() {
+  public List<Language> getSupportedLanguages() {
     return supportedLanguagesHolder.get();
   }
 
-  public void setSupportedLanguages(List<String> languages) {
+  public void setSupportedLanguages(List<Language> languages) {
     supportedLanguagesHolder.set(languages);
   }
 

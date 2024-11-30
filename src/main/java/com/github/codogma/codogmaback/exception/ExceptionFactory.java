@@ -2,6 +2,7 @@ package com.github.codogma.codogmaback.exception;
 
 import com.github.codogma.codogmaback.util.LocalizationUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -10,20 +11,48 @@ public class ExceptionFactory {
 
   private final LocalizationUtil localizationUtil;
 
-  public UserAlreadyExistsException userAlreadyExistsException() {
-    return new UserAlreadyExistsException(localizationUtil.getMessage("user.already.exists"));
+  public UserAlreadyExistsException userAlreadyExists() {
+    return new UserAlreadyExistsException(localizationUtil.getMessage("auth.user.already.exists"));
   }
 
-  public EmailAlreadyConfirmedException emailAlreadyConfirmedException() {
+  public EmailAlreadyConfirmedException emailAlreadyConfirmed() {
     return new EmailAlreadyConfirmedException(
-        localizationUtil.getMessage("email.already.confirmed"));
+        localizationUtil.getMessage("auth.email.already.confirmed"));
   }
 
-  public InvalidTokenException invalidTokenException() {
-    return new InvalidTokenException(localizationUtil.getMessage("invalid.token"));
+  public InvalidTokenException invalidToken() {
+    return new InvalidTokenException(localizationUtil.getMessage("auth.invalid.token"));
   }
 
-  public TokenExpiredException tokenExpiredException() {
-    return new TokenExpiredException(localizationUtil.getMessage("token.expired"));
+  public TokenExpiredException tokenExpired() {
+    return new TokenExpiredException(localizationUtil.getMessage("auth.token.expired"));
+  }
+
+  public UsernameOrEmailNotFoundException usernameOrEmailNotFound() {
+    return new UsernameOrEmailNotFoundException(
+        localizationUtil.getMessage("auth.username.or.email.expired"));
+  }
+
+  public EmailSendException emailSend() {
+    return new EmailSendException(localizationUtil.getMessage("email.send"));
+  }
+
+  public EmailNotConfirmedException emailNotConfirmed() {
+    return new EmailNotConfirmedException(localizationUtil.getMessage("email.not.confirmed"));
+  }
+
+  public SubscriptionAlreadyExistsException subscriptionAlreadyExists() {
+    return new SubscriptionAlreadyExistsException(
+        localizationUtil.getMessage("user.already.subscribed"));
+  }
+
+  public UsernameNotFoundException targetUserNotFound() {
+    return new UsernameNotFoundException(
+        localizationUtil.getMessage("user.target.not.found"));
+  }
+
+  public IllegalArgumentException userCannotSubscribeToThemselves() {
+    return new IllegalArgumentException(
+        localizationUtil.getMessage("user.cannot.subscribe.to.themselves"));
   }
 }

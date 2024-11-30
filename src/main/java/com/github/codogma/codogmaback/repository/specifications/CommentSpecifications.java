@@ -24,4 +24,18 @@ public class CommentSpecifications {
   public static Specification<CommentModel> isRootComment() {
     return (root, query, builder) -> builder.isNull(root.get("parentComment"));
   }
+
+  public static Specification<CommentModel> belongsToUser(Long userId) {
+    return (root, query, builder) -> builder.equal(root.get("user").get("id"), userId);
+  }
+
+  public static Specification<CommentModel> isAccessible(boolean canViewAllComments) {
+    return (root, query, builder) -> {
+      if (canViewAllComments) {
+        return builder.conjunction();
+      } else {
+        return builder.equal(root.get("status"), Status.PUBLISHED);
+      }
+    };
+  }
 }

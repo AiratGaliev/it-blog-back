@@ -1,20 +1,24 @@
 package com.github.codogma.codogmaback.service;
 
 import com.github.codogma.codogmaback.dto.GetCategory;
+import com.github.codogma.codogmaback.dto.GetTag;
 import com.github.codogma.codogmaback.dto.GetUser;
 import com.github.codogma.codogmaback.dto.UpdateUser;
 import com.github.codogma.codogmaback.dto.UserRole;
-import com.github.codogma.codogmaback.exception.SubscriptionAlreadyExistsException;
+import com.github.codogma.codogmaback.exception.ExceptionFactory;
 import com.github.codogma.codogmaback.interceptor.localization.LocalizationContext;
 import com.github.codogma.codogmaback.model.CategoryModel;
 import com.github.codogma.codogmaback.model.Language;
 import com.github.codogma.codogmaback.model.SubscriptionModel;
+import com.github.codogma.codogmaback.model.TagModel;
 import com.github.codogma.codogmaback.model.UserModel;
 import com.github.codogma.codogmaback.repository.CategoryRepository;
 import com.github.codogma.codogmaback.repository.SubscriptionRepository;
+import com.github.codogma.codogmaback.repository.TagRepository;
 import com.github.codogma.codogmaback.repository.UserRepository;
 import com.github.codogma.codogmaback.repository.specifications.UserSpecifications;
 import com.github.codogma.codogmaback.util.FileUploadUtil;
+import com.github.codogma.codogmaback.util.LocalizationUtil;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +30,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,11 +41,14 @@ public class UserService {
 
   private final EntityManager entityManager;
   private final UserRepository userRepository;
+  private final TagRepository tagRepository;
   private final CategoryRepository categoryRepository;
   private final SubscriptionRepository subscriptionRepository;
   private final FileUploadUtil fileUploadUtil;
   private final PasswordEncoder passwordEncoder;
   private final LocalizationContext localizationContext;
+  private final LocalizationUtil localizationUtil;
+  private final ExceptionFactory exceptionFactory;
 
   @Value("${search.results.limit}")
   private int searchResultsLimit;
@@ -78,7 +84,8 @@ public class UserService {
         .equals(userModel.getUsername())) {
       boolean isExistsUser = userRepository.existsByUsername(updateUser.getUsername());
       if (isExistsUser) {
-        bindingResult.rejectValue("username", "username.exists", "This username is already taken");
+        bindingResult.rejectValue("username", "username.exists",
+            localizationUtil.getMessage("user.username.exists"));
       } else {
         userModel.setUsername(updateUser.getUsername());
       }
@@ -99,7 +106,8 @@ public class UserService {
         .equals(userModel.getEmail())) {
       boolean isExistsEmail = userRepository.existsByEmail(updateUser.getNewEmail());
       if (isExistsEmail) {
-        bindingResult.rejectValue("newEmail", "email.exists", "This email is already taken");
+        bindingResult.rejectValue("newEmail", "email.exists",
+            localizationUtil.getMessage("email.exists"));
       } else {
         userModel.setEmail(updateUser.getNewEmail());
       }
@@ -109,7 +117,7 @@ public class UserService {
         userModel.setPassword(passwordEncoder.encode(updateUser.getNewPassword()));
       } else {
         bindingResult.rejectValue("currentPassword", "password.incorrect",
-            "Current password is incorrect");
+            localizationUtil.getMessage("user.password.incorrect"));
       }
     }
     if (updateUser.getAvatar() != null && !updateUser.getAvatar().isEmpty()) {
@@ -127,14 +135,14 @@ public class UserService {
   @Transactional
   public void subscribe(String targetUsername, UserModel subscriber) {
     if (subscriber.getUsername().equals(targetUsername)) {
-      throw new IllegalArgumentException("User cannot subscribe to themselves.");
+      throw exceptionFactory.userCannotSubscribeToThemselves();
     }
     UserModel targetUser = userRepository.findByUsername(targetUsername)
-        .orElseThrow(() -> new UsernameNotFoundException("Target user not found"));
+        .orElseThrow(exceptionFactory::targetUserNotFound);
     boolean subscribedExists = subscriptionRepository.existsBySubscriberAndUser(subscriber,
         targetUser);
     if (subscribedExists) {
-      throw new SubscriptionAlreadyExistsException("User already subscribed");
+      throw exceptionFactory.subscriptionAlreadyExists();
     }
     SubscriptionModel subscription = SubscriptionModel.builder().subscriber(subscriber)
         .user(targetUser).build();
@@ -144,20 +152,20 @@ public class UserService {
   @Transactional
   public boolean isSubscribed(String targetUsername, UserModel subscriber) {
     UserModel targetUser = userRepository.findByUsername(targetUsername)
-        .orElseThrow(() -> new UsernameNotFoundException("Target user not found"));
+        .orElseThrow(exceptionFactory::targetUserNotFound);
     return subscriptionRepository.existsBySubscriberAndUser(subscriber, targetUser);
   }
 
   @Transactional
   public void unsubscribe(String targetUsername, UserModel subscriber) {
     UserModel targetUser = userRepository.findByUsername(targetUsername)
-        .orElseThrow(() -> new UsernameNotFoundException("Target user not found"));
+        .orElseThrow(exceptionFactory::targetUserNotFound);
     subscriptionRepository.deleteBySubscriberAndUser(subscriber, targetUser);
   }
 
   private GetUser convertUserModelToDto(UserModel userModel) {
     List<CategoryModel> categories = categoryRepository.findCategoriesByUserId(userModel.getId());
-    Language interfaceLanguage = Language.valueOf(localizationContext.getLocale().toUpperCase());
+    Language interfaceLanguage = localizationContext.getLocale();
     return GetUser.builder().username(userModel.getUsername()).email(userModel.getEmail())
         .firstName(userModel.getFirstName()).lastName(userModel.getLastName())
         .shortInfo(userModel.getShortInfo()).bio(userModel.getBio())
@@ -176,10 +184,18 @@ public class UserService {
                 .avatarUrl(sub.getSubscriber().getAvatarUrl())
                 .shortInfo(sub.getSubscriber().getShortInfo()).build()).toList())
         .favorites(userModel.getFavorites().stream().map(favorite -> {
+          List<TagModel> topTags = tagRepository.findTop10TagsByCategoryId(
+              favorite.getCategory().getId());
           String localizedCategoryName = favorite.getCategory().getName()
               .getOrDefault(interfaceLanguage, favorite.getCategory().getName().get(Language.EN));
+          String localizedCategoryDescription = favorite.getCategory().getDescription()
+              .getOrDefault(interfaceLanguage,
+                  favorite.getCategory().getDescription().get(Language.EN));
           return GetCategory.builder().id(favorite.getCategory().getId())
-              .name(localizedCategoryName).build();
+              .name(localizedCategoryName).imageUrl(favorite.getCategory().getImageUrl())
+              .description(localizedCategoryDescription).tags(topTags.stream().map(
+                  tagModel -> GetTag.builder().id(tagModel.getId()).name(tagModel.getName())
+                      .build()).toList()).build();
         }).toList()).build();
   }
 }

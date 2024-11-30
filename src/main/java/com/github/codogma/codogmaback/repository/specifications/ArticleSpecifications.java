@@ -2,6 +2,7 @@ package com.github.codogma.codogmaback.repository.specifications;
 
 import com.github.codogma.codogmaback.model.ArticleModel;
 import com.github.codogma.codogmaback.model.FavoriteModel;
+import com.github.codogma.codogmaback.model.Language;
 import com.github.codogma.codogmaback.model.Role;
 import com.github.codogma.codogmaback.model.Status;
 import com.github.codogma.codogmaback.model.SubscriptionModel;
@@ -65,7 +66,8 @@ public class ArticleSpecifications {
     return (root, query, builder) -> articleIds != null ? root.get("id").in(articleIds) : null;
   }
 
-  public static Specification<ArticleModel> hasSupportedLanguage(List<String> supportedLanguages) {
+  public static Specification<ArticleModel> hasSupportedLanguage(
+      List<Language> supportedLanguages) {
     return (root, query, builder) -> root.get("language").in(supportedLanguages);
   }
 
@@ -84,7 +86,7 @@ public class ArticleSpecifications {
   }
 
   public static Specification<ArticleModel> buildSpecification(Long categoryId, String tagName,
-      String username, List<String> supportedLanguages, Boolean isFeed, UserModel userModel,
+      String username, List<Language> supportedLanguages, Boolean isFeed, UserModel userModel,
       List<Long> articleIds) {
     Specification<ArticleModel> spec = Specification.where(hasCategoryId(categoryId))
         .and(hasTagName(tagName)).and(hasUsername(username))
