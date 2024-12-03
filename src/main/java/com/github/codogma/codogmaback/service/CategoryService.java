@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.search.mapper.orm.Search;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -52,8 +53,8 @@ public class CategoryService {
   private int searchResultsLimit;
 
   @Transactional
-  public List<GetCategory> getAllCategories(String order, String sort, int page, int size,
-      String tag, String info) {
+  public Page<GetCategory> getCategories(String order, String sort, int page, int size, String tag,
+      String info, Boolean isFavorite, UserModel userModel) {
     Sort.Direction sortDirection = Sort.Direction.fromString(order);
     Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
     List<Long> categoryIds = null;
@@ -64,8 +65,7 @@ public class CategoryService {
           .fetchHits(searchResultsLimit).stream().map(CategoryModel::getId).toList();
     }
     Specification<CategoryModel> spec = CategorySpecifications.buildSpecification(tag, categoryIds);
-    return categoryRepository.findAll(spec, pageable).stream().map(this::convertCategoryToDTO)
-        .toList();
+    return categoryRepository.findAll(spec, pageable).map(this::convertCategoryToDTO);
   }
 
   @Transactional
