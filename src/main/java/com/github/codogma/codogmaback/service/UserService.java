@@ -40,6 +40,7 @@ import org.springframework.validation.BindingResult;
 public class UserService {
 
   private final EntityManager entityManager;
+  private final ExceptionFactory exceptionFactory;
   private final UserRepository userRepository;
   private final TagRepository tagRepository;
   private final CategoryRepository categoryRepository;
@@ -48,7 +49,6 @@ public class UserService {
   private final PasswordEncoder passwordEncoder;
   private final LocalizationContext localizationContext;
   private final LocalizationUtil localizationUtil;
-  private final ExceptionFactory exceptionFactory;
 
   @Value("${search.results.limit}")
   private int searchResultsLimit;
@@ -138,7 +138,7 @@ public class UserService {
       throw exceptionFactory.userCannotSubscribeToThemselves();
     }
     UserModel targetUser = userRepository.findByUsername(targetUsername)
-        .orElseThrow(exceptionFactory::targetUserNotFound);
+        .orElseThrow(() -> exceptionFactory.targetUserNotFound(targetUsername));
     boolean subscribedExists = subscriptionRepository.existsBySubscriberAndUser(subscriber,
         targetUser);
     if (subscribedExists) {
@@ -152,14 +152,14 @@ public class UserService {
   @Transactional
   public boolean isSubscribed(String targetUsername, UserModel subscriber) {
     UserModel targetUser = userRepository.findByUsername(targetUsername)
-        .orElseThrow(exceptionFactory::targetUserNotFound);
+        .orElseThrow(() -> exceptionFactory.targetUserNotFound(targetUsername));
     return subscriptionRepository.existsBySubscriberAndUser(subscriber, targetUser);
   }
 
   @Transactional
   public void unsubscribe(String targetUsername, UserModel subscriber) {
     UserModel targetUser = userRepository.findByUsername(targetUsername)
-        .orElseThrow(exceptionFactory::targetUserNotFound);
+        .orElseThrow(() -> exceptionFactory.targetUserNotFound(targetUsername));
     subscriptionRepository.deleteBySubscriberAndUser(subscriber, targetUser);
   }
 

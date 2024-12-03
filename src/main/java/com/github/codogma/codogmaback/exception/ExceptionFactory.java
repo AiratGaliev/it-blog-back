@@ -2,6 +2,7 @@ package com.github.codogma.codogmaback.exception;
 
 import com.github.codogma.codogmaback.util.LocalizationUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
@@ -46,13 +47,43 @@ public class ExceptionFactory {
         localizationUtil.getMessage("user.already.subscribed"));
   }
 
-  public UsernameNotFoundException targetUserNotFound() {
+  public UsernameNotFoundException userNotFound(String username) {
     return new UsernameNotFoundException(
-        localizationUtil.getMessage("user.target.not.found"));
+        localizationUtil.getMessage("user.not.found", new Object[]{username}));
+  }
+
+  public UsernameNotFoundException targetUserNotFound(String username) {
+    return new UsernameNotFoundException(
+        localizationUtil.getMessage("user.target.not.found", new Object[]{username}));
   }
 
   public IllegalArgumentException userCannotSubscribeToThemselves() {
     return new IllegalArgumentException(
         localizationUtil.getMessage("user.cannot.subscribe.to.themselves"));
+  }
+
+  public ArticleNotFoundException articleNotFound(Long id) {
+    return new ArticleNotFoundException(
+        localizationUtil.getMessage("article.not.found", new Object[]{id}));
+  }
+
+  public ArticleNotFoundException originalArticleNotFound(Long id) {
+    return new ArticleNotFoundException(
+        localizationUtil.getMessage("article.original.not.found", new Object[]{id}));
+  }
+
+  public AccessDeniedException notAllowedToEdit(Long id) {
+    return new AccessDeniedException(
+        localizationUtil.getMessage("access.not.allowed.to.edit", new Object[]{id}));
+  }
+
+  public AccessDeniedException editingNotAllowed(Long id) {
+    return new AccessDeniedException(
+        localizationUtil.getMessage("access.editing.not.allowed", new Object[]{id}));
+  }
+
+  public AccessDeniedException notAllowedToDelete(Long id) {
+    return new AccessDeniedException(
+        localizationUtil.getMessage("access.not.allowed.to.delete", new Object[]{id}));
   }
 }

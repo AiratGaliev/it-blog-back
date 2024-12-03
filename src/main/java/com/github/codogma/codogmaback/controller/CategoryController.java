@@ -11,8 +11,8 @@ import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -43,17 +43,20 @@ public class CategoryController {
   @Operation(summary = "Get all categories")
   @Parameters({@Parameter(name = "tag", description = "Tag to filter categories"),
       @Parameter(name = "info", description = "Information to filter categories"),
+      @Parameter(name = "isFavorite", description = "Get user's favorite category"),
       @Parameter(name = "page", description = "Page number to retrieve"),
       @Parameter(name = "size", description = "Number of categories per page"),
       @Parameter(name = "sort", description = "Field to sort by"),
       @Parameter(name = "order", description = "Order direction, either 'asc' or 'desc'")})
-  public ResponseEntity<List<GetCategory>> getAllCategories(
+  public ResponseEntity<Page<GetCategory>> getAllCategories(
       @RequestParam(required = false) String tag, @RequestParam(required = false) String info,
+      @RequestParam(required = false) Boolean isFavorite,
       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "name") String sort,
-      @RequestParam(defaultValue = "asc") String order) {
-    List<GetCategory> categories = categoryService.getAllCategories(order, sort, page, size, tag,
-        info);
+      @RequestParam(defaultValue = "desc") String order,
+      @AuthenticationPrincipal UserModel userModel) {
+    Page<GetCategory> categories = categoryService.getCategories(order, sort, page, size, tag,
+        info, isFavorite, userModel);
     return ResponseEntity.ok(categories);
   }
 

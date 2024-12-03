@@ -8,8 +8,8 @@ import com.github.codogma.codogmaback.dto.GetCategory;
 import com.github.codogma.codogmaback.dto.GetTag;
 import com.github.codogma.codogmaback.dto.UpdateArticle;
 import com.github.codogma.codogmaback.dto.UpdateDraftArticle;
-import com.github.codogma.codogmaback.exception.ArticleNotFoundException;
 import com.github.codogma.codogmaback.exception.BookmarkAlreadyExistsException;
+import com.github.codogma.codogmaback.exception.ExceptionFactory;
 import com.github.codogma.codogmaback.interceptor.localization.LocalizationContext;
 import com.github.codogma.codogmaback.model.ArticleModel;
 import com.github.codogma.codogmaback.model.BookmarkModel;
@@ -43,7 +43,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ArticleService {
 
   private final EntityManager entityManager;
+  private final ExceptionFactory exceptionFactory;
   private final UserRepository userRepository;
   private final ArticleRepository articleRepository;
   private final CategoryRepository categoryRepository;
@@ -68,7 +68,7 @@ public class ArticleService {
       Long categoryId, String tag, String username, Boolean isFeed, UserModel userModel,
       String content) {
     UserModel foundUser = userModel != null ? userRepository.findById(userModel.getId())
-        .orElseThrow(() -> new UsernameNotFoundException("User not found")) : null;
+        .orElseThrow(() -> exceptionFactory.userNotFound(userModel.getUsername())) : null;
     Sort.Direction sortDirection = Sort.Direction.fromString(order);
     Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
     List<Language> supportedLanguages = localizationContext.getSupportedLanguages();
@@ -101,16 +101,16 @@ public class ArticleService {
   }
 
   @Transactional
-  public GetArticle getArticleById(Long id, UserModel userModel) {
-    ArticleModel articleModel = articleRepository.findById(id)
-        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+  public GetArticle getArticleById(Long articleId, UserModel userModel) {
+    ArticleModel articleModel = articleRepository.findById(articleId)
+        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     Status articleStatus = articleModel.getStatus();
     if (articleStatus != Status.PUBLISHED && userModel == null) {
-      throw new ArticleNotFoundException("Article not found");
+      throw exceptionFactory.articleNotFound(articleId);
     }
     if (!articleStatus.equals(Status.PUBLISHED) && !articleModel.getUser().getUsername()
         .equals(userModel.getUsername()) && !userModel.getRole().equals(Role.ROLE_ADMIN)) {
-      throw new ArticleNotFoundException("Article not found");
+      throw exceptionFactory.articleNotFound(articleId);
     }
     return convertArticleModelToDTO(articleModel);
   }
@@ -118,7 +118,7 @@ public class ArticleService {
   @Transactional
   public List<GetArticle> getRecommendationsForArticle(Long articleId) {
     ArticleModel article = articleRepository.findById(articleId)
-        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     List<Language> supportedLanguages = localizationContext.getSupportedLanguages();
     List<String> categoryNames = article.getCategories().stream()
         .flatMap(category -> category.getName().values().stream()).toList();
@@ -143,15 +143,15 @@ public class ArticleService {
   }
 
   @Transactional
-  public GetArticle getDraftedArticleById(Long id, UserModel userModel) {
-    ArticleModel articleModel = articleRepository.findById(id)
-        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+  public GetArticle getDraftedArticleById(Long articleId, UserModel userModel) {
+    ArticleModel articleModel = articleRepository.findById(articleId)
+        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     if (!userModel.getId().equals(articleModel.getUser().getId())) {
-      throw new AccessDeniedException("You are not allowed to edit this article");
+      throw exceptionFactory.notAllowedToEdit(articleId);
     }
     Status articleStatus = articleModel.getStatus();
     if (articleStatus == Status.BLOCKED) {
-      throw new AccessDeniedException("Editing not allowed for this article");
+      throw exceptionFactory.editingNotAllowed(articleId);
     }
     articleModel.setStatus(Status.DRAFT);
     ArticleModel savedArticle = articleRepository.save(articleModel);
@@ -167,15 +167,16 @@ public class ArticleService {
   }
 
   @Transactional
-  public void updateDraftArticle(Long id, UpdateDraftArticle draftArticle, UserModel userModel) {
-    ArticleModel articleModel = articleRepository.findById(id)
-        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+  public void updateDraftArticle(Long articleId, UpdateDraftArticle draftArticle,
+      UserModel userModel) {
+    ArticleModel articleModel = articleRepository.findById(articleId)
+        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     if (!userModel.getId().equals(articleModel.getUser().getId())) {
-      throw new AccessDeniedException("You are not allowed to edit this article");
+      throw exceptionFactory.notAllowedToEdit(articleId);
     }
     Status articleStatus = articleModel.getStatus();
     if (articleStatus != Status.DRAFT) {
-      throw new AccessDeniedException("Editing not allowed for this article");
+      throw exceptionFactory.editingNotAllowed(articleId);
     }
     Language language = draftArticle.getLanguage();
     if (language != null) {
@@ -184,7 +185,7 @@ public class ArticleService {
     Long originalArticleId = draftArticle.getOriginalArticleId();
     if (originalArticleId != null) {
       articleRepository.findById(originalArticleId)
-          .orElseThrow(() -> new ArticleNotFoundException("Original article not found"));
+          .orElseThrow(() -> exceptionFactory.originalArticleNotFound(originalArticleId));
       articleModel.setOriginalArticleId(originalArticleId);
     }
     if (draftArticle.getTitle() != null) {
@@ -223,15 +224,17 @@ public class ArticleService {
   }
 
   @Transactional
-  public void publishArticle(Long id, UserModel userModel) {
-    ArticleModel articleModel = articleRepository.findById(id)
-        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+  public void publishArticle(Long articleId, UserModel userModel) {
+    ArticleModel articleModel = articleRepository.findById(articleId)
+        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     Status articleStatus = articleModel.getStatus();
     if (articleStatus == Status.DRAFT || articleStatus == Status.BLOCKED) {
-      throw new AccessDeniedException("Publishing not allowed for this article");
+      throw new AccessDeniedException(
+          "Publishing not allowed for article with id " + articleId + " and status: "
+              + articleStatus);
     }
     if ((articleStatus == Status.MODERATION) && userModel.getRole() != Role.ROLE_ADMIN) {
-      throw new AccessDeniedException("Only admins can publish this article");
+      throw new AccessDeniedException("Only moderators can publish this article");
     }
     if (articleStatus == Status.HIDDEN && !userModel.getId()
         .equals(articleModel.getUser().getId())) {
@@ -242,9 +245,9 @@ public class ArticleService {
   }
 
   @Transactional
-  public void hideArticle(Long id, UserModel userModel) {
-    ArticleModel articleModel = articleRepository.findById(id)
-        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+  public void hideArticle(Long articleId, UserModel userModel) {
+    ArticleModel articleModel = articleRepository.findById(articleId)
+        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     if (!userModel.getId().equals(articleModel.getUser().getId())) {
       throw new AccessDeniedException("Only the author can hide their published article");
     }
@@ -257,9 +260,9 @@ public class ArticleService {
   }
 
   @Transactional
-  public void blockArticle(Long id) {
-    ArticleModel articleModel = articleRepository.findById(id)
-        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+  public void blockArticle(Long articleId) {
+    ArticleModel articleModel = articleRepository.findById(articleId)
+        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     Status articleStatus = articleModel.getStatus();
     if (articleStatus == Status.DRAFT) {
       throw new AccessDeniedException("Blocking not allowed for draft article");
@@ -269,9 +272,9 @@ public class ArticleService {
   }
 
   @Transactional
-  public void unblockArticle(Long id) {
-    ArticleModel articleModel = articleRepository.findById(id)
-        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+  public void unblockArticle(Long articleId) {
+    ArticleModel articleModel = articleRepository.findById(articleId)
+        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     Status articleStatus = articleModel.getStatus();
     if (articleStatus != Status.BLOCKED) {
       throw new AccessDeniedException("Unblocking not allowed for this article");
@@ -281,15 +284,15 @@ public class ArticleService {
   }
 
   @Transactional
-  public void updateArticle(Long id, UpdateArticle updateArticle, UserModel userModel) {
-    ArticleModel articleModel = articleRepository.findById(id)
-        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+  public void updateArticle(Long articleId, UpdateArticle updateArticle, UserModel userModel) {
+    ArticleModel articleModel = articleRepository.findById(articleId)
+        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     if (!userModel.getId().equals(articleModel.getUser().getId())) {
-      throw new AccessDeniedException("You are not allowed to update this article");
+      throw exceptionFactory.notAllowedToEdit(articleId);
     }
     Status articleStatus = articleModel.getStatus();
     if (articleStatus != Status.DRAFT) {
-      throw new AccessDeniedException("Editing not allowed for this article");
+      throw exceptionFactory.editingNotAllowed(articleId);
     }
     List<CategoryModel> categories = new ArrayList<>(
         categoryRepository.findAllById(updateArticle.getCategoryIds()));
@@ -312,7 +315,7 @@ public class ArticleService {
     Long originalArticleId = updateArticle.getOriginalArticleId();
     if (originalArticleId != null) {
       articleRepository.findById(originalArticleId)
-          .orElseThrow(() -> new ArticleNotFoundException("Original article not found"));
+          .orElseThrow(() -> exceptionFactory.originalArticleNotFound(originalArticleId));
       articleModel.setOriginalArticleId(originalArticleId);
     }
     articleModel.setLanguage(updateArticle.getLanguage());
@@ -327,20 +330,20 @@ public class ArticleService {
   }
 
   @Transactional
-  public void deleteArticle(Long id, UserModel userModel) {
-    ArticleModel articleModel = articleRepository.findById(id)
-        .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
+  public void deleteArticle(Long articleId, UserModel userModel) {
+    ArticleModel articleModel = articleRepository.findById(articleId)
+        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     if (Objects.equals(userModel.getId(), articleModel.getUser().getId())) {
-      articleRepository.deleteById(id);
+      articleRepository.deleteById(articleId);
     } else {
-      throw new AccessDeniedException("You are not accessible to delete this article");
+      throw exceptionFactory.notAllowedToDelete(articleId);
     }
   }
 
   @Transactional
   public void bookmark(Long articleId, UserModel userModel) {
-    ArticleModel article = articleRepository.findById(articleId).orElseThrow(
-        () -> new ArticleNotFoundException("Article with id " + articleId + " not found"));
+    ArticleModel article = articleRepository.findById(articleId)
+        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     boolean bookmarkExists = bookmarkRepository.existsByUserAndArticle(userModel, article);
     if (bookmarkExists) {
       throw new BookmarkAlreadyExistsException("Article already bookmarked");
@@ -351,15 +354,15 @@ public class ArticleService {
 
   @Transactional
   public boolean isBookmarked(Long articleId, UserModel userModel) {
-    ArticleModel article = articleRepository.findById(articleId).orElseThrow(
-        () -> new ArticleNotFoundException("Article with id " + articleId + " not found"));
+    ArticleModel article = articleRepository.findById(articleId)
+        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     return bookmarkRepository.existsByUserAndArticle(userModel, article);
   }
 
   @Transactional
   public void unbookmark(Long articleId, UserModel userModel) {
-    ArticleModel article = articleRepository.findById(articleId).orElseThrow(
-        () -> new ArticleNotFoundException("Article with id " + articleId + " not found"));
+    ArticleModel article = articleRepository.findById(articleId)
+        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     bookmarkRepository.deleteByUserAndArticle(userModel, article);
   }
 
