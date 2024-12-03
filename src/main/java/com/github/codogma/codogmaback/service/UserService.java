@@ -26,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import org.hibernate.search.mapper.orm.Search;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -54,7 +55,7 @@ public class UserService {
   private int searchResultsLimit;
 
   @Transactional
-  public List<GetUser> getAllUsers(Long categoryId, UserRole role, String tag, String info,
+  public Page<GetUser> getAllUsers(Long categoryId, UserRole role, String tag, String info,
       int page, int size, String sort, String order) {
     Sort.Direction sortDirection = Sort.Direction.fromString(order);
     Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
@@ -68,8 +69,7 @@ public class UserService {
     }
     Specification<UserModel> spec = UserSpecifications.buildSpecification(categoryId, role, tag,
         usersIds);
-    return userRepository.findAll(spec, pageable).stream().map(this::convertUserModelToDto)
-        .toList();
+    return userRepository.findAll(spec, pageable).map(this::convertUserModelToDto);
   }
 
   @Transactional

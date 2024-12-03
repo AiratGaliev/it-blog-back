@@ -12,11 +12,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -55,13 +55,13 @@ public class UserController {
       @Parameter(name = "size", description = "Number of categories per page"),
       @Parameter(name = "sort", description = "Field to sort by"),
       @Parameter(name = "order", description = "Order direction, either 'asc' or 'desc'")})
-  public ResponseEntity<List<GetUser>> getAllUsers(@RequestParam(required = false) Long categoryId,
+  public ResponseEntity<Page<GetUser>> getAllUsers(@RequestParam(required = false) Long categoryId,
       @RequestParam(required = false) UserRole role, @RequestParam(required = false) String tag,
       @RequestParam(required = false) String info, @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "username") String sort,
-      @RequestParam(defaultValue = "asc") String order) {
-    List<GetUser> users = userService.getAllUsers(categoryId, role, tag, info, page, size, sort,
+      @RequestParam(defaultValue = "desc") String order) {
+    Page<GetUser> users = userService.getAllUsers(categoryId, role, tag, info, page, size, sort,
         order);
     return ResponseEntity.ok(users);
   }
