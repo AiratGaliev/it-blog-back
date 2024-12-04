@@ -30,10 +30,9 @@ public class UserSpecifications {
   public static Specification<UserModel> hasRole(UserRole role) {
     return (root, query, builder) -> {
       if (role == null) {
-        return null;
+        return builder.notEqual(root.get("role"), Role.ROLE_ADMIN);
       }
-      return builder.and(builder.equal(root.get("role"), role),
-          builder.notEqual(root.get("role"), Role.ROLE_ADMIN));
+      return builder.equal(root.get("role"), role);
     };
   }
 
@@ -52,23 +51,37 @@ public class UserSpecifications {
     return (root, query, builder) -> usersIds != null ? root.get("id").in(usersIds) : null;
   }
 
-  public static Specification<UserModel> hasSubscribes(UserModel userModel) {
+  public static Specification<UserModel> hasSubscriptions(UserModel userModel) {
     return (root, query, builder) -> {
       if (userModel == null || userModel.getSubscriptions().isEmpty()) {
         return builder.disjunction();
       }
-      List<Long> subscribedUserIds = userModel.getSubscriptions().stream()
+      List<Long> subscriptionsIds = userModel.getSubscriptions().stream()
           .map(sub -> sub.getUser().getId()).toList();
-      return root.get("id").in(subscribedUserIds);
+      return root.get("id").in(subscriptionsIds);
+    };
+  }
+
+  public static Specification<UserModel> hasSubscribers(UserModel userModel) {
+    return (root, query, builder) -> {
+      if (userModel == null || userModel.getSubscribers().isEmpty()) {
+        return builder.disjunction();
+      }
+      List<Long> subscribersIds = userModel.getSubscribers().stream()
+          .map(sub -> sub.getSubscriber().getId()).toList();
+      return root.get("id").in(subscribersIds);
     };
   }
 
   public static Specification<UserModel> buildSpecification(Long categoryId, UserRole role,
-      String tagName, List<Long> usersIds, Boolean isSubscribed, UserModel userModel) {
+      String tagName, List<Long> usersIds, Boolean isSubscriptions, Boolean isSubscribers,
+      UserModel userModel) {
     Specification<UserModel> spec = Specification.where(hasCategoryId(categoryId))
         .and(hasRole(role)).and(hasTagName(tagName)).and(hasInfoMatch(usersIds));
-    if (Boolean.TRUE.equals(isSubscribed)) {
-      spec = spec.and(hasSubscribes(userModel));
+    if (Boolean.TRUE.equals(isSubscriptions)) {
+      spec = spec.and(hasSubscriptions(userModel));
+    } else if (Boolean.TRUE.equals(isSubscribers)) {
+      spec = spec.and(hasSubscribers(userModel));
     }
     return spec;
   }

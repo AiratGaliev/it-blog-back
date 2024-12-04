@@ -51,7 +51,8 @@ public class UserController {
       @Parameter(name = "role", description = "Role to filter users", schema = @Schema(implementation = UserRole.class)),
       @Parameter(name = "tag", description = "Tag to filter users"),
       @Parameter(name = "info", description = "Information to filter users"),
-      @Parameter(name = "isSubscribed", description = "Get user's subscribed users"),
+      @Parameter(name = "isSubscriptions", description = "Get user's subscriptions"),
+      @Parameter(name = "isSubscribers", description = "Get user's subscribers"),
       @Parameter(name = "page", description = "Page number to retrieve"),
       @Parameter(name = "size", description = "Number of categories per page"),
       @Parameter(name = "sort", description = "Field to sort by"),
@@ -59,14 +60,15 @@ public class UserController {
   public ResponseEntity<Page<GetUser>> getUsers(@RequestParam(required = false) Long categoryId,
       @RequestParam(required = false) UserRole role, @RequestParam(required = false) String tag,
       @RequestParam(required = false) String info,
-      @RequestParam(required = false) Boolean isSubscribed,
+      @RequestParam(required = false) Boolean isSubscriptions,
+      @RequestParam(required = false) Boolean isSubscribers,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "username") String sort,
       @RequestParam(defaultValue = "desc") String order,
       @AuthenticationPrincipal UserModel userModel) {
     Page<GetUser> users = userService.getUsers(categoryId, role, tag, info, page, size, sort,
-        order, isSubscribed, userModel);
+        order, isSubscriptions, isSubscribers, userModel);
     return ResponseEntity.ok(users);
   }
 

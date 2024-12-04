@@ -55,8 +55,9 @@ public class UserService {
   private int searchResultsLimit;
 
   @Transactional
-  public Page<GetUser> getUsers(Long categoryId, UserRole role, String tag, String info,
-      int page, int size, String sort, String order, Boolean isSubscribed, UserModel userModel) {
+  public Page<GetUser> getUsers(Long categoryId, UserRole role, String tag, String info, int page,
+      int size, String sort, String order, Boolean isSubscriptions, Boolean isSubscribers,
+      UserModel userModel) {
     UserModel foundUser = userModel != null ? userRepository.findById(userModel.getId())
         .orElseThrow(() -> exceptionFactory.userNotFound(userModel.getUsername())) : null;
     Sort.Direction sortDirection = Sort.Direction.fromString(order);
@@ -70,7 +71,7 @@ public class UserService {
           .toList();
     }
     Specification<UserModel> spec = UserSpecifications.buildSpecification(categoryId, role, tag,
-        usersIds, isSubscribed, foundUser);
+        usersIds, isSubscriptions, isSubscribers, foundUser);
     return userRepository.findAll(spec, pageable).map(this::convertUserModelToDto);
   }
 
