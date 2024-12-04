@@ -52,9 +52,24 @@ public class UserSpecifications {
     return (root, query, builder) -> usersIds != null ? root.get("id").in(usersIds) : null;
   }
 
+  public static Specification<UserModel> hasSubscribes(UserModel userModel) {
+    return (root, query, builder) -> {
+      if (userModel == null || userModel.getSubscriptions().isEmpty()) {
+        return builder.disjunction();
+      }
+      List<Long> subscribedUserIds = userModel.getSubscriptions().stream()
+          .map(sub -> sub.getUser().getId()).toList();
+      return root.get("id").in(subscribedUserIds);
+    };
+  }
+
   public static Specification<UserModel> buildSpecification(Long categoryId, UserRole role,
-      String tagName, List<Long> usersIds) {
-    return Specification.where(hasCategoryId(categoryId)).and(hasRole(role))
-        .and(hasTagName(tagName)).and(hasInfoMatch(usersIds));
+      String tagName, List<Long> usersIds, Boolean isSubscribed, UserModel userModel) {
+    Specification<UserModel> spec = Specification.where(hasCategoryId(categoryId))
+        .and(hasRole(role)).and(hasTagName(tagName)).and(hasInfoMatch(usersIds));
+    if (Boolean.TRUE.equals(isSubscribed)) {
+      spec = spec.and(hasSubscribes(userModel));
+    }
+    return spec;
   }
 }
