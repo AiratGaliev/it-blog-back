@@ -5,6 +5,7 @@ import com.github.codogma.codogmaback.dto.GetCategory;
 import com.github.codogma.codogmaback.dto.GetTag;
 import com.github.codogma.codogmaback.dto.UpdateCategory;
 import com.github.codogma.codogmaback.exception.CategoryNotFoundException;
+import com.github.codogma.codogmaback.exception.ExceptionFactory;
 import com.github.codogma.codogmaback.exception.FavoriteAlreadyExistsException;
 import com.github.codogma.codogmaback.interceptor.localization.LocalizationContext;
 import com.github.codogma.codogmaback.model.CategoryModel;
@@ -15,6 +16,7 @@ import com.github.codogma.codogmaback.model.UserModel;
 import com.github.codogma.codogmaback.repository.CategoryRepository;
 import com.github.codogma.codogmaback.repository.FavoriteRepository;
 import com.github.codogma.codogmaback.repository.TagRepository;
+import com.github.codogma.codogmaback.repository.UserRepository;
 import com.github.codogma.codogmaback.repository.specifications.CategorySpecifications;
 import com.github.codogma.codogmaback.util.FileUploadUtil;
 import jakarta.persistence.EntityManager;
@@ -43,6 +45,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class CategoryService {
 
   private final EntityManager entityManager;
+  private final ExceptionFactory exceptionFactory;
+  private final UserRepository userRepository;
   private final CategoryRepository categoryRepository;
   private final TagRepository tagRepository;
   private final FileUploadUtil fileUploadUtil;
@@ -55,6 +59,8 @@ public class CategoryService {
   @Transactional
   public Page<GetCategory> getCategories(String order, String sort, int page, int size, String tag,
       String info, Boolean isFavorite, UserModel userModel) {
+    UserModel foundUser = userModel != null ? userRepository.findById(userModel.getId())
+        .orElseThrow(() -> exceptionFactory.userNotFound(userModel.getUsername())) : null;
     Sort.Direction sortDirection = Sort.Direction.fromString(order);
     Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
     List<Long> categoryIds = null;
@@ -64,7 +70,8 @@ public class CategoryService {
           .where(f -> f.match().fields("name", "description").matching(info).fuzzy(1))
           .fetchHits(searchResultsLimit).stream().map(CategoryModel::getId).toList();
     }
-    Specification<CategoryModel> spec = CategorySpecifications.buildSpecification(tag, categoryIds);
+    Specification<CategoryModel> spec = CategorySpecifications.buildSpecification(tag, categoryIds,
+        isFavorite, foundUser);
     return categoryRepository.findAll(spec, pageable).map(this::convertCategoryToDTO);
   }
 

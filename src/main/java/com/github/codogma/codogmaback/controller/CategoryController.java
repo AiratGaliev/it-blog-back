@@ -43,12 +43,12 @@ public class CategoryController {
   @Operation(summary = "Get all categories")
   @Parameters({@Parameter(name = "tag", description = "Tag to filter categories"),
       @Parameter(name = "info", description = "Information to filter categories"),
-      @Parameter(name = "isFavorite", description = "Get user's favorite category"),
+      @Parameter(name = "isFavorite", description = "Get user's favorite categories"),
       @Parameter(name = "page", description = "Page number to retrieve"),
       @Parameter(name = "size", description = "Number of categories per page"),
       @Parameter(name = "sort", description = "Field to sort by"),
       @Parameter(name = "order", description = "Order direction, either 'asc' or 'desc'")})
-  public ResponseEntity<Page<GetCategory>> getAllCategories(
+  public ResponseEntity<Page<GetCategory>> getCategories(
       @RequestParam(required = false) String tag, @RequestParam(required = false) String info,
       @RequestParam(required = false) Boolean isFavorite,
       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,

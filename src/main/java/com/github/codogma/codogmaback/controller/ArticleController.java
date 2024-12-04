@@ -51,7 +51,7 @@ public class ArticleController {
       @Parameter(name = "size", description = "Number of articles per page"),
       @Parameter(name = "sort", description = "Field to sort by"),
       @Parameter(name = "order", description = "Order direction, either 'asc' or 'desc'")})
-  public ResponseEntity<Page<GetArticle>> getAllArticles(
+  public ResponseEntity<Page<GetArticle>> getArticles(
       @RequestParam(required = false) Long categoryId, @RequestParam(required = false) String tag,
       @RequestParam(required = false) String username,
       @RequestParam(required = false) Boolean isFeed,
