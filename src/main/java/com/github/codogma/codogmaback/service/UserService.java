@@ -1,20 +1,12 @@
 package com.github.codogma.codogmaback.service;
 
-import com.github.codogma.codogmaback.dto.GetCategory;
-import com.github.codogma.codogmaback.dto.GetTag;
 import com.github.codogma.codogmaback.dto.GetUser;
 import com.github.codogma.codogmaback.dto.UpdateUser;
 import com.github.codogma.codogmaback.dto.UserRole;
 import com.github.codogma.codogmaback.exception.ExceptionFactory;
-import com.github.codogma.codogmaback.interceptor.localization.LocalizationContext;
-import com.github.codogma.codogmaback.model.CategoryModel;
-import com.github.codogma.codogmaback.model.Language;
 import com.github.codogma.codogmaback.model.SubscriptionModel;
-import com.github.codogma.codogmaback.model.TagModel;
 import com.github.codogma.codogmaback.model.UserModel;
-import com.github.codogma.codogmaback.repository.CategoryRepository;
 import com.github.codogma.codogmaback.repository.SubscriptionRepository;
-import com.github.codogma.codogmaback.repository.TagRepository;
 import com.github.codogma.codogmaback.repository.UserRepository;
 import com.github.codogma.codogmaback.repository.specifications.UserSpecifications;
 import com.github.codogma.codogmaback.util.FileUploadUtil;
@@ -43,12 +35,9 @@ public class UserService {
   private final EntityManager entityManager;
   private final ExceptionFactory exceptionFactory;
   private final UserRepository userRepository;
-  private final TagRepository tagRepository;
-  private final CategoryRepository categoryRepository;
   private final SubscriptionRepository subscriptionRepository;
   private final FileUploadUtil fileUploadUtil;
   private final PasswordEncoder passwordEncoder;
-  private final LocalizationContext localizationContext;
   private final LocalizationUtil localizationUtil;
 
   @Value("${search.results.limit}")
@@ -167,38 +156,9 @@ public class UserService {
   }
 
   private GetUser convertUserModelToDto(UserModel userModel) {
-    List<CategoryModel> categories = categoryRepository.findCategoriesByUserId(userModel.getId());
-    Language interfaceLanguage = localizationContext.getLocale();
     return GetUser.builder().username(userModel.getUsername()).email(userModel.getEmail())
         .firstName(userModel.getFirstName()).lastName(userModel.getLastName())
         .shortInfo(userModel.getShortInfo()).bio(userModel.getBio())
-        .avatarUrl(userModel.getAvatarUrl()).categories(categories.stream().map(category -> {
-          String localizedCategoryName = category.getName()
-              .getOrDefault(interfaceLanguage, category.getName().get(Language.EN));
-          return GetCategory.builder().id(category.getId()).name(localizedCategoryName).build();
-        }).toList()).role(userModel.getRole()).subscriptions(userModel.getSubscriptions().stream()
-            .map(sub -> GetUser.builder().username(sub.getUser().getUsername())
-                .firstName(sub.getUser().getFirstName()).lastName(sub.getUser().getLastName())
-                .avatarUrl(sub.getUser().getAvatarUrl()).shortInfo(sub.getUser().getShortInfo())
-                .build()).toList()).subscribers(userModel.getSubscribers().stream().map(
-            sub -> GetUser.builder().username(sub.getSubscriber().getUsername())
-                .firstName(sub.getSubscriber().getFirstName())
-                .lastName(sub.getSubscriber().getLastName())
-                .avatarUrl(sub.getSubscriber().getAvatarUrl())
-                .shortInfo(sub.getSubscriber().getShortInfo()).build()).toList())
-        .favorites(userModel.getFavorites().stream().map(favorite -> {
-          List<TagModel> topTags = tagRepository.findTop10TagsByCategoryId(
-              favorite.getCategory().getId());
-          String localizedCategoryName = favorite.getCategory().getName()
-              .getOrDefault(interfaceLanguage, favorite.getCategory().getName().get(Language.EN));
-          String localizedCategoryDescription = favorite.getCategory().getDescription()
-              .getOrDefault(interfaceLanguage,
-                  favorite.getCategory().getDescription().get(Language.EN));
-          return GetCategory.builder().id(favorite.getCategory().getId())
-              .name(localizedCategoryName).imageUrl(favorite.getCategory().getImageUrl())
-              .description(localizedCategoryDescription).tags(topTags.stream().map(
-                  tagModel -> GetTag.builder().id(tagModel.getId()).name(tagModel.getName())
-                      .build()).toList()).build();
-        }).toList()).build();
+        .avatarUrl(userModel.getAvatarUrl()).role(userModel.getRole()).build();
   }
 }
