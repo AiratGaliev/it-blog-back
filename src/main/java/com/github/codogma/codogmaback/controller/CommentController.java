@@ -11,8 +11,8 @@ import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,11 +42,21 @@ public class CommentController {
   @GetMapping
   @Operation(summary = "Get all comments for an article")
   @Parameters({@Parameter(name = "articleId", description = "Article id to filter comments"),
-      @Parameter(name = "username", description = "Username to filter comments")})
-  public List<GetComment> getComments(@RequestParam(required = false) Long articleId,
+      @Parameter(name = "username", description = "Username to filter comments"),
+      @Parameter(name = "content", description = "Content to filter comments"),
+      @Parameter(name = "page", description = "Page number to retrieve"),
+      @Parameter(name = "size", description = "Number of comments per page"),
+      @Parameter(name = "sort", description = "Field to sort by"),
+      @Parameter(name = "order", description = "Order direction, either 'asc' or 'desc'")})
+  public Page<GetComment> getComments(@RequestParam(required = false) Long articleId,
       @RequestParam(required = false) String username,
+      @RequestParam(required = false) String content, @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size,
+      @RequestParam(defaultValue = "createdAt") String sort,
+      @RequestParam(defaultValue = "desc") String order,
       @AuthenticationPrincipal UserModel userModel) {
-    return commentService.getComments(articleId, username, userModel);
+    return commentService.getComments(articleId, username, content, page, size, sort, order,
+        userModel);
   }
 
   @PostMapping

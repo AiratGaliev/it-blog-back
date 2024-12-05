@@ -54,7 +54,7 @@ public class UserController {
       @Parameter(name = "isSubscriptions", description = "Get user's subscriptions"),
       @Parameter(name = "isSubscribers", description = "Get user's subscribers"),
       @Parameter(name = "page", description = "Page number to retrieve"),
-      @Parameter(name = "size", description = "Number of categories per page"),
+      @Parameter(name = "size", description = "Number of users per page"),
       @Parameter(name = "sort", description = "Field to sort by"),
       @Parameter(name = "order", description = "Order direction, either 'asc' or 'desc'")})
   public ResponseEntity<Page<GetUser>> getUsers(@RequestParam(required = false) Long categoryId,

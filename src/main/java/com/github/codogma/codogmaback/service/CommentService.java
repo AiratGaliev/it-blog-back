@@ -17,11 +17,14 @@ import com.github.codogma.codogmaback.repository.CommentRepository;
 import com.github.codogma.codogmaback.repository.UserRepository;
 import com.github.codogma.codogmaback.repository.specifications.CommentSpecifications;
 import jakarta.transaction.Transactional;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -37,9 +40,12 @@ public class CommentService {
   private final UserRepository userRepository;
 
   @Transactional
-  public List<GetComment> getComments(Long articleId, String username, UserModel userModel) {
-    List<GetComment> comments = new ArrayList<>();
+  public Page<GetComment> getComments(Long articleId, String username, String content, int page,
+      int size, String sort, String order, UserModel userModel) {
+    Page<GetComment> comments = null;
     Specification<CommentModel> spec = Specification.where(null);
+    Direction sortDirection = Direction.fromString(order);
+    Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
     if (articleId != null) {
       ArticleModel article = articleRepository.findById(articleId)
           .orElseThrow(() -> new ArticleNotFoundException("Article not found"));
@@ -49,8 +55,8 @@ public class CommentService {
       spec = Specification.where(CommentSpecifications.hasArticleId(articleId))
           .and(CommentSpecifications.isRootComment())
           .and(CommentSpecifications.hasAccess(currentUsername, isAdmin, articleAuthorUsername));
-      comments = commentRepository.findAll(spec, Sort.by("createdAt").ascending()).stream()
-          .map(this::convertCommentModelToDTO).toList();
+      comments = commentRepository.findAll(spec, pageable)
+          .map(this::convertCommentModelToDTO);
     }
     if (username != null) {
       UserModel foundUser = userRepository.findByUsername(username).orElseThrow(
@@ -60,8 +66,8 @@ public class CommentService {
               userModel.getId(), foundUser.getId()));
       spec = spec.and(CommentSpecifications.belongsToUser(foundUser.getId()))
           .and(CommentSpecifications.isAccessible(canViewAllComments));
-      comments = commentRepository.findAll(spec, Sort.by("createdAt").ascending()).stream()
-          .map(this::convertCommentModelToDTOWithArticleData).toList();
+      comments = commentRepository.findAll(spec, pageable)
+          .map(this::convertCommentModelToDTOWithArticleData);
     }
     return comments;
   }
