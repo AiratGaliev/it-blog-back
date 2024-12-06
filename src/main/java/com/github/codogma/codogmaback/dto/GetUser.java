@@ -3,6 +3,7 @@ package com.github.codogma.codogmaback.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.github.codogma.codogmaback.model.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,4 +33,6 @@ public class GetUser {
   private Role role;
   @Schema(description = "Profile avatar image")
   private String avatarUrl;
+  @Schema(description = "List of categories associated with the user")
+  private List<GetCategory> categories;
 }
