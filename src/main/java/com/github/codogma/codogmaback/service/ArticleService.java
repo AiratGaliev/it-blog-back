@@ -80,7 +80,8 @@ public class ArticleService {
     List<Long> articleIds = getArticleIds(content);
     Specification<ArticleModel> spec = ArticleSpecifications.buildSpecification(categoryId, tag,
         username, supportedLanguages, isFeed, foundUser, articleIds);
-    return articleRepository.findAll(spec, pageable).map(this::convertArticleModelToDTO)
+    return articleRepository.findAll(spec, pageable)
+        .map(articleModel -> convertArticleModelToDTO(articleModel, userModel))
         .map(this::preparePreview);
   }
 
@@ -93,7 +94,8 @@ public class ArticleService {
     Specification<ArticleView> spec = ArticleViewSpecifications.buildSpecification(tag, articleIds,
         userModel);
     Page<ArticleView> views = articleViewRepository.findAll(spec, pageable);
-    return views.map(view -> convertArticleModelToDTO(view.getArticle())).map(this::preparePreview);
+    return views.map(view -> convertArticleModelToDTO(view.getArticle(), userModel))
+        .map(this::preparePreview);
   }
 
   private List<Long> getArticleIds(String content) {
@@ -121,7 +123,7 @@ public class ArticleService {
   @Transactional
   public List<GetArticle> getDraftArticles(UserModel userModel) {
     return articleRepository.findAllByUserAndStatus(userModel, Status.DRAFT).stream()
-        .map(this::convertArticleModelToDTO).toList();
+        .map(articleModel -> convertArticleModelToDTO(articleModel, userModel)).toList();
   }
 
   @Transactional
@@ -149,11 +151,11 @@ public class ArticleService {
     if (userModel != null) {
       recordArticleView(articleId, userModel);
     }
-    return convertArticleModelToDTO(articleModel);
+    return convertArticleModelToDTO(articleModel, userModel);
   }
 
   @Transactional
-  public List<GetArticle> getRecommendationsForArticle(Long articleId) {
+  public List<GetArticle> getRecommendationsForArticle(Long articleId, UserModel userModel) {
     ArticleModel article = articleRepository.findById(articleId)
         .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     List<Language> supportedLanguages = localizationContext.getSupportedLanguages();
@@ -176,7 +178,8 @@ public class ArticleService {
 
       return boolQuery;
     }).fetchHits(5);
-    return recommendedArticles.stream().map(this::convertArticleModelToDTO).toList();
+    return recommendedArticles.stream()
+        .map(articleModel -> convertArticleModelToDTO(articleModel, userModel)).toList();
   }
 
   @Transactional
@@ -192,7 +195,7 @@ public class ArticleService {
     }
     articleModel.setStatus(Status.DRAFT);
     ArticleModel savedArticle = articleRepository.save(articleModel);
-    return convertArticleModelToDTO(savedArticle);
+    return convertArticleModelToDTO(savedArticle, userModel);
   }
 
   @Transactional
@@ -200,7 +203,7 @@ public class ArticleService {
     ArticleModel articleModel = ArticleModel.builder().user(userModel)
         .title(draftArticle.getTitle()).content(draftArticle.getContent()).build();
     ArticleModel savedArticle = articleRepository.save(articleModel);
-    return convertArticleModelToDTO(savedArticle);
+    return convertArticleModelToDTO(savedArticle, userModel);
   }
 
   @Transactional
@@ -378,7 +381,7 @@ public class ArticleService {
   }
 
   @Transactional
-  public void bookmark(Long articleId, UserModel userModel) {
+  public GetArticle bookmark(Long articleId, UserModel userModel) {
     ArticleModel article = articleRepository.findById(articleId)
         .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     boolean bookmarkExists = bookmarkRepository.existsByUserAndArticle(userModel, article);
@@ -387,33 +390,29 @@ public class ArticleService {
     }
     BookmarkModel bookmark = BookmarkModel.builder().user(userModel).article(article).build();
     bookmarkRepository.save(bookmark);
+    return convertArticleModelToDTO(article, userModel);
   }
 
   @Transactional
-  public boolean isBookmarked(Long articleId, UserModel userModel) {
-    ArticleModel article = articleRepository.findById(articleId)
-        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
-    return bookmarkRepository.existsByUserAndArticle(userModel, article);
-  }
-
-  @Transactional
-  public void unbookmark(Long articleId, UserModel userModel) {
+  public GetArticle unbookmark(Long articleId, UserModel userModel) {
     ArticleModel article = articleRepository.findById(articleId)
         .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     bookmarkRepository.deleteByUserAndArticle(userModel, article);
+    return convertArticleModelToDTO(article, userModel);
   }
 
-  private GetArticle convertArticleModelToDTO(ArticleModel articleModel) {
+  private GetArticle convertArticleModelToDTO(ArticleModel articleModel, UserModel userModel) {
     ArticleModel originalArticle =
         articleModel.getOriginalArticleId() != null ? articleRepository.findById(
             articleModel.getOriginalArticleId()).orElse(null) : null;
+    boolean bookmarkExists = bookmarkRepository.existsByUserAndArticle(userModel, articleModel);
     Language interfaceLanguage = localizationContext.getLocale();
     return GetArticle.builder().id(articleModel.getId()).status(articleModel.getStatus())
         .language(articleModel.getLanguage()).originalArticle(
             originalArticle != null ? GetArticle.builder().id(originalArticle.getId())
                 .title(originalArticle.getTitle()).build() : null).title(articleModel.getTitle())
-        .previewContent(articleModel.getPreviewContent()).content(articleModel.getContent())
-        .username(articleModel.getUser().getUsername())
+        .isBookmarked(bookmarkExists).previewContent(articleModel.getPreviewContent())
+        .content(articleModel.getContent()).username(articleModel.getUser().getUsername())
         .authorAvatarUrl(articleModel.getUser().getAvatarUrl())
         .categories(articleModel.getCategories().stream().map(category -> {
           String localizedCategoryName = category.getName()

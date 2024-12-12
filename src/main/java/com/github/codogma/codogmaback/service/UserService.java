@@ -68,12 +68,14 @@ public class UserService {
     }
     Specification<UserModel> spec = UserSpecifications.buildSpecification(categoryId, role, tag,
         usersIds, isSubscriptions, isSubscribers, foundUser);
-    return userRepository.findAll(spec, pageable).map(this::convertUserModelToDto);
+    return userRepository.findAll(spec, pageable)
+        .map(found -> convertUserModelToDto(found, userModel));
   }
 
   @Transactional
-  public Optional<GetUser> getUserByUsername(String username) {
-    return userRepository.findByUsername(username).map(this::convertUserModelToDto);
+  public Optional<GetUser> getUserByUsername(String username, UserModel userModel) {
+    return userRepository.findByUsername(username)
+        .map(foundUser -> convertUserModelToDto(foundUser, userModel));
   }
 
   @Transactional
@@ -123,7 +125,7 @@ public class UserService {
       String avatarUrl = fileUploadUtil.uploadUserAvatar(updateUser.getAvatar(), userModel.getId());
       userModel.setAvatarUrl(avatarUrl);
     }
-    return convertUserModelToDto(userRepository.save(userModel));
+    return convertUserModelToDto(userRepository.save(userModel), null);
   }
 
   @Transactional
@@ -132,7 +134,7 @@ public class UserService {
   }
 
   @Transactional
-  public void subscribe(String targetUsername, UserModel subscriber) {
+  public GetUser subscribe(String targetUsername, UserModel subscriber) {
     if (subscriber.getUsername().equals(targetUsername)) {
       throw exceptionFactory.userCannotSubscribeToThemselves();
     }
@@ -146,32 +148,29 @@ public class UserService {
     SubscriptionModel subscription = SubscriptionModel.builder().subscriber(subscriber)
         .user(targetUser).build();
     subscriptionRepository.save(subscription);
+    return convertUserModelToDto(targetUser, subscriber);
   }
 
   @Transactional
-  public boolean isSubscribed(String targetUsername, UserModel subscriber) {
-    UserModel targetUser = userRepository.findByUsername(targetUsername)
-        .orElseThrow(() -> exceptionFactory.targetUserNotFound(targetUsername));
-    return subscriptionRepository.existsBySubscriberAndUser(subscriber, targetUser);
-  }
-
-  @Transactional
-  public void unsubscribe(String targetUsername, UserModel subscriber) {
+  public GetUser unsubscribe(String targetUsername, UserModel subscriber) {
     UserModel targetUser = userRepository.findByUsername(targetUsername)
         .orElseThrow(() -> exceptionFactory.targetUserNotFound(targetUsername));
     subscriptionRepository.deleteBySubscriberAndUser(subscriber, targetUser);
+    return convertUserModelToDto(targetUser, subscriber);
   }
 
-  private GetUser convertUserModelToDto(UserModel userModel) {
-    List<CategoryModel> categories = categoryRepository.findCategoriesByUserId(userModel.getId());
+  private GetUser convertUserModelToDto(UserModel targetUser, UserModel subscriber) {
+    List<CategoryModel> categories = categoryRepository.findCategoriesByUserId(targetUser.getId());
+    boolean isSubscribed = subscriptionRepository.existsBySubscriberAndUser(subscriber, targetUser);
     Language interfaceLanguage = localizationContext.getLocale();
-    return GetUser.builder().username(userModel.getUsername()).email(userModel.getEmail())
-        .firstName(userModel.getFirstName()).lastName(userModel.getLastName())
-        .shortInfo(userModel.getShortInfo()).bio(userModel.getBio())
-        .avatarUrl(userModel.getAvatarUrl()).categories(categories.stream().map(category -> {
+    return GetUser.builder().username(targetUser.getUsername()).isSubscribed(isSubscribed)
+        .email(targetUser.getEmail()).firstName(targetUser.getFirstName())
+        .lastName(targetUser.getLastName()).shortInfo(targetUser.getShortInfo())
+        .bio(targetUser.getBio()).avatarUrl(targetUser.getAvatarUrl())
+        .categories(categories.stream().map(category -> {
           String localizedCategoryName = category.getName()
               .getOrDefault(interfaceLanguage, category.getName().get(Language.EN));
           return GetCategory.builder().id(category.getId()).name(localizedCategoryName).build();
-        }).toList()).role(userModel.getRole()).build();
+        }).toList()).role(targetUser.getRole()).build();
   }
 }

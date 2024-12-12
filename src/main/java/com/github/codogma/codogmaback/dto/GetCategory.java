@@ -18,6 +18,8 @@ public class GetCategory {
 
   @Schema(description = "ID of the category", example = "1")
   private Long id;
+  @Schema(description = "Check if the category is favorite")
+  private Boolean isFavorite;
   @Schema(description = "Name of the category", example = "Technology")
   private String name;
   @Schema(description = "Description of the category", example = "Articles about technology")

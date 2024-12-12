@@ -19,6 +19,8 @@ public class GetUser {
 
   @Schema(description = "Username of the user", example = "JohnDoe")
   private String username;
+  @Schema(description = "Check if the user is subscribed")
+  private Boolean isSubscribed;
   @Schema(description = "Email of the user", example = "test@test.com")
   private String email;
   @Schema(description = "First name of the user", example = "John")

@@ -27,6 +27,8 @@ public class GetArticle {
   private Language language;
   @Schema(description = "Original article")
   private GetArticle originalArticle;
+  @Schema(description = "Check if the article is bookmarked")
+  private Boolean isBookmarked;
   @Schema(description = "Title of the article", example = "My First Blog Article")
   private String title;
   @Schema(description = "Preview content of the article", example = "This is the preview content of the article")
