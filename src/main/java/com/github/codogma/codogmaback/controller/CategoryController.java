@@ -62,8 +62,9 @@ public class CategoryController {
 
   @GetMapping("/{id}")
   @Operation(summary = "Get article by id")
-  public ResponseEntity<GetCategory> getCategoryById(@PathVariable Long id) {
-    return categoryService.getCategoryById(id)
+  public ResponseEntity<GetCategory> getCategoryById(@PathVariable Long id,
+      @AuthenticationPrincipal UserModel userModel) {
+    return categoryService.getCategoryById(id, userModel)
         .map(article -> new ResponseEntity<>(article, HttpStatus.OK))
         .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
@@ -74,9 +75,10 @@ public class CategoryController {
   @PreAuthorize("hasAuthority('ROLE_ADMIN')")
   public ResponseEntity<GetCategory> createCategory(
       @Valid @ModelAttribute CreateCategory createCategoryDTO,
-      @RequestParam(value = "image", required = false) MultipartFile image) {
+      @RequestParam(value = "image", required = false) MultipartFile image,
+      @AuthenticationPrincipal UserModel userModel) {
     createCategoryDTO.setImage(image);
-    GetCategory createdCategory = categoryService.createCategory(createCategoryDTO);
+    GetCategory createdCategory = categoryService.createCategory(createCategoryDTO, userModel);
     return new ResponseEntity<>(createdCategory, HttpStatus.CREATED);
   }
 
@@ -105,29 +107,19 @@ public class CategoryController {
   @Operation(summary = "Add category to favorites")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
-  public ResponseEntity<Void> addToFavorites(@PathVariable Long id,
+  public ResponseEntity<GetCategory> addToFavorites(@PathVariable Long id,
       @AuthenticationPrincipal UserModel userModel) {
-    categoryService.addToFavorite(id, userModel);
-    return ResponseEntity.noContent().build();
-  }
-
-  @GetMapping("/{id}/is-favorite")
-  @Operation(summary = "Check if the user has favorite the category to bookmarks")
-  @SecurityRequirement(name = "bearerAuth")
-  @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
-  public ResponseEntity<Boolean> isFavorite(@PathVariable Long id,
-      @AuthenticationPrincipal UserModel userModel) {
-    boolean isFavorite = categoryService.isFavorite(id, userModel);
-    return ResponseEntity.ok(isFavorite);
+    GetCategory category = categoryService.addToFavorite(id, userModel);
+    return ResponseEntity.ok(category);
   }
 
   @DeleteMapping("/{id}/unfavorite")
   @Operation(summary = "Unfavorite an category")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
-  public ResponseEntity<Void> unfavorite(@PathVariable Long id,
+  public ResponseEntity<GetCategory> unfavorite(@PathVariable Long id,
       @AuthenticationPrincipal UserModel userModel) {
-    categoryService.unfavorite(id, userModel);
-    return ResponseEntity.noContent().build();
+    GetCategory category = categoryService.unfavorite(id, userModel);
+    return ResponseEntity.ok(category);
   }
 }

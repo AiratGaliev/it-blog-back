@@ -94,8 +94,9 @@ public class ArticleController {
 
   @GetMapping("/{id}/recommendations")
   @Operation(summary = "Get an article")
-  public ResponseEntity<List<GetArticle>> getRecommendationsForArticle(@PathVariable Long id) {
-    List<GetArticle> articles = articleService.getRecommendationsForArticle(id);
+  public ResponseEntity<List<GetArticle>> getRecommendationsForArticle(@PathVariable Long id,
+      @AuthenticationPrincipal UserModel userModel) {
+    List<GetArticle> articles = articleService.getRecommendationsForArticle(id, userModel);
     return ResponseEntity.ok(articles);
   }
 
@@ -203,29 +204,19 @@ public class ArticleController {
   @Operation(summary = "Add article to bookmarks")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
-  public ResponseEntity<Void> bookmark(@PathVariable Long id,
+  public ResponseEntity<GetArticle> bookmark(@PathVariable Long id,
       @AuthenticationPrincipal UserModel userModel) {
-    articleService.bookmark(id, userModel);
-    return ResponseEntity.noContent().build();
-  }
-
-  @GetMapping("/{id}/is-bookmarked")
-  @Operation(summary = "Check if the user has added the article to bookmarks")
-  @SecurityRequirement(name = "bearerAuth")
-  @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
-  public ResponseEntity<Boolean> isBookmarked(@PathVariable Long id,
-      @AuthenticationPrincipal UserModel userModel) {
-    boolean isSubscribed = articleService.isBookmarked(id, userModel);
-    return ResponseEntity.ok(isSubscribed);
+    GetArticle article = articleService.bookmark(id, userModel);
+    return ResponseEntity.ok(article);
   }
 
   @DeleteMapping("/{id}/unbookmark")
   @Operation(summary = "Unbookmark an article")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
-  public ResponseEntity<Void> unbookmark(@PathVariable Long id,
+  public ResponseEntity<GetArticle> unbookmark(@PathVariable Long id,
       @AuthenticationPrincipal UserModel userModel) {
-    articleService.unbookmark(id, userModel);
-    return ResponseEntity.noContent().build();
+    GetArticle article = articleService.unbookmark(id, userModel);
+    return ResponseEntity.ok(article);
   }
 }

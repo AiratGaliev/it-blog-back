@@ -62,20 +62,20 @@ public class UserController {
       @RequestParam(required = false) String info,
       @RequestParam(required = false) Boolean isSubscriptions,
       @RequestParam(required = false) Boolean isSubscribers,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "10") int size,
+      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "username") String sort,
       @RequestParam(defaultValue = "desc") String order,
       @AuthenticationPrincipal UserModel userModel) {
-    Page<GetUser> users = userService.getUsers(categoryId, role, tag, info, page, size, sort,
-        order, isSubscriptions, isSubscribers, userModel);
+    Page<GetUser> users = userService.getUsers(categoryId, role, tag, info, page, size, sort, order,
+        isSubscriptions, isSubscribers, userModel);
     return ResponseEntity.ok(users);
   }
 
   @GetMapping("/{username}")
   @Operation(summary = "Get an user by username")
-  public ResponseEntity<GetUser> getUserByUsername(@PathVariable String username) {
-    return userService.getUserByUsername(username)
+  public ResponseEntity<GetUser> getUserByUsername(@PathVariable String username,
+      @AuthenticationPrincipal UserModel userModel) {
+    return userService.getUserByUsername(username, userModel)
         .map(createGetUser -> new ResponseEntity<>(createGetUser, HttpStatus.OK))
         .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
@@ -111,29 +111,19 @@ public class UserController {
   @Operation(summary = "Subscribe to a user")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
-  public ResponseEntity<Void> subscribe(@PathVariable String username,
+  public ResponseEntity<GetUser> subscribe(@PathVariable String username,
       @AuthenticationPrincipal UserModel userModel) {
-    userService.subscribe(username, userModel);
-    return new ResponseEntity<>(HttpStatus.OK);
-  }
-
-  @GetMapping("/{username}/is-subscribed")
-  @Operation(summary = "Check if the user is subscribed to another user")
-  @SecurityRequirement(name = "bearerAuth")
-  @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
-  public ResponseEntity<Boolean> isSubscribed(@PathVariable String username,
-      @AuthenticationPrincipal UserModel userModel) {
-    boolean isSubscribed = userService.isSubscribed(username, userModel);
-    return ResponseEntity.ok(isSubscribed);
+    GetUser user = userService.subscribe(username, userModel);
+    return ResponseEntity.ok(user);
   }
 
   @DeleteMapping("/{username}/unsubscribe")
   @Operation(summary = "Unsubscribe from a user")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
-  public ResponseEntity<Void> unsubscribe(@PathVariable String username,
+  public ResponseEntity<GetUser> unsubscribe(@PathVariable String username,
       @AuthenticationPrincipal UserModel userModel) {
-    userService.unsubscribe(username, userModel);
-    return new ResponseEntity<>(HttpStatus.OK);
+    GetUser user = userService.unsubscribe(username, userModel);
+    return ResponseEntity.ok(user);
   }
 }

@@ -72,23 +72,25 @@ public class CategoryService {
     }
     Specification<CategoryModel> spec = CategorySpecifications.buildSpecification(tag, categoryIds,
         isFavorite, foundUser);
-    return categoryRepository.findAll(spec, pageable).map(this::convertCategoryToDTO);
+    return categoryRepository.findAll(spec, pageable)
+        .map(categoryModel -> convertCategoryToDTO(categoryModel, userModel));
   }
 
   @Transactional
-  public Optional<GetCategory> getCategoryById(Long id) {
-    return categoryRepository.findById(id).map(this::convertCategoryToDTO);
+  public Optional<GetCategory> getCategoryById(Long id, UserModel userModel) {
+    return categoryRepository.findById(id)
+        .map(categoryModel -> convertCategoryToDTO(categoryModel, userModel));
   }
 
   @Transactional
-  public GetCategory createCategory(CreateCategory createCategory) {
+  public GetCategory createCategory(CreateCategory createCategory, UserModel userModel) {
     CategoryModel category = new CategoryModel();
     setLocalizedCategoryFields(category, createCategory.getName(), createCategory.getDescription());
     category = categoryRepository.save(category);
     MultipartFile image = createCategory.getImage();
     uploadCategoryImage(image, category);
     category = categoryRepository.save(category);
-    return convertCategoryToDTO(category);
+    return convertCategoryToDTO(category, userModel);
   }
 
   @Transactional
@@ -110,7 +112,7 @@ public class CategoryService {
   }
 
   @Transactional
-  public void addToFavorite(Long id, UserModel userModel) {
+  public GetCategory addToFavorite(Long id, UserModel userModel) {
     CategoryModel category = categoryRepository.findById(id)
         .orElseThrow(() -> new CategoryNotFoundException("Category not found"));
     boolean favoriteExists = favoriteRepository.existsByUserAndCategory(userModel, category);
@@ -119,20 +121,15 @@ public class CategoryService {
     }
     FavoriteModel favorite = FavoriteModel.builder().user(userModel).category(category).build();
     favoriteRepository.save(favorite);
+    return convertCategoryToDTO(category, userModel);
   }
 
   @Transactional
-  public boolean isFavorite(Long id, UserModel userModel) {
-    CategoryModel category = categoryRepository.findById(id)
-        .orElseThrow(() -> new CategoryNotFoundException("Category not found"));
-    return favoriteRepository.existsByUserAndCategory(userModel, category);
-  }
-
-  @Transactional
-  public void unfavorite(Long id, UserModel userModel) {
+  public GetCategory unfavorite(Long id, UserModel userModel) {
     CategoryModel category = categoryRepository.findById(id)
         .orElseThrow(() -> new CategoryNotFoundException("Category not found"));
     favoriteRepository.deleteByUserAndCategory(userModel, category);
+    return convertCategoryToDTO(category, userModel);
   }
 
   private void setLocalizedCategoryFields(CategoryModel category, String name, String description) {
@@ -148,17 +145,18 @@ public class CategoryService {
     }
   }
 
-  private GetCategory convertCategoryToDTO(CategoryModel category) {
+  private GetCategory convertCategoryToDTO(CategoryModel category, UserModel userModel) {
     List<TagModel> topTags = tagRepository.findTop10TagsByCategoryId(category.getId());
+    boolean existsed = favoriteRepository.existsByUserAndCategory(userModel, category);
     Language interfaceLanguage = localizationContext.getLocale();
     String localizedCategoryName = getLocalizedValue(category.getName(), interfaceLanguage);
     String localizedCategoryDescription = getLocalizedValue(category.getDescription(),
         interfaceLanguage);
     return GetCategory.builder().id(category.getId()).name(localizedCategoryName)
-        .description(localizedCategoryDescription).imageUrl(category.getImageUrl()).tags(
-            topTags.stream().map(
-                    tagModel -> GetTag.builder().id(tagModel.getId()).name(tagModel.getName()).build())
-                .toList()).build();
+        .isFavorite(existsed).description(localizedCategoryDescription)
+        .imageUrl(category.getImageUrl()).tags(topTags.stream()
+            .map(tagModel -> GetTag.builder().id(tagModel.getId()).name(tagModel.getName()).build())
+            .toList()).build();
   }
 
   private String getLocalizedValue(Map<Language, String> values, Language preferredLanguage) {
