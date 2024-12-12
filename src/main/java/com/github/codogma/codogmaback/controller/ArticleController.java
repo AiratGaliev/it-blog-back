@@ -65,6 +65,25 @@ public class ArticleController {
     return ResponseEntity.ok(articles);
   }
 
+  @GetMapping("/viewed")
+  @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR', 'ROLE_ADMIN')")
+  @Operation(summary = "Get viewed articles", description = "Retrieve all viewed articles. Supports pagination and multiple filter combinations to narrow down search results.")
+  @Parameters({@Parameter(name = "tag", description = "Tag to filter articles"),
+      @Parameter(name = "content", description = "Content to filter articles"),
+      @Parameter(name = "page", description = "Page number to retrieve"),
+      @Parameter(name = "size", description = "Number of articles per page"),
+      @Parameter(name = "sort", description = "Field to sort by"),
+      @Parameter(name = "order", description = "Order direction, either 'asc' or 'desc'")})
+  public ResponseEntity<Page<GetArticle>> getViewedArticles(
+      @RequestParam(required = false) String tag, @RequestParam(required = false) String content,
+      @RequestParam(defaultValue = "updatedAt") String sort,
+      @RequestParam(defaultValue = "desc") String order, @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size, @AuthenticationPrincipal UserModel userModel) {
+    Page<GetArticle> articles = articleService.getViewedArticles(order, sort, page, size, tag,
+        content, userModel);
+    return ResponseEntity.ok(articles);
+  }
+
   @GetMapping("/{id}")
   @Operation(summary = "Get an article")
   public ResponseEntity<GetArticle> getArticleById(@PathVariable Long id,
