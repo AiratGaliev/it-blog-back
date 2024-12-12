@@ -12,6 +12,7 @@ import com.github.codogma.codogmaback.exception.BookmarkAlreadyExistsException;
 import com.github.codogma.codogmaback.exception.ExceptionFactory;
 import com.github.codogma.codogmaback.interceptor.localization.LocalizationContext;
 import com.github.codogma.codogmaback.model.ArticleModel;
+import com.github.codogma.codogmaback.model.ArticleView;
 import com.github.codogma.codogmaback.model.BookmarkModel;
 import com.github.codogma.codogmaback.model.CategoryModel;
 import com.github.codogma.codogmaback.model.Language;
@@ -20,13 +21,16 @@ import com.github.codogma.codogmaback.model.Status;
 import com.github.codogma.codogmaback.model.TagModel;
 import com.github.codogma.codogmaback.model.UserModel;
 import com.github.codogma.codogmaback.repository.ArticleRepository;
+import com.github.codogma.codogmaback.repository.ArticleViewRepository;
 import com.github.codogma.codogmaback.repository.BookmarkRepository;
 import com.github.codogma.codogmaback.repository.CategoryRepository;
 import com.github.codogma.codogmaback.repository.TagRepository;
 import com.github.codogma.codogmaback.repository.UserRepository;
 import com.github.codogma.codogmaback.repository.specifications.ArticleSpecifications;
+import com.github.codogma.codogmaback.repository.specifications.ArticleViewSpecifications;
 import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -55,6 +59,7 @@ public class ArticleService {
   private final ExceptionFactory exceptionFactory;
   private final UserRepository userRepository;
   private final ArticleRepository articleRepository;
+  private final ArticleViewRepository articleViewRepository;
   private final CategoryRepository categoryRepository;
   private final TagRepository tagRepository;
   private final BookmarkRepository bookmarkRepository;
@@ -69,9 +74,29 @@ public class ArticleService {
       String content) {
     UserModel foundUser = userModel != null ? userRepository.findById(userModel.getId())
         .orElseThrow(() -> exceptionFactory.userNotFound(userModel.getUsername())) : null;
+    List<Language> supportedLanguages = localizationContext.getSupportedLanguages();
     Sort.Direction sortDirection = Sort.Direction.fromString(order);
     Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
-    List<Language> supportedLanguages = localizationContext.getSupportedLanguages();
+    List<Long> articleIds = getArticleIds(content);
+    Specification<ArticleModel> spec = ArticleSpecifications.buildSpecification(categoryId, tag,
+        username, supportedLanguages, isFeed, foundUser, articleIds);
+    return articleRepository.findAll(spec, pageable).map(this::convertArticleModelToDTO)
+        .map(this::preparePreview);
+  }
+
+  @Transactional(readOnly = true)
+  public Page<GetArticle> getViewedArticles(String order, String sort, int page, int size,
+      String tag, String content, UserModel userModel) {
+    Sort.Direction sortDirection = Sort.Direction.fromString(order);
+    Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
+    List<Long> articleIds = getArticleIds(content);
+    Specification<ArticleView> spec = ArticleViewSpecifications.buildSpecification(tag, articleIds,
+        userModel);
+    Page<ArticleView> views = articleViewRepository.findAll(spec, pageable);
+    return views.map(view -> convertArticleModelToDTO(view.getArticle())).map(this::preparePreview);
+  }
+
+  private List<Long> getArticleIds(String content) {
     List<Long> articleIds = null;
     if (content != null && !content.isEmpty()) {
       SearchSession searchSession = Search.session(entityManager);
@@ -79,25 +104,34 @@ public class ArticleService {
           .where(f -> f.match().fields("content", "title").matching(content).fuzzy(1))
           .fetchHits(searchResultsLimit).stream().map(ArticleModel::getId).toList();
     }
-    Specification<ArticleModel> spec = ArticleSpecifications.buildSpecification(categoryId, tag,
-        username, supportedLanguages, isFeed, foundUser, articleIds);
-    return articleRepository.findAll(spec, pageable).map(this::convertArticleModelToDTO)
-        .map(article -> {
-          if (article.getPreviewContent().isEmpty()) {
-            String previewContent = createHtmlPreview(article.getContent(), 1100);
-            article.setPreviewContent(previewContent);
-          } else {
-            article.setPreviewContent(article.getPreviewContent());
-          }
-          article.setContent(null);
-          return article;
-        });
+    return articleIds;
+  }
+
+  private GetArticle preparePreview(GetArticle article) {
+    if (article.getPreviewContent().isEmpty()) {
+      String previewContent = createHtmlPreview(article.getContent(), 1100);
+      article.setPreviewContent(previewContent);
+    } else {
+      article.setPreviewContent(article.getPreviewContent());
+    }
+    article.setContent(null);
+    return article;
   }
 
   @Transactional
   public List<GetArticle> getDraftArticles(UserModel userModel) {
     return articleRepository.findAllByUserAndStatus(userModel, Status.DRAFT).stream()
         .map(this::convertArticleModelToDTO).toList();
+  }
+
+  @Transactional
+  public void recordArticleView(Long articleId, UserModel userModel) {
+    ArticleModel article = articleRepository.findById(articleId)
+        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
+    ArticleView existingView = articleViewRepository.findByUserAndArticle(userModel, article)
+        .orElse(ArticleView.builder().user(userModel).article(article).build());
+    existingView.setUpdatedAt(new Date());
+    articleViewRepository.save(existingView);
   }
 
   @Transactional
@@ -111,6 +145,9 @@ public class ArticleService {
     if (!articleStatus.equals(Status.PUBLISHED) && !articleModel.getUser().getUsername()
         .equals(userModel.getUsername()) && !userModel.getRole().equals(Role.ROLE_ADMIN)) {
       throw exceptionFactory.articleNotFound(articleId);
+    }
+    if (userModel != null) {
+      recordArticleView(articleId, userModel);
     }
     return convertArticleModelToDTO(articleModel);
   }
@@ -208,7 +245,7 @@ public class ArticleService {
       List<TagModel> tagModels = new ArrayList<>();
       List<TagModel> existingTags = tagRepository.findAllByNameIgnoreCaseIn(tags);
       Map<String, TagModel> existingTagMap = existingTags.stream()
-          .collect(Collectors.toMap(tag -> tag.getName().toLowerCase(), tag -> tag));
+          .collect(Collectors.toMap(tag -> tag.getName().toLowerCase().trim(), tag -> tag));
       tags.forEach(tag -> {
         TagModel tagModel = existingTagMap.get(tag.toLowerCase());
         if (tagModel == null) {
@@ -301,7 +338,7 @@ public class ArticleService {
     if (tags != null && !tags.isEmpty()) {
       List<TagModel> existingTags = tagRepository.findAllByNameIgnoreCaseIn(tags);
       Map<String, TagModel> existingTagMap = existingTags.stream()
-          .collect(Collectors.toMap(tag -> tag.getName().toLowerCase(), tag -> tag));
+          .collect(Collectors.toMap(tag -> tag.getName().toLowerCase().trim(), tag -> tag));
       tags.forEach(tag -> {
         TagModel tagModel = existingTagMap.get(tag.toLowerCase());
         if (tagModel == null) {
