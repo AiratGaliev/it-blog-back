@@ -17,4 +17,14 @@ public interface CategoryRepository extends JpaRepository<CategoryModel, Long>,
       + "JOIN articles a ON ac.article_id = a.id " + "WHERE a.user_id = :userId "
       + "GROUP BY c.id", nativeQuery = true)
   List<CategoryModel> findCategoriesByUserId(@Param("userId") Long userId);
+
+  @Query(value = """
+      SELECT c.* FROM categories c
+      JOIN category_localized_names cln ON c.id = cln.category_id
+      WHERE cln.language = :language
+        AND LOWER(cln.name) LIKE LOWER(CONCAT(:name, '%'))
+      LIMIT 10
+      """, nativeQuery = true)
+  List<CategoryModel> findTop10ByNameStartingWithIgnoreCase(@Param("language") String language,
+      @Param("name") String name);
 }

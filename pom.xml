@@ -11,11 +11,11 @@
   </parent>
   <groupId>com.github.codogma</groupId>
   <artifactId>codogma-back</artifactId>
-  <version>0.9.19</version>
+  <version>0.9.20</version>
   <name>codogma-back</name>
   <description>codogma-back</description>
   <properties>
-    <java.version>23</java.version>
+    <java.version>21</java.version>
   </properties>
   <dependencyManagement>
     <dependencies>

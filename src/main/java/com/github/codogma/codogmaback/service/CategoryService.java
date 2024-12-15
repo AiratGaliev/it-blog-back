@@ -77,6 +77,14 @@ public class CategoryService {
   }
 
   @Transactional
+  public List<GetCategory> getCategoriesByNameContaining(String name) {
+    Language interfaceLanguage = localizationContext.getLocale();
+    return categoryRepository.findTop10ByNameStartingWithIgnoreCase(interfaceLanguage.name(), name)
+        .stream()
+        .map(this::convertCategoryToDTO).toList();
+  }
+
+  @Transactional
   public Optional<GetCategory> getCategoryById(Long id, UserModel userModel) {
     return categoryRepository.findById(id)
         .map(categoryModel -> convertCategoryToDTO(categoryModel, userModel));
@@ -157,6 +165,12 @@ public class CategoryService {
         .imageUrl(category.getImageUrl()).tags(topTags.stream()
             .map(tagModel -> GetTag.builder().id(tagModel.getId()).name(tagModel.getName()).build())
             .toList()).build();
+  }
+
+  private GetCategory convertCategoryToDTO(CategoryModel category) {
+    Language interfaceLanguage = localizationContext.getLocale();
+    String localizedCategoryName = getLocalizedValue(category.getName(), interfaceLanguage);
+    return GetCategory.builder().id(category.getId()).name(localizedCategoryName).build();
   }
 
   private String getLocalizedValue(Map<Language, String> values, Language preferredLanguage) {
