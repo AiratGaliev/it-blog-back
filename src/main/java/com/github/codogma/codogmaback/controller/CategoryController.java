@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -57,6 +58,13 @@ public class CategoryController {
       @AuthenticationPrincipal UserModel userModel) {
     Page<GetCategory> categories = categoryService.getCategories(order, sort, page, size, tag,
         info, isFavorite, userModel);
+    return ResponseEntity.ok(categories);
+  }
+
+  @GetMapping("/list-by-name")
+  @Operation(summary = "Get categories by name")
+  public ResponseEntity<List<GetCategory>> getCategoriesByName(@RequestParam String name) {
+    List<GetCategory> categories = categoryService.getCategoriesByNameContaining(name);
     return ResponseEntity.ok(categories);
   }
 
