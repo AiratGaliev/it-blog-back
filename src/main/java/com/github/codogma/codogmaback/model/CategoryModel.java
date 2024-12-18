@@ -16,6 +16,7 @@ import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.MapKeyEnumerated;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -47,8 +48,9 @@ public class CategoryModel {
   @ElementCollection
   @MapKeyColumn(name = "language")
   @MapKeyEnumerated(EnumType.STRING)
-  @CollectionTable(name = "category_localized_names", joinColumns = @JoinColumn(name = "category_id"))
-  @Column(unique = true, nullable = false)
+  @CollectionTable(name = "category_localized_names", joinColumns = @JoinColumn(name = "category_id"), uniqueConstraints = {
+      @UniqueConstraint(columnNames = {"name", "language"})})
+  @Column(nullable = false)
   private Map<Language, String> name = new HashMap<>();
   @FullTextField
   @ElementCollection

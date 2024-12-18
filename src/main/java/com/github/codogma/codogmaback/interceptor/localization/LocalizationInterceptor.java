@@ -8,6 +8,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,11 +25,12 @@ public class LocalizationInterceptor implements HandlerInterceptor {
       Object handler) {
     Language intl = Arrays.stream(Optional.ofNullable(request.getCookies()).orElse(new Cookie[0]))
         .filter(cookie -> "intl".equals(cookie.getName())).map(Cookie::getValue)
-        .map(Language::fromCode).findFirst().orElseGet(() -> {
+        .map(Language::fromCode).filter(Objects::nonNull).findFirst().orElseGet(() -> {
           String acceptLanguage = request.getHeader("Accept-Language");
           if (acceptLanguage != null) {
             return Arrays.stream(acceptLanguage.split(",")).map(lang -> lang.split(";")[0])
-                .map(String::trim).map(Language::fromCode).findFirst().orElse(Language.EN);
+                .map(String::trim).map(Language::fromCode).filter(Objects::nonNull).findFirst()
+                .orElse(Language.EN);
           }
           return Language.EN;
         });
