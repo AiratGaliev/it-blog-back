@@ -15,8 +15,8 @@ public enum Language {
 
   @JsonCreator
   public static Language fromCode(String code) {
-    return Stream.of(values()).filter(lang -> lang.getCode().equalsIgnoreCase(code)).findFirst()
-        .orElseThrow(() -> new IllegalArgumentException("Unsupported language code: " + code));
+    return Stream.of(values()).filter(lang -> lang != null && lang.getCode().equalsIgnoreCase(code))
+        .findFirst().orElse(null);
   }
 
   @JsonValue
