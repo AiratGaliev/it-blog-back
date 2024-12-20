@@ -27,8 +27,10 @@ public class GetArticle {
   private Language language;
   @Schema(description = "Original article")
   private GetArticle originalArticle;
-  @Schema(description = "Check if the article is bookmarked")
-  private Boolean isBookmarked;
+  @Schema(description = "Check to see if the article is in the compilation")
+  private Boolean isCompilated;
+  @Schema(description = "Count of compilations of the article", example = "10")
+  private Integer compilationsCount;
   @Schema(description = "Title of the article", example = "My First Blog Article")
   private String title;
   @Schema(description = "Preview content of the article", example = "This is the preview content of the article")
@@ -43,8 +45,6 @@ public class GetArticle {
   private List<GetTag> tags;
   @Schema(description = "Categories associated with the article")
   private List<GetCategory> categories;
-  @Schema(description = "Count of bookmarks of the article", example = "10")
-  private Integer bookmarksCount;
   @Schema(description = "Date and time of the article creation", example = "2022-01-01T00:00:00.000Z")
   private Date createdAt;
   @Schema(description = "Date and time of the article update", example = "2022-01-01T01:00:00.000Z")

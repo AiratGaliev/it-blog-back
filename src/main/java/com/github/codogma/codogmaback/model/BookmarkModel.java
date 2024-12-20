@@ -32,8 +32,8 @@ public class BookmarkModel {
   @JoinColumn(name = "user_id", nullable = false)
   private UserModel user;
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "article_id", nullable = false)
-  private ArticleModel article;
+  @JoinColumn(name = "compilation_id", nullable = false)
+  private CompilationModel compilation;
   @CreationTimestamp
   @Column(nullable = false, updatable = false, name = "created_at")
   private Date createdAt;

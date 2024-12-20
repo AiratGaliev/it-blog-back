@@ -22,7 +22,7 @@ public class GetCategory {
   private Boolean isFavorite;
   @Schema(description = "Name of the category", example = "Technology")
   private String name;
-  @Schema(description = "Description of the category", example = "Articles about technology")
+  @Schema(description = "Description of the category", example = "Category about technology")
   private String description;
   @Schema(description = "Image of the category")
   private String imageUrl;

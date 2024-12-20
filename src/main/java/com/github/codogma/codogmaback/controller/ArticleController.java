@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/articles")
-@Tag(name = "Articles", description = "API for blog articles")
+@Tag(name = "Articles", description = "API for articles")
 public class ArticleController {
 
   private final ArticleService articleService;
@@ -94,9 +94,8 @@ public class ArticleController {
 
   @GetMapping("/{id}/recommendations")
   @Operation(summary = "Get an article")
-  public ResponseEntity<List<GetArticle>> getRecommendationsForArticle(@PathVariable Long id,
-      @AuthenticationPrincipal UserModel userModel) {
-    List<GetArticle> articles = articleService.getRecommendationsForArticle(id, userModel);
+  public ResponseEntity<List<GetArticle>> getRecommendationsForArticle(@PathVariable Long id) {
+    List<GetArticle> articles = articleService.getRecommendationsForArticle(id);
     return ResponseEntity.ok(articles);
   }
 
@@ -200,23 +199,25 @@ public class ArticleController {
     return ResponseEntity.noContent().build();
   }
 
-  @PostMapping("/{id}/bookmark")
-  @Operation(summary = "Add article to bookmarks")
+  @PostMapping("/{id}/compilate")
+  @Operation(summary = "Add an article to the compilation")
   @SecurityRequirement(name = "bearerAuth")
+  @Parameters({@Parameter(name = "compilationId", description = "Compilation id to add articles")})
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
-  public ResponseEntity<GetArticle> bookmark(@PathVariable Long id,
-      @AuthenticationPrincipal UserModel userModel) {
-    GetArticle article = articleService.bookmark(id, userModel);
+  public ResponseEntity<GetArticle> compilate(@PathVariable Long id,
+      @RequestParam Long compilationId) {
+    GetArticle article = articleService.compilate(id, compilationId);
     return ResponseEntity.ok(article);
   }
 
-  @DeleteMapping("/{id}/unbookmark")
-  @Operation(summary = "Unbookmark an article")
+  @DeleteMapping("/{id}/uncompilate")
+  @Operation(summary = "Delete an article from the compilation")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
-  public ResponseEntity<GetArticle> unbookmark(@PathVariable Long id,
-      @AuthenticationPrincipal UserModel userModel) {
-    GetArticle article = articleService.unbookmark(id, userModel);
+  @Parameters({@Parameter(name = "compilationId", description = "Compilation id to add articles")})
+  public ResponseEntity<GetArticle> uncompilate(@PathVariable Long id,
+      @RequestParam Long compilationId) {
+    GetArticle article = articleService.uncompilate(id, compilationId);
     return ResponseEntity.ok(article);
   }
 }

@@ -8,13 +8,14 @@ import com.github.codogma.codogmaback.dto.GetCategory;
 import com.github.codogma.codogmaback.dto.GetTag;
 import com.github.codogma.codogmaback.dto.UpdateArticle;
 import com.github.codogma.codogmaback.dto.UpdateDraftArticle;
-import com.github.codogma.codogmaback.exception.BookmarkAlreadyExistsException;
+import com.github.codogma.codogmaback.exception.CompilationAlreadyExistsException;
+import com.github.codogma.codogmaback.exception.CompilationNotExistsException;
 import com.github.codogma.codogmaback.exception.ExceptionFactory;
 import com.github.codogma.codogmaback.interceptor.localization.LocalizationContext;
 import com.github.codogma.codogmaback.model.ArticleModel;
 import com.github.codogma.codogmaback.model.ArticleView;
-import com.github.codogma.codogmaback.model.BookmarkModel;
 import com.github.codogma.codogmaback.model.CategoryModel;
+import com.github.codogma.codogmaback.model.CompilationModel;
 import com.github.codogma.codogmaback.model.Language;
 import com.github.codogma.codogmaback.model.Role;
 import com.github.codogma.codogmaback.model.Status;
@@ -22,8 +23,8 @@ import com.github.codogma.codogmaback.model.TagModel;
 import com.github.codogma.codogmaback.model.UserModel;
 import com.github.codogma.codogmaback.repository.ArticleRepository;
 import com.github.codogma.codogmaback.repository.ArticleViewRepository;
-import com.github.codogma.codogmaback.repository.BookmarkRepository;
 import com.github.codogma.codogmaback.repository.CategoryRepository;
+import com.github.codogma.codogmaback.repository.CompilationRepository;
 import com.github.codogma.codogmaback.repository.TagRepository;
 import com.github.codogma.codogmaback.repository.UserRepository;
 import com.github.codogma.codogmaback.repository.specifications.ArticleSpecifications;
@@ -62,7 +63,7 @@ public class ArticleService {
   private final ArticleViewRepository articleViewRepository;
   private final CategoryRepository categoryRepository;
   private final TagRepository tagRepository;
-  private final BookmarkRepository bookmarkRepository;
+  private final CompilationRepository compilationRepository;
   private final LocalizationContext localizationContext;
 
   @Value("${search.results.limit}")
@@ -80,8 +81,7 @@ public class ArticleService {
     List<Long> articleIds = getArticleIds(content);
     Specification<ArticleModel> spec = ArticleSpecifications.buildSpecification(categoryId, tag,
         username, supportedLanguages, isFeed, foundUser, articleIds);
-    return articleRepository.findAll(spec, pageable)
-        .map(articleModel -> convertArticleModelToDTO(articleModel, userModel))
+    return articleRepository.findAll(spec, pageable).map(this::convertArticleModelToDTO)
         .map(this::preparePreview);
   }
 
@@ -94,8 +94,7 @@ public class ArticleService {
     Specification<ArticleView> spec = ArticleViewSpecifications.buildSpecification(tag, articleIds,
         userModel);
     Page<ArticleView> views = articleViewRepository.findAll(spec, pageable);
-    return views.map(view -> convertArticleModelToDTO(view.getArticle(), userModel))
-        .map(this::preparePreview);
+    return views.map(view -> convertArticleModelToDTO(view.getArticle())).map(this::preparePreview);
   }
 
   private List<Long> getArticleIds(String content) {
@@ -123,7 +122,7 @@ public class ArticleService {
   @Transactional
   public List<GetArticle> getDraftArticles(UserModel userModel) {
     return articleRepository.findAllByUserAndStatus(userModel, Status.DRAFT).stream()
-        .map(articleModel -> convertArticleModelToDTO(articleModel, userModel)).toList();
+        .map(this::convertArticleModelToDTO).toList();
   }
 
   @Transactional
@@ -151,11 +150,11 @@ public class ArticleService {
     if (userModel != null) {
       recordArticleView(articleId, userModel);
     }
-    return convertArticleModelToDTO(articleModel, userModel);
+    return convertArticleModelToDTO(articleModel);
   }
 
   @Transactional
-  public List<GetArticle> getRecommendationsForArticle(Long articleId, UserModel userModel) {
+  public List<GetArticle> getRecommendationsForArticle(Long articleId) {
     ArticleModel article = articleRepository.findById(articleId)
         .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
     List<Language> supportedLanguages = localizationContext.getSupportedLanguages();
@@ -178,8 +177,7 @@ public class ArticleService {
 
       return boolQuery;
     }).fetchHits(5);
-    return recommendedArticles.stream()
-        .map(articleModel -> convertArticleModelToDTO(articleModel, userModel)).toList();
+    return recommendedArticles.stream().map(this::convertArticleModelToDTO).toList();
   }
 
   @Transactional
@@ -195,7 +193,7 @@ public class ArticleService {
     }
     articleModel.setStatus(Status.DRAFT);
     ArticleModel savedArticle = articleRepository.save(articleModel);
-    return convertArticleModelToDTO(savedArticle, userModel);
+    return convertArticleModelToDTO(savedArticle);
   }
 
   @Transactional
@@ -203,7 +201,7 @@ public class ArticleService {
     ArticleModel articleModel = ArticleModel.builder().user(userModel)
         .title(draftArticle.getTitle()).content(draftArticle.getContent()).build();
     ArticleModel savedArticle = articleRepository.save(articleModel);
-    return convertArticleModelToDTO(savedArticle, userModel);
+    return convertArticleModelToDTO(savedArticle);
   }
 
   @Transactional
@@ -239,9 +237,14 @@ public class ArticleService {
     }
     List<Long> categoryIds = draftArticle.getCategoryIds();
     if (categoryIds != null && !categoryIds.isEmpty()) {
-      List<CategoryModel> categories = new ArrayList<>(
-          categoryRepository.findAllById(draftArticle.getCategoryIds()));
+      List<CategoryModel> categories = new ArrayList<>(categoryRepository.findAllById(categoryIds));
       articleModel.setCategories(categories);
+    }
+    List<Long> compilationIds = draftArticle.getCompilationIds();
+    if (compilationIds != null && !compilationIds.isEmpty()) {
+      List<CompilationModel> compilations = new ArrayList<>(
+          compilationRepository.findAllById(compilationIds));
+      articleModel.setCompilations(compilations);
     }
     List<String> tags = draftArticle.getTags();
     if (tags != null && !tags.isEmpty()) {
@@ -336,6 +339,8 @@ public class ArticleService {
     }
     List<CategoryModel> categories = new ArrayList<>(
         categoryRepository.findAllById(updateArticle.getCategoryIds()));
+    List<CompilationModel> compilations = new ArrayList<>(
+        compilationRepository.findAllById(updateArticle.getCompilationIds()));
     List<String> tags = updateArticle.getTags();
     List<TagModel> tagModels = new ArrayList<>();
     if (tags != null && !tags.isEmpty()) {
@@ -364,6 +369,7 @@ public class ArticleService {
     articleModel.setPreviewContent(updateArticle.getPreviewContent());
     articleModel.setContent(updateArticle.getContent());
     articleModel.setCategories(categories);
+    articleModel.setCompilations(compilations);
     articleModel.setTags(tagModels);
     articleModel.setUser(userModel);
     articleRepository.save(articleModel);
@@ -381,37 +387,55 @@ public class ArticleService {
   }
 
   @Transactional
-  public GetArticle bookmark(Long articleId, UserModel userModel) {
+  public GetArticle compilate(Long articleId, Long compilationId) {
+    CompilationModel compilation = compilationRepository.findById(compilationId).orElseThrow();
     ArticleModel article = articleRepository.findById(articleId)
         .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
-    boolean bookmarkExists = bookmarkRepository.existsByUserAndArticle(userModel, article);
-    if (bookmarkExists) {
-      throw new BookmarkAlreadyExistsException("Article already bookmarked");
+//    if (compilation.getArticles().contains(article)) {
+//      throw exceptionFactory.articleAlreadyInCompilation(articleId, compilationId);
+//    }
+    boolean compilationExists = compilationRepository.existsByArticles_Id(articleId);
+    if (compilationExists) {
+      throw new CompilationAlreadyExistsException("Article already exists in compilation");
     }
-    BookmarkModel bookmark = BookmarkModel.builder().user(userModel).article(article).build();
-    bookmarkRepository.save(bookmark);
-    return convertArticleModelToDTO(article, userModel);
+    compilation.getArticles().add(article);
+    article.getCompilations().add(compilation);
+    compilationRepository.save(compilation);
+    ArticleModel savedArticle = articleRepository.save(article);
+    return convertArticleModelToDTO(savedArticle);
   }
 
   @Transactional
-  public GetArticle unbookmark(Long articleId, UserModel userModel) {
+  public GetArticle uncompilate(Long articleId, Long compilationId) {
+    CompilationModel compilation = compilationRepository.findById(compilationId).orElseThrow();
     ArticleModel article = articleRepository.findById(articleId)
         .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
-    bookmarkRepository.deleteByUserAndArticle(userModel, article);
-    return convertArticleModelToDTO(article, userModel);
+//    if (!compilation.getArticles().contains(article)) {
+//      throw exceptionFactory.articleNotInCompilation(articleId, compilationId);
+//    }
+    boolean compilationExists = compilationRepository.existsByArticles_Id(articleId);
+    if (!compilationExists) {
+      throw new CompilationNotExistsException("Article not exists in compilation");
+    }
+    compilation.getArticles().remove(article);
+    article.getCompilations().remove(compilation);
+    compilationRepository.save(compilation);
+    articleRepository.save(article);
+    ArticleModel savedArticle = articleRepository.save(article);
+    return convertArticleModelToDTO(savedArticle);
   }
 
-  private GetArticle convertArticleModelToDTO(ArticleModel articleModel, UserModel userModel) {
+  private GetArticle convertArticleModelToDTO(ArticleModel articleModel) {
     ArticleModel originalArticle =
         articleModel.getOriginalArticleId() != null ? articleRepository.findById(
             articleModel.getOriginalArticleId()).orElse(null) : null;
-    boolean bookmarkExists = bookmarkRepository.existsByUserAndArticle(userModel, articleModel);
+    boolean compilationExists = compilationRepository.existsByArticles_Id(articleModel.getId());
     Language interfaceLanguage = localizationContext.getLocale();
     return GetArticle.builder().id(articleModel.getId()).status(articleModel.getStatus())
         .language(articleModel.getLanguage()).originalArticle(
             originalArticle != null ? GetArticle.builder().id(originalArticle.getId())
                 .title(originalArticle.getTitle()).build() : null).title(articleModel.getTitle())
-        .isBookmarked(bookmarkExists).previewContent(articleModel.getPreviewContent())
+        .isCompilated(compilationExists).previewContent(articleModel.getPreviewContent())
         .content(articleModel.getContent()).username(articleModel.getUser().getUsername())
         .authorAvatarUrl(articleModel.getUser().getAvatarUrl())
         .categories(articleModel.getCategories().stream().map(category -> {
@@ -420,7 +444,7 @@ public class ArticleService {
           return GetCategory.builder().id(category.getId()).name(localizedCategoryName).build();
         }).toList()).tags(articleModel.getTags().stream()
             .map(tagModel -> GetTag.builder().id(tagModel.getId()).name(tagModel.getName()).build())
-            .toList()).bookmarksCount(articleModel.getBookmarks().size())
+            .toList()).compilationsCount(articleModel.getCompilations().size())
         .createdAt(articleModel.getCreatedAt()).updatedAt(articleModel.getUpdatedAt()).build();
   }
 }

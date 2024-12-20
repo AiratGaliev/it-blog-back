@@ -16,13 +16,12 @@ public class FileUploadUtil {
 
   @Value("${user.avatar.upload-dir}")
   private String avatarUploadDir;
-
   @Value("${article.image.upload-dir}")
   private String articleImageUploadDir;
-
   @Value("${category.image.upload-dir}")
   private String categoryImageUploadDir;
-
+  @Value("${compilation.image.upload-dir}")
+  private String compilationImageUploadDir;
   @Value("${server.servlet.context-path}")
   private String contextPath;
 
@@ -55,6 +54,17 @@ public class FileUploadUtil {
         "category-" + categoryId + "-image-" + UUID.randomUUID() + getFileExtension(file);
     saveFile(file, categoryImageUploadDir, filename);
     return String.format("%s/categories/images/%s", contextPath, filename);
+  }
+
+  public String uploadCompilationAvatar(MultipartFile file, Long compilationId) {
+    if (file == null || file.isEmpty()) {
+      throw new IllegalArgumentException("File is empty or null");
+    }
+
+    String filename =
+        "compilation-" + compilationId + "-image-" + UUID.randomUUID() + getFileExtension(file);
+    saveFile(file, compilationImageUploadDir, filename);
+    return String.format("%s/compilations/images/%s", contextPath, filename);
   }
 
   private void saveFile(MultipartFile file, String dir, String filename) {

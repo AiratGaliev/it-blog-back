@@ -16,6 +16,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -70,8 +71,11 @@ public class ArticleModel {
   @JoinTable(name = "article_categories", joinColumns = @JoinColumn(name = "article_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
   private List<CategoryModel> categories = new ArrayList<>();
   @Builder.Default
-  @OneToMany(mappedBy = "article", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<BookmarkModel> bookmarks = new ArrayList<>();
+  @IndexedEmbedded
+  @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+  @JoinTable(name = "article_compilations", joinColumns = @JoinColumn(name = "article_id"), inverseJoinColumns = @JoinColumn(name = "compilation_id"), uniqueConstraints = {
+      @UniqueConstraint(columnNames = {"article_id", "compilation_id"})})
+  private List<CompilationModel> compilations = new ArrayList<>();
   @Builder.Default
   @IndexedEmbedded
   @ManyToMany(fetch = FetchType.LAZY)

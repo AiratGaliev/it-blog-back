@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/tags")
-@Tag(name = "Tags", description = "API for blog tags")
+@Tag(name = "Tags", description = "API for tags")
 public class TagController {
 
   private final TagService tagService;

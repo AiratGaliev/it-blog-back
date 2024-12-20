@@ -27,6 +27,8 @@ public class UpdateDraftArticle {
   private String content;
   @Schema(description = "Categories associated with the article")
   private List<Long> categoryIds;
+  @Schema(description = "Compilations associated with the article")
+  private List<Long> compilationIds;
   @Schema(description = "Tags associated with the article")
   private List<String> tags;
 }

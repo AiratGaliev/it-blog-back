@@ -2,6 +2,7 @@ package com.github.codogma.codogmaback.config;
 
 import com.github.codogma.codogmaback.model.ArticleModel;
 import com.github.codogma.codogmaback.model.CategoryModel;
+import com.github.codogma.codogmaback.model.CompilationModel;
 import com.github.codogma.codogmaback.model.TagModel;
 import com.github.codogma.codogmaback.model.UserModel;
 import jakarta.annotation.PostConstruct;
@@ -40,8 +41,8 @@ public class SearchIndexConfig implements ApplicationListener<ContextRefreshedEv
   public void initializeSearchIndexing() {
     SearchSession searchSession = Search.session(entityManager);
     searchSession.massIndexer(ArticleModel.class, CategoryModel.class, UserModel.class,
-            TagModel.class).threadsToLoadObjects(searchMassIndexerThreads).start()
-        .thenRun(() -> log.info("Indexing completed successfully.")).exceptionally(e -> {
+            TagModel.class, CompilationModel.class).threadsToLoadObjects(searchMassIndexerThreads)
+        .start().thenRun(() -> log.info("Indexing completed successfully.")).exceptionally(e -> {
           log.error("Error occurred during indexing.", e);
           return null;
         });

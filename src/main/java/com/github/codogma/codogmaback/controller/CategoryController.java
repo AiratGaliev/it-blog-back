@@ -35,7 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/categories")
-@Tag(name = "Categories", description = "API for blog categories")
+@Tag(name = "Categories", description = "API for categories")
 public class CategoryController {
 
   private final CategoryService categoryService;
