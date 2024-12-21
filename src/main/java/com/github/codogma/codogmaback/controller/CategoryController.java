@@ -29,7 +29,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 @Validated
 @RestController
@@ -73,7 +72,7 @@ public class CategoryController {
   public ResponseEntity<GetCategory> getCategoryById(@PathVariable Long id,
       @AuthenticationPrincipal UserModel userModel) {
     return categoryService.getCategoryById(id, userModel)
-        .map(article -> new ResponseEntity<>(article, HttpStatus.OK))
+        .map(category -> new ResponseEntity<>(category, HttpStatus.OK))
         .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
   }
 
@@ -83,27 +82,23 @@ public class CategoryController {
   @PreAuthorize("hasAuthority('ROLE_ADMIN')")
   public ResponseEntity<GetCategory> createCategory(
       @Valid @ModelAttribute CreateCategory createCategoryDTO,
-      @RequestParam(value = "image", required = false) MultipartFile image,
       @AuthenticationPrincipal UserModel userModel) {
-    createCategoryDTO.setImage(image);
     GetCategory createdCategory = categoryService.createCategory(createCategoryDTO, userModel);
     return new ResponseEntity<>(createdCategory, HttpStatus.CREATED);
   }
 
   @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @Operation(summary = "Update a new category")
+  @Operation(summary = "Update the category")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_ADMIN')")
   public ResponseEntity<String> updateCategory(@PathVariable Long id,
-      @Valid @ModelAttribute UpdateCategory updateCategoryDTO,
-      @RequestParam(value = "image", required = false) MultipartFile image) {
-    updateCategoryDTO.setImage(image);
+      @Valid @ModelAttribute UpdateCategory updateCategoryDTO) {
     categoryService.updateCategory(id, updateCategoryDTO);
     return new ResponseEntity<>("Category updated successfully", HttpStatus.OK);
   }
 
   @DeleteMapping("/{id}")
-  @Operation(summary = "Delete a category")
+  @Operation(summary = "Delete the category")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_ADMIN')")
   public ResponseEntity<String> deleteCategory(@PathVariable Long id) {

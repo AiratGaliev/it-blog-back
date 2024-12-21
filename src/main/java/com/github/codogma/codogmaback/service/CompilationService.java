@@ -2,7 +2,7 @@ package com.github.codogma.codogmaback.service;
 
 import com.github.codogma.codogmaback.dto.CreateCompilation;
 import com.github.codogma.codogmaback.dto.GetCompilation;
-import com.github.codogma.codogmaback.dto.UpdateCategory;
+import com.github.codogma.codogmaback.dto.UpdateCompilation;
 import com.github.codogma.codogmaback.exception.BookmarkAlreadyExistsException;
 import com.github.codogma.codogmaback.exception.CompilationNotFoundException;
 import com.github.codogma.codogmaback.exception.ExceptionFactory;
@@ -47,27 +47,27 @@ public class CompilationService {
   @Value("${search.results.limit}")
   private int searchResultsLimit;
 
-  public Page<GetCompilation> getCompilations(String tag, String info, Boolean isFollowing,
+  public Page<GetCompilation> getCompilations(String tag, String info, Boolean isBookmarked,
       int page, int size, String sort, String order, UserModel userModel) {
     UserModel foundUser = userModel != null ? userRepository.findById(userModel.getId())
         .orElseThrow(() -> exceptionFactory.userNotFound(userModel.getUsername())) : null;
     Sort.Direction sortDirection = Sort.Direction.fromString(order);
     Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
-    List<Long> categoryIds = null;
+    List<Long> compilationIds = null;
     if (info != null && !info.isEmpty()) {
       SearchSession searchSession = Search.session(entityManager);
-      categoryIds = searchSession.search(CompilationModel.class)
+      compilationIds = searchSession.search(CompilationModel.class)
           .where(f -> f.match().fields("title", "description").matching(info).fuzzy(1))
           .fetchHits(searchResultsLimit).stream().map(CompilationModel::getId).toList();
     }
     Specification<CompilationModel> spec = CompilationSpecifications.buildSpecification(tag,
-        categoryIds, isFollowing, foundUser);
+        compilationIds, isBookmarked, foundUser);
     return compilationRepository.findAll(spec, pageable)
         .map(compilationModel -> convertCompilationToDTO(compilationModel, userModel));
   }
 
   @Transactional
-  public List<GetCompilation> getCompilationsByNameContaining(String name) {
+  public List<GetCompilation> getCompilationsByTitle(String name) {
     return compilationRepository.findTop10ByTitleStartingWithIgnoreCase(name).stream()
         .map(this::convertCompilationToDTO).toList();
   }
@@ -91,10 +91,10 @@ public class CompilationService {
   }
 
   @Transactional
-  public void updateCompilation(Long id, UpdateCategory updateCategory) {
+  public void updateCompilation(Long id, UpdateCompilation updateCompilation) {
     CompilationModel category = compilationRepository.findById(id)
         .orElseThrow(() -> new CompilationNotFoundException("Compilation not found"));
-    MultipartFile image = updateCategory.getImage();
+    MultipartFile image = updateCompilation.getImage();
     uploadCompilationImage(image, category);
     compilationRepository.save(category);
   }
