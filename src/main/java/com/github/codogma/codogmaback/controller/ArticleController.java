@@ -57,7 +57,7 @@ public class ArticleController {
       @RequestParam(required = false) Boolean isFeed,
       @RequestParam(required = false) String content, @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
-      @RequestParam(defaultValue = "createdAt") String sort,
+      @RequestParam(defaultValue = "updatedAt") String sort,
       @RequestParam(defaultValue = "desc") String order,
       @AuthenticationPrincipal UserModel userModel) {
     Page<GetArticle> articles = articleService.getArticles(order, sort, page, size, categoryId, tag,

@@ -132,7 +132,7 @@ public class ArticleService {
     ArticleView existingView = articleViewRepository.findByUserAndArticle(userModel, article)
         .orElse(ArticleView.builder().user(userModel).article(article).build());
     existingView.setUpdatedAt(new Date());
-    articleViewRepository.save(existingView);
+    articleViewRepository.saveAndFlush(existingView);
   }
 
   @Transactional
@@ -339,8 +339,12 @@ public class ArticleService {
     }
     List<CategoryModel> categories = new ArrayList<>(
         categoryRepository.findAllById(updateArticle.getCategoryIds()));
-    List<CompilationModel> compilations = new ArrayList<>(
-        compilationRepository.findAllById(updateArticle.getCompilationIds()));
+    List<Long> compilationIds = updateArticle.getCompilationIds();
+    if (compilationIds != null && !compilationIds.isEmpty()) {
+      List<CompilationModel> compilations = new ArrayList<>(
+          compilationRepository.findAllById(compilationIds));
+      articleModel.setCompilations(compilations);
+    }
     List<String> tags = updateArticle.getTags();
     List<TagModel> tagModels = new ArrayList<>();
     if (tags != null && !tags.isEmpty()) {
@@ -369,7 +373,6 @@ public class ArticleService {
     articleModel.setPreviewContent(updateArticle.getPreviewContent());
     articleModel.setContent(updateArticle.getContent());
     articleModel.setCategories(categories);
-    articleModel.setCompilations(compilations);
     articleModel.setTags(tagModels);
     articleModel.setUser(userModel);
     articleRepository.save(articleModel);
@@ -391,9 +394,6 @@ public class ArticleService {
     CompilationModel compilation = compilationRepository.findById(compilationId).orElseThrow();
     ArticleModel article = articleRepository.findById(articleId)
         .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
-//    if (compilation.getArticles().contains(article)) {
-//      throw exceptionFactory.articleAlreadyInCompilation(articleId, compilationId);
-//    }
     boolean compilationExists = compilationRepository.existsByArticles_Id(articleId);
     if (compilationExists) {
       throw new CompilationAlreadyExistsException("Article already exists in compilation");
@@ -410,9 +410,6 @@ public class ArticleService {
     CompilationModel compilation = compilationRepository.findById(compilationId).orElseThrow();
     ArticleModel article = articleRepository.findById(articleId)
         .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
-//    if (!compilation.getArticles().contains(article)) {
-//      throw exceptionFactory.articleNotInCompilation(articleId, compilationId);
-//    }
     boolean compilationExists = compilationRepository.existsByArticles_Id(articleId);
     if (!compilationExists) {
       throw new CompilationNotExistsException("Article not exists in compilation");

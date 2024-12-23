@@ -52,7 +52,7 @@ public class CompilationController {
       @RequestParam(required = false) String tag, @RequestParam(required = false) String info,
       @RequestParam(required = false) Boolean isBookmarked,
       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
-      @RequestParam(defaultValue = "name") String sort,
+      @RequestParam(defaultValue = "updatedAt") String sort,
       @RequestParam(defaultValue = "desc") String order,
       @AuthenticationPrincipal UserModel userModel) {
     Page<GetCompilation> compilations = compilationService.getCompilations(tag, info, isBookmarked,

@@ -15,7 +15,6 @@ import com.github.codogma.codogmaback.repository.UserRepository;
 import com.github.codogma.codogmaback.repository.specifications.CompilationSpecifications;
 import com.github.codogma.codogmaback.util.FileUploadUtil;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +46,7 @@ public class CompilationService {
   @Value("${search.results.limit}")
   private int searchResultsLimit;
 
+  @Transactional
   public Page<GetCompilation> getCompilations(String tag, String info, Boolean isBookmarked,
       int page, int size, String sort, String order, UserModel userModel) {
     UserModel foundUser = userModel != null ? userRepository.findById(userModel.getId())
@@ -102,7 +102,7 @@ public class CompilationService {
   @Transactional
   public void deleteCompilation(Long id) {
     CompilationModel compilation = compilationRepository.findById(id)
-        .orElseThrow(EntityNotFoundException::new);
+        .orElseThrow(() -> new CompilationNotFoundException("Compilation not found"));
     compilation.getArticles().forEach(article -> article.getCompilations().remove(compilation));
     compilationRepository.delete(compilation);
   }
@@ -138,8 +138,8 @@ public class CompilationService {
 
   private GetCompilation convertCompilationToDTO(CompilationModel compilation,
       UserModel userModel) {
-    boolean existsed = bookmarkRepository.existsByUserAndCompilation(userModel, compilation);
-    return GetCompilation.builder().id(compilation.getId()).isBookmarked(existsed)
+    boolean existed = bookmarkRepository.existsByUserAndCompilation(userModel, compilation);
+    return GetCompilation.builder().id(compilation.getId()).isBookmarked(existed)
         .bookmarksCount(compilation.getBookmarks().size()).title(compilation.getTitle())
         .description(compilation.getDescription()).imageUrl(compilation.getImageUrl()).build();
   }
