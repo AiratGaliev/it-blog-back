@@ -31,7 +31,6 @@ import com.github.codogma.codogmaback.repository.specifications.ArticleSpecifica
 import com.github.codogma.codogmaback.repository.specifications.ArticleViewSpecifications;
 import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -126,16 +125,6 @@ public class ArticleService {
   }
 
   @Transactional
-  public void recordArticleView(Long articleId, UserModel userModel) {
-    ArticleModel article = articleRepository.findById(articleId)
-        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
-    ArticleView existingView = articleViewRepository.findByUserAndArticle(userModel, article)
-        .orElse(ArticleView.builder().user(userModel).article(article).build());
-    existingView.setUpdatedAt(new Date());
-    articleViewRepository.saveAndFlush(existingView);
-  }
-
-  @Transactional
   public GetArticle getArticleById(Long articleId, UserModel userModel) {
     ArticleModel articleModel = articleRepository.findById(articleId)
         .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
@@ -147,9 +136,17 @@ public class ArticleService {
         .equals(userModel.getUsername()) && !userModel.getRole().equals(Role.ROLE_ADMIN)) {
       throw exceptionFactory.articleNotFound(articleId);
     }
-    if (userModel != null) {
-      recordArticleView(articleId, userModel);
-    }
+    return convertArticleModelToDTO(articleModel);
+  }
+
+  @Transactional
+  public GetArticle recordView(Long articleId, UserModel userModel) {
+    ArticleModel articleModel = articleRepository.findById(articleId)
+        .orElseThrow(() -> exceptionFactory.articleNotFound(articleId));
+//    ArticleView existingView = articleViewRepository.findByUserAndArticle(userModel, articleModel)
+//        .orElseGet(() -> ArticleView.builder().user(userModel).article(articleModel).build());
+//    existingView.setUpdatedAt(new Date());
+//    articleViewRepository.save(existingView);
     return convertArticleModelToDTO(articleModel);
   }
 

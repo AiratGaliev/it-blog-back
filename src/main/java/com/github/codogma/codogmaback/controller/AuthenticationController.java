@@ -56,7 +56,7 @@ public class AuthenticationController {
   }
 
   @PostMapping("/sign-in")
-  @Operation(summary = "Authenticate a user")
+  @Operation(summary = "Authenticate the user")
   public ResponseEntity<AuthenticationResponse> signIn(
       @Valid @RequestBody SignInRequest signInRequest, HttpServletResponse response) {
     AuthenticationResponse authenticatedUser = authenticationService.signIn(signInRequest,
@@ -81,7 +81,7 @@ public class AuthenticationController {
   }
 
   @PostMapping("/logout")
-  @Operation(summary = "Logout a user")
+  @Operation(summary = "Logout the user")
   public ResponseEntity<String> logout(HttpServletResponse response,
       @AuthenticationPrincipal UserModel userModel) {
     authenticationService.logout(response, userModel);

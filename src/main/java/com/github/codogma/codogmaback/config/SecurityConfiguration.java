@@ -41,20 +41,14 @@ public class SecurityConfiguration {
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     return http.csrf(AbstractHttpConfigurer::disable)
         .cors(cors -> cors.configurationSource(corsConfigurationSource())).authorizeHttpRequests(
-            auth -> auth.requestMatchers("/auth/**").permitAll().requestMatchers("/api-docs/**")
-                .permitAll().requestMatchers("/swagger-ui.html").permitAll()
-                .requestMatchers("/swagger-ui/**").permitAll().requestMatchers("/v3/api-docs/**")
-                .permitAll().requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/articles/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/users/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/compilations/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/comments/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/tags/**").permitAll().anyRequest()
-                .authenticated()).oauth2Login(
-            oauth2 -> oauth2.successHandler(customOAuth2SuccessHandler)
-                .userInfoEndpoint(
-                    userInfo -> userInfo.userAuthoritiesMapper(new SimpleAuthorityMapper())))
+            auth -> auth.requestMatchers("/auth/**", "/swagger-ui.html", "/swagger-ui/**",
+                    "/api-docs/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/articles/**", "/categories/**", "/users/**",
+                    "/compilations/**", "/images/**", "/comments/**", "/tags/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/articles/*/record-view").permitAll()
+                .anyRequest().authenticated()).oauth2Login(
+            oauth2 -> oauth2.successHandler(customOAuth2SuccessHandler).userInfoEndpoint(
+                userInfo -> userInfo.userAuthoritiesMapper(new SimpleAuthorityMapper())))
         .exceptionHandling(
             exception -> exception.authenticationEntryPoint((request, response, authException) -> {
               throw authException;

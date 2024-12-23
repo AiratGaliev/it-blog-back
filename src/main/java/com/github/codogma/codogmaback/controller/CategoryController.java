@@ -68,7 +68,7 @@ public class CategoryController {
   }
 
   @GetMapping("/{id}")
-  @Operation(summary = "Get article by id")
+  @Operation(summary = "Get the category by id")
   public ResponseEntity<GetCategory> getCategoryById(@PathVariable Long id,
       @AuthenticationPrincipal UserModel userModel) {
     return categoryService.getCategoryById(id, userModel)
@@ -107,7 +107,7 @@ public class CategoryController {
   }
 
   @PostMapping("/{id}/add-to-favorites")
-  @Operation(summary = "Add category to favorites")
+  @Operation(summary = "Add the category to favorites")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
   public ResponseEntity<GetCategory> addToFavorites(@PathVariable Long id,
@@ -117,7 +117,7 @@ public class CategoryController {
   }
 
   @DeleteMapping("/{id}/unfavorite")
-  @Operation(summary = "Unfavorite an category")
+  @Operation(summary = "Unfavorite the category")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
   public ResponseEntity<GetCategory> unfavorite(@PathVariable Long id,

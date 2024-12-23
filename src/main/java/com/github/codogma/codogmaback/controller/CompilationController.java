@@ -68,7 +68,7 @@ public class CompilationController {
   }
 
   @GetMapping("/{id}")
-  @Operation(summary = "Get compilation by id")
+  @Operation(summary = "Get the compilation by id")
   public ResponseEntity<GetCompilation> getCompilationById(@PathVariable Long id,
       @AuthenticationPrincipal UserModel userModel) {
     return compilationService.getCompilationById(id, userModel)
@@ -108,7 +108,7 @@ public class CompilationController {
   }
 
   @PostMapping("/{id}/bookmark")
-  @Operation(summary = "Add compilation to bookmarks")
+  @Operation(summary = "Add the compilation to bookmarks")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
   public ResponseEntity<GetCompilation> bookmark(@PathVariable Long id,
@@ -118,7 +118,7 @@ public class CompilationController {
   }
 
   @DeleteMapping("/{id}/unbookmark")
-  @Operation(summary = "Unbookmark the category")
+  @Operation(summary = "Delete the compilation from bookmarks")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
   public ResponseEntity<GetCompilation> unbookmark(@PathVariable Long id,

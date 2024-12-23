@@ -11,9 +11,11 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @Validated
 @RestController
 @RequiredArgsConstructor
@@ -43,10 +46,10 @@ public class ArticleController {
   @GetMapping
   @Operation(summary = "Get all articles or filter articles by various criteria", description = "Retrieve all articles or filter articles by category, tag, and/or content. Supports pagination and multiple filter combinations to narrow down search results.")
   @Parameters({@Parameter(name = "categoryId", description = "Category id to filter articles"),
-      @Parameter(name = "tag", description = "Tag to filter articles"),
+      @Parameter(name = "tag", description = "Tag value to filter articles"),
       @Parameter(name = "username", description = "Username to filter articles"),
       @Parameter(name = "isFeed", description = "Get user's feed"),
-      @Parameter(name = "content", description = "Content to filter articles"),
+      @Parameter(name = "content", description = "Content value to filter articles"),
       @Parameter(name = "page", description = "Page number to retrieve"),
       @Parameter(name = "size", description = "Number of articles per page"),
       @Parameter(name = "sort", description = "Field to sort by"),
@@ -85,15 +88,27 @@ public class ArticleController {
   }
 
   @GetMapping("/{id}")
-  @Operation(summary = "Get an article")
+  @Operation(summary = "Get the article")
   public ResponseEntity<GetArticle> getArticleById(@PathVariable Long id,
       @AuthenticationPrincipal UserModel userModel) {
     GetArticle article = articleService.getArticleById(id, userModel);
     return ResponseEntity.ok(article);
   }
 
+  @PostMapping("/{id}/record-view")
+  @Operation(summary = "Record article view")
+  public ResponseEntity<GetArticle> recordView(@PathVariable Long id,
+      @AuthenticationPrincipal UserModel userModel,
+      HttpServletRequest request) {
+    String ipAddress = request.getRemoteAddr();
+    String userAgent = request.getHeader("User-Agent");
+    log.info("IP address: {}, User-Agent: {}", ipAddress, userAgent);
+    GetArticle article = articleService.recordView(id, userModel);
+    return ResponseEntity.ok(article);
+  }
+
   @GetMapping("/{id}/recommendations")
-  @Operation(summary = "Get an article")
+  @Operation(summary = "Get the recommendations")
   public ResponseEntity<List<GetArticle>> getRecommendationsForArticle(@PathVariable Long id) {
     List<GetArticle> articles = articleService.getRecommendationsForArticle(id);
     return ResponseEntity.ok(articles);
@@ -142,7 +157,7 @@ public class ArticleController {
   }
 
   @PatchMapping("/{id}/publish")
-  @Operation(summary = "Publish an article")
+  @Operation(summary = "Publish the article")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_AUTHOR')")
   public ResponseEntity<Void> publishArticle(@PathVariable Long id,
@@ -152,7 +167,7 @@ public class ArticleController {
   }
 
   @PatchMapping("/{id}/hide")
-  @Operation(summary = "Hide an article")
+  @Operation(summary = "Hide the article")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_AUTHOR')")
   public ResponseEntity<Void> hideArticle(@PathVariable Long id,
@@ -162,7 +177,7 @@ public class ArticleController {
   }
 
   @PatchMapping("/{id}/block")
-  @Operation(summary = "Block an article")
+  @Operation(summary = "Block the article")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
   public ResponseEntity<Void> blockArticle(@PathVariable Long id) {
@@ -171,7 +186,7 @@ public class ArticleController {
   }
 
   @PatchMapping("/{id}/unblock")
-  @Operation(summary = "Unblock an article")
+  @Operation(summary = "Unblock the article")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
   public ResponseEntity<Void> unblockArticle(@PathVariable Long id) {
@@ -180,7 +195,7 @@ public class ArticleController {
   }
 
   @PutMapping("/{id}")
-  @Operation(summary = "Update an article")
+  @Operation(summary = "Update the article")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
   public ResponseEntity<Void> updateArticle(@PathVariable Long id,
@@ -190,7 +205,7 @@ public class ArticleController {
   }
 
   @DeleteMapping("/{id}")
-  @Operation(summary = "Delete an article")
+  @Operation(summary = "Delete the article")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_AUTHOR')")
   public ResponseEntity<Void> deleteArticle(@PathVariable Long id,
@@ -200,7 +215,7 @@ public class ArticleController {
   }
 
   @PostMapping("/{id}/compilate")
-  @Operation(summary = "Add an article to the compilation")
+  @Operation(summary = "Add the article to the compilation")
   @SecurityRequirement(name = "bearerAuth")
   @Parameters({@Parameter(name = "compilationId", description = "Compilation id to add articles")})
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
@@ -211,7 +226,7 @@ public class ArticleController {
   }
 
   @DeleteMapping("/{id}/uncompilate")
-  @Operation(summary = "Delete an article from the compilation")
+  @Operation(summary = "Delete the article from the compilation")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
   @Parameters({@Parameter(name = "compilationId", description = "Compilation id to add articles")})
