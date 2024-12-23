@@ -11,7 +11,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 public class CategorySpecifications {
 
-  public static Specification<CategoryModel> hasTagName(String tagName) {
+  private static Specification<CategoryModel> hasTagName(String tagName) {
     return (root, query, builder) -> {
       if (tagName == null || tagName.isEmpty()) {
         return builder.conjunction();
@@ -22,11 +22,11 @@ public class CategorySpecifications {
     };
   }
 
-  public static Specification<CategoryModel> hasInfoMatch(List<Long> categoryIds) {
+  private static Specification<CategoryModel> hasInfoMatch(List<Long> categoryIds) {
     return (root, query, builder) -> categoryIds != null ? root.get("id").in(categoryIds) : null;
   }
 
-  public static Specification<CategoryModel> hasFavorites(UserModel userModel) {
+  private static Specification<CategoryModel> hasFavorites(UserModel userModel) {
     return (root, query, builder) -> {
       if (userModel == null || userModel.getFavorites().isEmpty()) {
         return builder.disjunction();

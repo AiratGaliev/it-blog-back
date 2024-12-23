@@ -70,7 +70,7 @@ public class CommentController {
   }
 
   @PatchMapping("/{commentId}/publish")
-  @Operation(summary = "Publish a comment")
+  @Operation(summary = "Publish the comment")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_ADMIN')")
   public GetComment publishComment(@PathVariable Long commentId) {
@@ -78,7 +78,7 @@ public class CommentController {
   }
 
   @PatchMapping("/{commentId}/block")
-  @Operation(summary = "Block a comment")
+  @Operation(summary = "Block the comment")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAuthority('ROLE_ADMIN')")
   public GetComment blockComment(@PathVariable Long commentId) {
@@ -86,7 +86,7 @@ public class CommentController {
   }
 
   @PutMapping("/{commentId}")
-  @Operation(summary = "Update a comment")
+  @Operation(summary = "Update the comment")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR', 'ROLE_ADMIN')")
   public GetComment updateComment(@PathVariable Long commentId,
@@ -96,7 +96,7 @@ public class CommentController {
   }
 
   @DeleteMapping("/{commentId}")
-  @Operation(summary = "Delete a comment")
+  @Operation(summary = "Delete the comment")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR', 'ROLE_ADMIN')")
   public void deleteComment(@PathVariable Long commentId,

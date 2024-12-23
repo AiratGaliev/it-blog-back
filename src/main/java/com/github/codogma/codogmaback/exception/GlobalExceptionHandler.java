@@ -134,9 +134,21 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
   }
 
-  @ExceptionHandler(BookmarkAlreadyExistsException.class)
-  public ResponseEntity<String> handleBookmarkAlreadyExistsException(
-      BookmarkAlreadyExistsException ex) {
+  @ExceptionHandler(CompilationAlreadyExistsException.class)
+  public ResponseEntity<String> handleCompilationAlreadyExistsException(
+      CompilationAlreadyExistsException ex) {
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(CompilationNotExistsException.class)
+  public ResponseEntity<String> handleCompilationNotExistsException(
+      CompilationNotExistsException ex) {
+    return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(CompilationNotFoundException.class)
+  public ResponseEntity<String> handleCompilationNotFoundException(
+      CompilationNotFoundException ex) {
     return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
   }
 

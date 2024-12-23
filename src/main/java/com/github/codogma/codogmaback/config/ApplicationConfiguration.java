@@ -34,6 +34,8 @@ public class ApplicationConfiguration implements WebMvcConfigurer {
   private String articleImageUploadDir;
   @Value("${category.image.upload-dir}")
   private String categoryImageUploadDir;
+  @Value("${compilation.image.upload-dir}")
+  private String compilationImageUploadDir;
 
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -42,7 +44,9 @@ public class ApplicationConfiguration implements WebMvcConfigurer {
     registry.addResourceHandler("/articles/images/**")
         .addResourceLocations("file:" + articleImageUploadDir + "/");
     registry.addResourceHandler("/categories/images/**")
-        .addResourceLocations("file:" + categoryImageUploadDir + "/").setCachePeriod(3600)
+        .addResourceLocations("file:" + categoryImageUploadDir + "/");
+    registry.addResourceHandler("/compilations/images/**")
+        .addResourceLocations("file:" + compilationImageUploadDir + "/").setCachePeriod(3600)
         .resourceChain(true).addResolver(new EncodedResourceResolver());
   }
 

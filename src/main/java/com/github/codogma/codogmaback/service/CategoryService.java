@@ -80,8 +80,7 @@ public class CategoryService {
   public List<GetCategory> getCategoriesByNameContaining(String name) {
     Language interfaceLanguage = localizationContext.getLocale();
     return categoryRepository.findTop10ByNameStartingWithIgnoreCase(interfaceLanguage.name(), name)
-        .stream()
-        .map(this::convertCategoryToDTO).toList();
+        .stream().map(this::convertCategoryToDTO).toList();
   }
 
   @Transactional

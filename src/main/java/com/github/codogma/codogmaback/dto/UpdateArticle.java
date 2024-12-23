@@ -36,6 +36,8 @@ public class UpdateArticle {
   @NotEmpty(message = "Categories cannot be null or empty")
   @Schema(description = "Categories associated with the article", requiredMode = RequiredMode.REQUIRED)
   private List<Long> categoryIds;
+  @Schema(description = "Compilations associated with the article")
+  private List<Long> compilationIds;
   @NotEmpty(message = "Tags cannot be null or empty")
   @Schema(description = "Tags associated with the article", requiredMode = RequiredMode.REQUIRED)
   private List<String> tags;

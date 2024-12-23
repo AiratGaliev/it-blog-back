@@ -105,6 +105,10 @@ category:
   image:
     upload-dir: ${user.home}/codogma/categories/images
 
+compilation:
+  image:
+    upload-dir: ${user.home}/codogma/compilations/images
+
 search:
   results:
     limit: 1000

@@ -12,13 +12,13 @@ import org.springframework.web.multipart.MultipartFile;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(name = "Create Category")
-public class CreateCategory {
+@Schema(name = "Create Compilation")
+public class CreateCompilation {
 
-  @Schema(description = "Name of the category", example = "Programming", requiredMode = RequiredMode.REQUIRED)
-  private String name;
-  @Schema(description = "Category's image", requiredMode = RequiredMode.REQUIRED)
+  @Schema(description = "Title of the compilation", example = "Java Basics", requiredMode = RequiredMode.REQUIRED)
+  private String title;
+  @Schema(description = "Compilation's image", requiredMode = RequiredMode.REQUIRED)
   private MultipartFile image;
-  @Schema(description = "Description of the category", example = "Articles about technology")
+  @Schema(description = "Description of the compilation", example = "About the basics of java programming")
   private String description;
 }

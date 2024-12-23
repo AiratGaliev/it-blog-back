@@ -26,6 +26,7 @@ services:
       - ~/codogma/users/avatars:/app/users/avatars
       - ~/codogma/articles/images:/app/articles/images
       - ~/codogma/categories/images:/app/categories/images
+      - ~/codogma/compilations/images:/app/categories/images
       - ~/codogma/lucene/indexes:/app/lucene/indexes
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/codogma-back
@@ -36,6 +37,7 @@ services:
       user.avatar.upload-dir: /app/users/avatars
       article.image.upload-dir: /app/articles/images
       category.image.upload-dir: /app/categories/images
+      compilation.image.upload-dir: /app/compilations/images
       spring.jpa.properties.hibernate.search.backend.directory.root: /app/lucene/indexes
     depends_on:
       - db

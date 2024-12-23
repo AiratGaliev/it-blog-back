@@ -86,4 +86,9 @@ public class ExceptionFactory {
     return new AccessDeniedException(
         localizationUtil.getMessage("access.not.allowed.to.delete", new Object[]{id}));
   }
+
+  public CompilationNotFoundException compilationNotFound(Long id) {
+    return new CompilationNotFoundException(
+        localizationUtil.getMessage("compilation.not.found", new Object[]{id}));
+  }
 }

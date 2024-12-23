@@ -72,7 +72,7 @@ public class UserController {
   }
 
   @GetMapping("/{username}")
-  @Operation(summary = "Get an user by username")
+  @Operation(summary = "Get the user by username")
   public ResponseEntity<GetUser> getUserByUsername(@PathVariable String username,
       @AuthenticationPrincipal UserModel userModel) {
     return userService.getUserByUsername(username, userModel)
@@ -81,7 +81,7 @@ public class UserController {
   }
 
   @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @Operation(summary = "Update an user by username")
+  @Operation(summary = "Update the user by username")
   @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<Object> updateUser(@Valid @ModelAttribute UpdateUser updateUser,
       @RequestParam(value = "avatar", required = false) MultipartFile avatar,
@@ -99,7 +99,7 @@ public class UserController {
   }
 
   @DeleteMapping("/{username}")
-  @Operation(summary = "Delete an user by username")
+  @Operation(summary = "Delete the user by username")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
   public ResponseEntity<Void> deleteUser(@PathVariable String username) {
@@ -108,7 +108,7 @@ public class UserController {
   }
 
   @PostMapping("/{username}/subscribe")
-  @Operation(summary = "Subscribe to a user")
+  @Operation(summary = "Subscribe to the user")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
   public ResponseEntity<GetUser> subscribe(@PathVariable String username,
@@ -118,7 +118,7 @@ public class UserController {
   }
 
   @DeleteMapping("/{username}/unsubscribe")
-  @Operation(summary = "Unsubscribe from a user")
+  @Operation(summary = "Unsubscribe from the user")
   @SecurityRequirement(name = "bearerAuth")
   @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_AUTHOR')")
   public ResponseEntity<GetUser> unsubscribe(@PathVariable String username,
