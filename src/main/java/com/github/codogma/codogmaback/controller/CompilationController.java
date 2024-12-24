@@ -60,7 +60,7 @@ public class CompilationController {
     return ResponseEntity.ok(compilations);
   }
 
-  @GetMapping("/list-by-name")
+  @GetMapping("/list-by-title")
   @Operation(summary = "Get compilations by title")
   public ResponseEntity<List<GetCompilation>> getCompilationsByTitle(@RequestParam String title) {
     List<GetCompilation> compilations = compilationService.getCompilationsByTitle(title);
