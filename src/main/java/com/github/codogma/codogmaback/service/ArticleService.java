@@ -5,6 +5,7 @@ import static com.github.codogma.codogmaback.util.ContentUtil.createHtmlPreview;
 import com.github.codogma.codogmaback.dto.CreateDraftArticle;
 import com.github.codogma.codogmaback.dto.GetArticle;
 import com.github.codogma.codogmaback.dto.GetCategory;
+import com.github.codogma.codogmaback.dto.GetCompilation;
 import com.github.codogma.codogmaback.dto.GetTag;
 import com.github.codogma.codogmaback.dto.UpdateArticle;
 import com.github.codogma.codogmaback.dto.UpdateDraftArticle;
@@ -436,9 +437,12 @@ public class ArticleService {
           String localizedCategoryName = category.getName()
               .getOrDefault(interfaceLanguage, category.getName().get(Language.EN));
           return GetCategory.builder().id(category.getId()).name(localizedCategoryName).build();
-        }).toList()).tags(articleModel.getTags().stream()
-            .map(tagModel -> GetTag.builder().id(tagModel.getId()).name(tagModel.getName()).build())
-            .toList()).compilationsCount(articleModel.getCompilations().size())
+        }).toList()).compilations(articleModel.getCompilations().stream().map(
+            compilation -> GetCompilation.builder().id(compilation.getId())
+                .title(compilation.getTitle()).build()).toList()).tags(
+            articleModel.getTags().stream().map(
+                    tagModel -> GetTag.builder().id(tagModel.getId()).name(tagModel.getName()).build())
+                .toList()).compilationsCount(articleModel.getCompilations().size())
         .createdAt(articleModel.getCreatedAt()).updatedAt(articleModel.getUpdatedAt()).build();
   }
 }

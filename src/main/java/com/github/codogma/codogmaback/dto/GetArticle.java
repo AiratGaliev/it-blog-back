@@ -45,6 +45,8 @@ public class GetArticle {
   private List<GetTag> tags;
   @Schema(description = "Categories associated with the article")
   private List<GetCategory> categories;
+  @Schema(description = "Compilations associated with the article")
+  private List<GetCompilation> compilations;
   @Schema(description = "Date and time of the article creation", example = "2022-01-01T00:00:00.000Z")
   private Date createdAt;
   @Schema(description = "Date and time of the article update", example = "2022-01-01T01:00:00.000Z")
